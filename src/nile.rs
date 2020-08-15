@@ -2,6 +2,9 @@ use crate::board::Board;
 use crate::player::Player;
 use crate::tile::{Rotation, Tile, TileBox};
 
+use wasm_bindgen::prelude::*;
+
+
 #[derive(Debug)]
 pub struct TilePlacement {
     pub tile: Tile,
@@ -16,6 +19,7 @@ pub enum Move {
     Move(Vec<TilePlacement>),
 }
 
+#[wasm_bindgen]
 #[derive(Debug)]
 pub struct Nile {
     board: Board,

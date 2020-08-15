@@ -1,10 +1,9 @@
+use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use rand::rngs::ThreadRng;
-use std::collections::{VecDeque, HashSet};
-use std::hash::Hash;
+use std::collections::VecDeque;
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum Direction {
     SW,
     W,
@@ -13,20 +12,7 @@ pub enum Direction {
     NE,
     E,
     SE,
-}
-
-impl Direction {
-    pub fn path_change(&self, path: Path) -> Path {
-        match self {
-            Direction::N | Direction::W | Direction::E => path,
-            Direction::SW | Direction::NW | Direction::NE | Direction::SE => {
-                match path {
-                    Path::Diagonal => Path::Orthogonal,
-                    Path::Orthogonal => Path::Diagonal,
-                }
-            }
-        }
-    }
+    S,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -37,14 +23,23 @@ pub enum Rotation {
     Clockwise270,
 }
 
-#[derive(Copy, Clone, Debug)]
-pub enum Path {
-    Orthogonal,
-    Diagonal,
-}
-
-enum NormalTile {
-
+pub fn offset(direction: Direction, rotation: Rotation) -> (isize, isize) {
+    let (x, y) = match direction {
+        Direction::SW => (-1, -1),
+        Direction::W => (-1, 0),
+        Direction::NW => (-1, 1),
+        Direction::N => (0, 1),
+        Direction::NE => (1, 1),
+        Direction::E => (1, 0),
+        Direction::SE => (1, -1),
+        Direction::S => (0, -1),
+    };
+    match rotation {
+        Rotation::None => (x, y),
+        Rotation::Clockwise90 => (y, -x),
+        Rotation::Clockwise180 => (-y, -x),
+        Rotation::Clockwise270 => (-y, x),
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -110,21 +105,28 @@ impl Tile {
         }
     }
 
-    pub fn direction(&self) -> HashSet<Direction> {
-        let hash_set = HashSet::new();
+    pub fn directions(&self) -> Vec<Direction> {
         match self {
-            Tile::Straight | Tile::Diagonal => {
-                hash_set.insert(Direction::N);
-            }
-            Tile::Center90 => {
-                hash_set.insert(Direction::W);
-                hash_set.insert(Direction::E);
-            }
-        };
-        hash_set
+            Tile::Straight => vec![Direction::S, Direction::N],
+            Tile::Diagonal => vec![Direction::SW, Direction::NE],
+            Tile::Center90 => vec![Direction::S, Direction::W],
+            Tile::Corner90 => vec![Direction::SW, Direction::SE],
+            Tile::Left45 => vec![Direction::S, Direction::NW],
+            Tile::Right45 => vec![Direction::S, Direction::NE],
+            Tile::Left135 => vec![Direction::S, Direction::SW],
+            Tile::Right135 => vec![Direction::S, Direction::SE],
+            Tile::Universal => vec![
+                Direction::S,
+                Direction::SW,
+                Direction::W,
+                Direction::NW,
+                Direction::N,
+                Direction::NE,
+                Direction::E,
+                Direction::SE,
+            ],
+        }
     }
-
-    pub fn exit(entrance: )
 }
 
 #[derive(Debug)]
@@ -170,6 +172,7 @@ impl TileBox {
     /// If a player cannot play, there tiles are returned to the box
     pub fn discard(&mut self, tile: Tile) {
         // Insert at random location
-        self.tiles.insert(self.rng.gen_range(0, self.tiles.len()), tile);
+        self.tiles
+            .insert(self.rng.gen_range(0, self.tiles.len()), tile);
     }
 }
