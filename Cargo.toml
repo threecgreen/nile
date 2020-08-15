@@ -3,6 +3,8 @@ name = "nile"
 version = "0.1.0"
 description = "Board game Nile in the browser"
 authors = ["Carter Green <cartergr@usc.edu>"]
+repository = "https://github.com/threecgreen/nile"
+readme = "README.md"
 license = "MIT"
 edition = "2018"
 
@@ -11,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = "0.2.63"
+rand = "0.7.3"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
