@@ -16,7 +16,7 @@ jobs:
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
     - name: Build
-      run: wasm-back build
+      run: wasm-pack build
     - name: Test
       run: cargo test
     - name: Lint
