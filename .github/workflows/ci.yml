@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_COLOR: true
+
+jobs:
+  rust:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install wasm-pack
+      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+    - name: Build
+      run: wasm-back build
+    - name: Test
+      run: cargo test
+    - name: Lint
+      run: |
+        rustup component add clippy || exit 0
+        cargo clippy
