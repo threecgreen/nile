@@ -94,9 +94,6 @@ impl Nile {
     }
 
     fn advance_turn(&mut self) {
-        self.current_turn += 1;
-        if self.current_turn >= self.players.len() {
-            self.current_turn = 0;
-        }
+        self.current_turn = (self.current_turn + 1) % self.players.len();
     }
 }

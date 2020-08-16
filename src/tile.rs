@@ -4,6 +4,7 @@ use rand::Rng;
 use serde::Deserialize;
 use std::collections::VecDeque;
 use std::ops::Add;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
@@ -34,6 +35,7 @@ impl Direction {
 }
 
 #[repr(u8)]
+#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Deserialize)]
 pub enum Rotation {
     None,
@@ -69,6 +71,7 @@ impl Add<Offset> for Coordinates {
 }
 
 #[repr(u8)]
+#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]
 pub enum Tile {
     /// ```text
@@ -156,6 +159,7 @@ impl Tile {
     }
 }
 
+#[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 pub struct TilePlacement {
     pub tile: Tile,
