@@ -7,13 +7,22 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.tsx?$/,
+                test: /\.(tsx?)$/,
                 use: [
                     {
                         loader: "ts-loader",
                         options: { configFile: "tsconfig.json" },
                     }
                 ]
+            },
+            {
+                test: /\.svg$/,
+                use: [
+                    {
+                        loader: '@svgr/webpack',
+                        // options: { typescript: true }
+                    }
+                ],
             },
         ],
     },

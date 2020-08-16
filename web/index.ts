@@ -1,16 +1,18 @@
-import { Rotation, Tile } from "nile";
-import { drawTilePlacement } from "./lib/tile";
+import { render } from "react-dom";
+import { App } from "./App";
+import { createElement } from "react";
 
 const GRID_COLOR = "#0f0f0f";
 
-const canvas = document.getElementById("nile-canvas") as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
-if (ctx) {
-    ctx.beginPath();
-    ctx.strokeStyle = GRID_COLOR;
+const container = document.getElementById("app-container") as HTMLDivElement;
+render(createElement(App), container);
 
-    drawTilePlacement(ctx, 0, 0, Tile.Straight, Rotation.None);
-    drawTilePlacement(ctx, 0, 1, Tile.Diagonal, Rotation.None);
+// if (ctx) {
+//     ctx.beginPath();
+//     ctx.strokeStyle = GRID_COLOR;
 
-    ctx.stroke();
-}
+//     drawTilePlacement(ctx, 0, 0, Tile.Straight, Rotation.None);
+//     drawTilePlacement(ctx, 0, 1, Tile.Diagonal, Rotation.None);
+
+//     ctx.stroke();
+// }
