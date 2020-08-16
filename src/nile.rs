@@ -1,23 +1,9 @@
 use crate::board::Board;
 use crate::player::Player;
-use crate::tile::{Rotation, Tile, TileBox};
+use crate::tile::{self, TileBox};
+use crate::event::{self, Event, Log};
 
 use wasm_bindgen::prelude::*;
-
-
-#[derive(Debug)]
-pub struct TilePlacement {
-    pub tile: Tile,
-    pub row: usize,
-    pub column: usize,
-    pub rotation: Rotation,
-}
-
-#[derive(Debug)]
-pub enum Move {
-    CantPlay,
-    Move(Vec<TilePlacement>),
-}
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -26,6 +12,7 @@ pub struct Nile {
     tile_box: TileBox,
     players: Vec<Player>,
     current_turn: usize,
+    log: Log,
 }
 
 #[derive(Debug)]
@@ -49,30 +36,62 @@ impl Nile {
                 tile_box,
                 players,
                 current_turn: 0,
+                log: Log::new(),
             })
         }
     }
 
-    pub fn take_move(&mut self, m: Move) -> Result<(), String> {
+    pub fn handle_event(&mut self, event: Event) -> Result<(), String> {
         let player = self.players.get_mut(self.current_turn).expect("Player");
-        let res =  match m {
-            Move::CantPlay => {
-                let mut penalty = 0;
-                for tile in player.discard_tiles() {
-                    penalty -= tile.score();
-                    self.tile_box.discard(tile);
-                }
-                player.add_score(penalty);
-                Ok(())
-            },
-            Move::Move(placements) => {
-                Ok(())
+
+        match event {
+            Event::PlaceTile(event::TilePlacement{tile, coordinates, rotation}) => {
+                // TODO: validate tile placement
+                self.board.place_tile(coordinates, tile::TilePlacement{tile, rotation});
+                // TODO: show theoretical score
             }
+            Event::RotateTile(event::Rotation{coordinates, rotation}) => {
+                if self.board.get_cell(coordinates).is_empty() {
+                    return Err("Cell is empty".to_owned())
+                }
+                // TODO: tile at coordinates validate tile was placed on this turn
+            }
+            Event::RemoveTile(coordinates) => {
+                self.board.remove_tile(coordinates);
+            }
+            Event::CantPlay => {
+                self.advance_turn();
+            }
+            Event::EndTurn => {
+                self.advance_turn();
+            }
+            Event::Undo | Event::Redo => ()
         };
-        player.end_turn(&mut self.tile_box);
-        self.advance_turn();
-        res
+        if let Some(event) = self.log.handle_event(event) {
+            self.handle_event(event)
+        } else {
+            Ok(())
+        }
     }
+
+    // pub fn take_move(&mut self, m: Move) -> Result<(), String> {
+    //     let player = self.players.get_mut(self.current_turn).expect("Player");
+    //     let res = match m {
+    //         Move::CantPlay => {
+    //             let mut penalty = 0;
+    //             for tile in player.discard_tiles() {
+    //                 penalty -= tile.score();
+    //                 self.tile_box.discard(tile);
+    //             }
+    //             player.add_score(penalty);
+    //             Ok(())
+    //         }
+    //         Move::Move(placements) => Ok(()),
+    //     };
+    //     player.end_turn(&mut self.tile_box);
+    //     self.advance_turn();
+    //     res
+    // }
 
     fn advance_turn(&mut self) {
         self.current_turn += 1;

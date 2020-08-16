@@ -1,9 +1,9 @@
-use crate::tile::Tile;
+use crate::tile::{Coordinates, Tile, TilePlacement, Rotation};
 
 #[derive(Clone, Debug, Default)]
 pub struct Cell {
     bonus: i16,
-    tile: Option<Tile>,
+    tile: Option<TilePlacement>,
 }
 
 impl Cell {
@@ -11,8 +11,12 @@ impl Cell {
         Self { bonus, tile: None }
     }
 
-    pub fn set_tile(&mut self, tile: Tile) {
+    pub fn set_tile(&mut self, tile: TilePlacement) {
         self.tile = Some(tile);
+    }
+
+    pub fn remove_tile(&mut self) -> Option<TilePlacement> {
+        self.tile.take()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -20,7 +24,7 @@ impl Cell {
     }
 
     pub fn score(&self) -> i16 {
-        self.bonus + self.tile.map(|t| t.score()).unwrap_or(0)
+        self.bonus + self.tile.map(|t| t.tile.score()).unwrap_or(0)
     }
 }
 
@@ -56,17 +60,31 @@ impl Board {
         BOARD_SIZE
     }
 
-    fn get_index(&self, row: usize, column: usize) -> usize {
+    fn get_index(&self, coordinates: Coordinates) -> usize {
+        let row = coordinates.1 as usize;
+        let column = coordinates.0 as usize;
         row * self.width() + column
     }
 
-    pub fn get_cell(&self, row: usize, column: usize) -> &Cell {
-        &self.cells[self.get_index(row, column)]
+    pub fn get_cell(&self, coordinates: Coordinates) -> &Cell {
+        &self.cells[self.get_index(coordinates)]
     }
 
-    pub fn place_tile(&mut self, row: usize, column: usize, tile: Tile) {
-        let idx = self.get_index(row, column);
+    pub fn place_tile(&mut self, coordinates: Coordinates, tile_placement: TilePlacement)  {
+        let idx = self.get_index(coordinates);
         // TODO: check if empty or should that be handled by engine
-        self.cells[idx].set_tile(tile)
+        self.cells[idx].set_tile(tile_placement)
+    }
+
+    pub fn remove_tile(&mut self, coordinates: Coordinates) -> Option<TilePlacement> {
+        let idx = self.get_index(coordinates);
+        self.cells[idx].remove_tile()
+    }
+
+    pub fn rotate_tile(&mut self, coordinates: Coordinates, rotation: Rotation) {
+        let idx = self.get_index(coordinates);
+        if let Some(ref mut tile) = self.cells[idx].tile {
+            tile.rotation = rotation;
+        }
     }
 }

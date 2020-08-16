@@ -1,8 +1,11 @@
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
+use serde::Deserialize;
 use std::collections::VecDeque;
+use std::ops::Add;
 
+#[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum Direction {
     SW,
@@ -15,7 +18,23 @@ pub enum Direction {
     S,
 }
 
-#[derive(Copy, Clone, Debug)]
+impl Direction {
+    pub fn into_offset(self) -> Offset {
+        match self {
+            Direction::SW => Offset(-1, -1),
+            Direction::W => Offset(-1, 0),
+            Direction::NW => Offset(-1, 1),
+            Direction::N => Offset(0, 1),
+            Direction::NE => Offset(1, 1),
+            Direction::E => Offset(1, 0),
+            Direction::SE => Offset(1, -1),
+            Direction::S => Offset(0, -1),
+        }
+    }
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub enum Rotation {
     None,
     Clockwise90,
@@ -23,26 +42,34 @@ pub enum Rotation {
     Clockwise270,
 }
 
-pub fn offset(direction: Direction, rotation: Rotation) -> (isize, isize) {
-    let (x, y) = match direction {
-        Direction::SW => (-1, -1),
-        Direction::W => (-1, 0),
-        Direction::NW => (-1, 1),
-        Direction::N => (0, 1),
-        Direction::NE => (1, 1),
-        Direction::E => (1, 0),
-        Direction::SE => (1, -1),
-        Direction::S => (0, -1),
-    };
-    match rotation {
-        Rotation::None => (x, y),
-        Rotation::Clockwise90 => (y, -x),
-        Rotation::Clockwise180 => (-y, -x),
-        Rotation::Clockwise270 => (-y, x),
+#[derive(Copy, Clone, Debug)]
+pub struct Offset(i8, i8);
+
+impl Offset {
+    pub fn rotate(self, rotation: Rotation) -> Offset {
+        let Offset(x, y) = self;
+        match rotation {
+            Rotation::None => Offset(x, y),
+            Rotation::Clockwise90 => Offset(y, -x),
+            Rotation::Clockwise180 => Offset(-y, -x),
+            Rotation::Clockwise270 => Offset(-y, x),
+        }
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Deserialize)]
+pub struct Coordinates(pub i8, pub i8);
+
+impl Add<Offset> for Coordinates {
+    type Output = Self;
+
+    fn add(self, rhs: Offset) -> Self {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Deserialize)]
 pub enum Tile {
     /// ```text
     ///
@@ -96,7 +123,7 @@ pub enum Tile {
 }
 
 impl Tile {
-    pub fn score(&self) -> i16 {
+    pub fn score(self) -> i16 {
         match self {
             Tile::Straight | Tile::Diagonal | Tile::Center90 | Tile::Corner90 => 10,
             Tile::Left45 | Tile::Right45 => 8,
@@ -105,7 +132,7 @@ impl Tile {
         }
     }
 
-    pub fn directions(&self) -> Vec<Direction> {
+    pub fn directions(self) -> Vec<Direction> {
         match self {
             Tile::Straight => vec![Direction::S, Direction::N],
             Tile::Diagonal => vec![Direction::SW, Direction::NE],
@@ -127,6 +154,12 @@ impl Tile {
             ],
         }
     }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct TilePlacement {
+    pub tile: Tile,
+    pub rotation: Rotation,
 }
 
 #[derive(Debug)]
