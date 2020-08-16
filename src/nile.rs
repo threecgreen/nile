@@ -1,7 +1,7 @@
 use crate::board::Board;
 use crate::event::{self, Event, Log};
 use crate::player::Player;
-use crate::score::{TurnScore, sum_scores};
+use crate::score::{sum_scores, TurnScore};
 use crate::tile::{self, TileBox};
 
 use wasm_bindgen::prelude::*;
@@ -48,13 +48,24 @@ impl Nile {
 
         // TODO: separate `match` into private function
         match event {
-            Event::PlaceTile(event::TilePlacement{tile, coordinates, rotation}) => {
-                player.place_tile(tile).ok_or_else(|| format!("Player doesn't have a {:?}", tile))?;
-                let event_score = self.board.place_tile(coordinates, tile::TilePlacement{tile, rotation})?;
+            Event::PlaceTile(event::TilePlacement {
+                tile,
+                coordinates,
+                rotation,
+            }) => {
+                player
+                    .place_tile(tile)
+                    .ok_or_else(|| format!("Player doesn't have a {:?}", tile))?;
+                let event_score = self
+                    .board
+                    .place_tile(coordinates, tile::TilePlacement { tile, rotation })?;
                 let turn_score = player.add_score(event_score);
                 // TODO: show theoretical score
             }
-            Event::RotateTile(event::Rotation{coordinates, rotation}) => {
+            Event::RotateTile(event::Rotation {
+                coordinates,
+                rotation,
+            }) => {
                 // TODO: tile at coordinates validate tile was placed on this turn
                 self.board.rotate_tile(coordinates, rotation)?;
             }
@@ -63,7 +74,7 @@ impl Nile {
                     player.return_tile(tile_placement.tile);
                     let turn_score = player.add_score(event_score);
                 } else {
-                    return Err("No tile there".to_owned())
+                    return Err("No tile there".to_owned());
                 }
             }
             Event::CantPlay => {
@@ -82,7 +93,7 @@ impl Nile {
                 player.end_turn(&mut self.tile_box);
                 self.advance_turn();
             }
-            Event::Undo | Event::Redo => ()
+            Event::Undo | Event::Redo => (),
         };
         // `self.log.handle_event` returns `Some` for `Event::Redo` and `Event::Undo`
         if let Some(event) = self.log.handle_event(event) {
@@ -91,6 +102,14 @@ impl Nile {
         } else {
             Ok(())
         }
+    }
+
+    pub fn board(&self) -> &Board {
+        &self.board
+    }
+
+    pub fn players(&self) -> &Vec<Player> {
+        &self.players
     }
 
     fn advance_turn(&mut self) {

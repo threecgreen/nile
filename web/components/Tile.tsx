@@ -15,10 +15,16 @@ import Tile135 from "../assets/tiles/135.svg";
 // @ts-ignore
 import Universal from "../assets/tiles/Universal.svg";
 
-interface IProps {
+interface IRCProps {
+    row: number,
+    column: number,
+    totalColumns: number,
+}
+
+type IProps = {
     tile: TileEnum,
     rotation: Rotation,
-}
+} & IRCProps;
 
 const rotationToCSs = (rotation: Rotation): string => {
     switch (rotation) {
@@ -37,7 +43,7 @@ const reflectToCss = (reflect: boolean): string => {
     return reflect ? "scaleX(-1)" : "";
 }
 
-export const Tile: React.FC<IProps> = ({tile, rotation}) => {
+export const Tile: React.FC<IProps> = ({tile, rotation, ...props}) => {
     let svg;
     let reflect = false;
     switch (tile) {
@@ -75,15 +81,30 @@ export const Tile: React.FC<IProps> = ({tile, rotation}) => {
     }
     return (
         <div style={ {
+            gridColumn: `${props.column + 1} / ${props.totalColumns}`,
+            gridRow: props.row + 1,
             height: "40px",
             width: "40px",
             border: "solid",
             borderWidth: "1px",
-            marginTop: "-0.5px",
-            marginBottom: "-0.5px",
+            margin: "-0.5px",
             transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
         >
             { svg }
         </div>
     )
 }
+Tile.displayName = "Tile";
+
+export const EmptyTile: React.FC<IRCProps> = (props) => (
+    <div style={ {
+        gridColumn: `${props.column + 1} / ${props.totalColumns + 1}`,
+        gridRow: props.row + 1,
+        height: "40px",
+        width: "40px",
+        border: "solid",
+        borderWidth: "1px",
+        margin: "-0.5px",
+    } } />
+)
+EmptyTile.displayName = "EmptyTile";

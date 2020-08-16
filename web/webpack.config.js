@@ -32,7 +32,9 @@ module.exports = {
     },
     mode: "development",
     plugins: [
-        new CopyWebpackPlugin(['index.html'])
+        new CopyWebpackPlugin({
+            patterns: ['index.html']
+        })
     ],
     resolve: {
         plugins: [new TsConfigPathsPlugin({ configFile: "tsconfig.json" })],

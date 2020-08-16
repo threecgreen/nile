@@ -7,6 +7,8 @@ mod tile;
 mod validation;
 mod wasm_api;
 
+pub use board::{Board, Cell};
+pub use event::Event;
 pub use nile::Nile;
-pub use tile::{Rotation, Tile, TilePlacement};
+pub use tile::{Coordinates, Rotation, Tile, TilePlacement};
 pub use wasm_api::WasmNile;

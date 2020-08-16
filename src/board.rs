@@ -1,10 +1,28 @@
 use crate::score::TurnScore;
-use crate::tile::{Coordinates, Rotation, Tile, TilePlacement};
+use crate::tile::{Coordinates, Rotation, TilePlacement};
 
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
 #[derive(Clone, Debug, Default)]
 pub struct Cell {
     bonus: i16,
     tile: Option<TilePlacement>,
+}
+
+#[wasm_bindgen]
+impl Cell {
+    pub fn tile(&self) -> Option<TilePlacement> {
+        self.tile
+    }
+
+    pub fn bonus(&self) -> i16 {
+        self.bonus
+    }
+
+    pub fn update_tile(&mut self, tile: Option<TilePlacement>) {
+        self.tile = tile;
+    }
 }
 
 impl Cell {
@@ -37,13 +55,29 @@ impl Cell {
 }
 
 /// The board is 21x21 plus a special end of game column
-#[derive(Debug)]
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
 pub struct Board {
     cells: Vec<Cell>,
     end_of_game_cells: Vec<Cell>,
 }
 
 static BOARD_SIZE: usize = 21;
+
+#[wasm_bindgen]
+impl Board {
+    pub fn height(&self) -> usize {
+        BOARD_SIZE
+    }
+
+    pub fn width(&self) -> usize {
+        BOARD_SIZE
+    }
+
+    pub fn get_cell(&self, row: i8, column: i8) -> Cell {
+        self.cells[self.get_index(Coordinates(row, column))].clone()
+    }
+}
 
 impl Board {
     pub fn new() -> Board {
@@ -60,22 +94,10 @@ impl Board {
         }
     }
 
-    pub fn height(&self) -> usize {
-        BOARD_SIZE
-    }
-
-    pub fn width(&self) -> usize {
-        BOARD_SIZE
-    }
-
     fn get_index(&self, coordinates: Coordinates) -> usize {
         let row = coordinates.1 as usize;
         let column = coordinates.0 as usize;
         row * self.width() + column
-    }
-
-    pub fn get_cell(&self, coordinates: Coordinates) -> &Cell {
-        &self.cells[self.get_index(coordinates)]
     }
 
     pub fn place_tile(
@@ -96,7 +118,11 @@ impl Board {
         self.cells[idx].remove_tile()
     }
 
-    pub fn rotate_tile(&mut self, coordinates: Coordinates, rotation: Rotation) -> Result<(), String>{
+    pub fn rotate_tile(
+        &mut self,
+        coordinates: Coordinates,
+        rotation: Rotation,
+    ) -> Result<(), String> {
         let idx = self.get_index(coordinates);
         if let Some(ref mut tile) = self.cells[idx].tile {
             tile.rotation = rotation;
