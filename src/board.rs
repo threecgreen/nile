@@ -1,4 +1,5 @@
-use crate::tile::{Coordinates, Tile, TilePlacement, Rotation};
+use crate::score::TurnScore;
+use crate::tile::{Coordinates, Rotation, Tile, TilePlacement};
 
 #[derive(Clone, Debug, Default)]
 pub struct Cell {
@@ -11,20 +12,27 @@ impl Cell {
         Self { bonus, tile: None }
     }
 
-    pub fn set_tile(&mut self, tile: TilePlacement) {
+    pub fn set_tile(&mut self, tile: TilePlacement) -> TurnScore {
         self.tile = Some(tile);
+        self.score()
     }
 
-    pub fn remove_tile(&mut self) -> Option<TilePlacement> {
-        self.tile.take()
+    pub fn remove_tile(&mut self) -> Option<(TilePlacement, TurnScore)> {
+        let old_score = self.score();
+        self.tile.take().map(|tp| (tp, -old_score))
     }
 
     pub fn is_empty(&self) -> bool {
         self.tile.is_some()
     }
 
-    pub fn score(&self) -> i16 {
-        self.bonus + self.tile.map(|t| t.tile.score()).unwrap_or(0)
+    pub fn score(&self) -> TurnScore {
+        let tile_score = self.tile.map(|t| t.tile.score()).unwrap_or(0);
+        if self.bonus >= 0 {
+            TurnScore::new(self.bonus + tile_score, 0)
+        } else {
+            TurnScore::new(tile_score, self.bonus)
+        }
     }
 }
 
@@ -70,21 +78,36 @@ impl Board {
         &self.cells[self.get_index(coordinates)]
     }
 
-    pub fn place_tile(&mut self, coordinates: Coordinates, tile_placement: TilePlacement)  {
+    pub fn place_tile(
+        &mut self,
+        coordinates: Coordinates,
+        tile_placement: TilePlacement,
+    ) -> Result<TurnScore, String> {
         let idx = self.get_index(coordinates);
-        // TODO: check if empty or should that be handled by engine
-        self.cells[idx].set_tile(tile_placement)
+        if self.cells[idx].is_empty() {
+            Ok(self.cells[idx].set_tile(tile_placement))
+        } else {
+            Err("There's already a tile there".to_owned())
+        }
     }
 
-    pub fn remove_tile(&mut self, coordinates: Coordinates) -> Option<TilePlacement> {
+    pub fn remove_tile(&mut self, coordinates: Coordinates) -> Option<(TilePlacement, TurnScore)> {
         let idx = self.get_index(coordinates);
         self.cells[idx].remove_tile()
     }
 
-    pub fn rotate_tile(&mut self, coordinates: Coordinates, rotation: Rotation) {
+    pub fn rotate_tile(&mut self, coordinates: Coordinates, rotation: Rotation) -> Result<(), String>{
         let idx = self.get_index(coordinates);
         if let Some(ref mut tile) = self.cells[idx].tile {
             tile.rotation = rotation;
+            Ok(())
+        } else {
+            Err("Cell is empty".to_owned())
         }
+    }
+
+    pub fn has_tile(&self, coordinates: Coordinates) -> bool {
+        let idx = self.get_index(coordinates);
+        self.cells[idx].is_empty()
     }
 }

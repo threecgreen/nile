@@ -1,4 +1,5 @@
 use crate::tile::{Tile, TileBox};
+use crate::score::TurnScore;
 
 use std::collections::VecDeque;
 
@@ -6,7 +7,10 @@ use std::collections::VecDeque;
 pub struct Player {
     name: String,
     tile_rack: VecDeque<Tile>,
-    scores: Vec<i16>,
+    /// Scores of completed turns
+    scores: Vec<TurnScore>,
+    /// Scores of current turn
+    current_turn_score: TurnScore,
 }
 
 static MAX_TILES: usize = 5;
@@ -20,11 +24,14 @@ impl Player {
             name,
             tile_rack,
             scores: Vec::new(),
+            current_turn_score: TurnScore::default(),
         }
     }
 
     pub fn end_turn(&mut self, tile_box: &mut TileBox) {
         Self::fill_rack(&mut self.tile_rack, tile_box);
+        self.scores.push(self.current_turn_score);
+        self.current_turn_score = TurnScore::default();
     }
 
     pub fn rack_is_empty(&self) -> bool {
@@ -45,24 +52,30 @@ impl Player {
         &self.tile_rack
     }
 
-    pub fn get_tile(&self, index: usize) -> Option<&Tile> {
-        self.tile_rack.get(index)
+    /// The player is placing a tile of variant `tile`. Validate the player has at least one of
+    /// these tiles and remove it from their rack.
+    pub fn place_tile(&mut self, tile: Tile) -> Option<Tile> {
+        self.tile_rack.iter().position(|t| t == t)
+            .and_then(|idx| self.tile_rack.remove(idx))
     }
 
-    pub fn remove_tile(&mut self, index: usize) -> Option<Tile> {
-        self.tile_rack.remove(index)
+    /// The player removed a tile from the board is returning it to their rack
+    pub fn return_tile(&mut self, tile: Tile) {
+        self.tile_rack.push_back(tile);
     }
 
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    pub fn add_score(&mut self, score: i16) {
-        self.scores.push(score);
+    /// Modify the current turn score and return the updated turn score
+    pub fn add_score(&mut self, score: TurnScore) -> TurnScore {
+        self.current_turn_score += score;
+        self.current_turn_score
     }
 
     pub fn total_score(&self) -> i16 {
-        self.scores.iter().fold(0, |total, score| total + score)
+        self.scores.iter().fold(0, |total, score| total + score.score())
     }
 
     pub fn discard_tiles(&mut self) -> Vec<Tile> {

@@ -57,7 +57,7 @@ impl Offset {
     }
 }
 
-#[derive(Copy, Clone, Debug, Deserialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 pub struct Coordinates(pub i8, pub i8);
 
 impl Add<Offset> for Coordinates {
@@ -69,7 +69,7 @@ impl Add<Offset> for Coordinates {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Deserialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]
 pub enum Tile {
     /// ```text
     ///
@@ -202,10 +202,14 @@ impl TileBox {
         self.tiles.pop_front()
     }
 
-    /// If a player cannot play, there tiles are returned to the box
-    pub fn discard(&mut self, tile: Tile) {
+    fn insert_at_random(&mut self, tile: Tile) {
         // Insert at random location
         self.tiles
             .insert(self.rng.gen_range(0, self.tiles.len()), tile);
+    }
+
+    /// If a player cannot play, there tiles are returned to the box
+    pub fn discard(&mut self, tiles: Vec<Tile>) {
+        tiles.into_iter().for_each(|t| self.insert_at_random(t));
     }
 }

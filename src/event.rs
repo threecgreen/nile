@@ -1,6 +1,7 @@
-use crate::tile::{self, Tile, Coordinates};
+use crate::tile::{self, Coordinates, Tile};
 
-use serde::{Deserialize};
+use serde::Deserialize;
+use std::collections::HashSet;
 
 #[derive(Copy, Clone, Debug, Deserialize)]
 pub struct TilePlacement {
@@ -76,6 +77,22 @@ impl Log {
                 None
             }
         }
+    }
+
+    /// Coordinates of all cells that have been modified this turn
+    pub fn current_turn_coordinates(&self) -> HashSet<Coordinates> {
+        self.undo_events
+            .iter()
+            .filter_map(|e| {
+                // TODO: This could be optimized to determine which coordinates still have tiles
+                match e {
+                    Event::RotateTile(r) => Some(r.coordinates),
+                    Event::PlaceTile(tp) => Some(tp.coordinates),
+                    Event::RemoveTile(c) => Some(*c),
+                    _ => None,
+                }
+            })
+            .collect()
     }
 
     pub fn can_undo(&self) -> bool {

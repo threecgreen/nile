@@ -1,7 +1,8 @@
 use crate::board::Board;
-use crate::player::Player;
-use crate::tile::{self, TileBox};
 use crate::event::{self, Event, Log};
+use crate::player::Player;
+use crate::score::{TurnScore, sum_scores};
+use crate::tile::{self, TileBox};
 
 use wasm_bindgen::prelude::*;
 
@@ -31,6 +32,7 @@ impl Nile {
             player_names.into_iter().for_each(|player| {
                 players.push(Player::new(player, &mut tile_box));
             });
+            let player_count = players.len();
             Ok(Self {
                 board: Board::new(),
                 tile_box,
@@ -44,54 +46,52 @@ impl Nile {
     pub fn handle_event(&mut self, event: Event) -> Result<(), String> {
         let player = self.players.get_mut(self.current_turn).expect("Player");
 
+        // TODO: separate `match` into private function
         match event {
             Event::PlaceTile(event::TilePlacement{tile, coordinates, rotation}) => {
-                // TODO: validate tile placement
-                self.board.place_tile(coordinates, tile::TilePlacement{tile, rotation});
+                player.place_tile(tile).ok_or_else(|| format!("Player doesn't have a {:?}", tile))?;
+                let event_score = self.board.place_tile(coordinates, tile::TilePlacement{tile, rotation})?;
+                let turn_score = player.add_score(event_score);
                 // TODO: show theoretical score
             }
             Event::RotateTile(event::Rotation{coordinates, rotation}) => {
-                if self.board.get_cell(coordinates).is_empty() {
-                    return Err("Cell is empty".to_owned())
-                }
                 // TODO: tile at coordinates validate tile was placed on this turn
+                self.board.rotate_tile(coordinates, rotation)?;
             }
             Event::RemoveTile(coordinates) => {
-                self.board.remove_tile(coordinates);
+                if let Some((tile_placement, event_score)) = self.board.remove_tile(coordinates) {
+                    player.return_tile(tile_placement.tile);
+                    let turn_score = player.add_score(event_score);
+                } else {
+                    return Err("No tile there".to_owned())
+                }
             }
             Event::CantPlay => {
+                if self.log.can_undo() {
+                    return Err("Player has made moves this turn".to_owned());
+                }
+                // FIXME: can pass in `self.tile_box` to `player` and have it handle most of this
+                let tiles = player.discard_tiles();
+                let tile_score = tiles.iter().fold(0, |acc, t| acc + t.score());
+                // Add negative score
+                player.add_score(TurnScore::new(0, tile_score));
+                self.tile_box.discard(tiles);
                 self.advance_turn();
             }
             Event::EndTurn => {
+                player.end_turn(&mut self.tile_box);
                 self.advance_turn();
             }
             Event::Undo | Event::Redo => ()
         };
+        // `self.log.handle_event` returns `Some` for `Event::Redo` and `Event::Undo`
         if let Some(event) = self.log.handle_event(event) {
+            // Recurse
             self.handle_event(event)
         } else {
             Ok(())
         }
     }
-
-    // pub fn take_move(&mut self, m: Move) -> Result<(), String> {
-    //     let player = self.players.get_mut(self.current_turn).expect("Player");
-    //     let res = match m {
-    //         Move::CantPlay => {
-    //             let mut penalty = 0;
-    //             for tile in player.discard_tiles() {
-    //                 penalty -= tile.score();
-    //                 self.tile_box.discard(tile);
-    //             }
-    //             player.add_score(penalty);
-    //             Ok(())
-    //         }
-    //         Move::Move(placements) => Ok(()),
-    //     };
-    //     player.end_turn(&mut self.tile_box);
-    //     self.advance_turn();
-    //     res
-    // }
 
     fn advance_turn(&mut self) {
         self.current_turn += 1;
