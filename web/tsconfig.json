@@ -8,7 +8,10 @@
         "noUnusedParameters": true,
         "strict": true,
         "jsx": "react",
-        "baseUrl": "."
+        "baseUrl": ".",
+        "plugins": [
+            {"name": "typescript-tslint-plugin"}
+        ]
     }
 }
 

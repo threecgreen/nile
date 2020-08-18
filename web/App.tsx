@@ -1,6 +1,7 @@
 import React from "react";
 import { Tile as TileEnum, Rotation, WasmNile } from "nile";
 import { Tile, EmptyTile } from "components/Tile";
+import styles from "./App.module.css";
 
 interface IRangeArgs {
     start?: number;
@@ -28,12 +29,7 @@ export const App: React.FC = () => {
     const width = board.width();
     const height = board.height();
     return (
-        <div style={ {
-            gridGap: "0px",
-            columnWidth: "40px",
-            width: 41 * (width + 1),
-            display: "grid"} }
-        >
+        <div className={ styles.board }>
             { Array.from(range({stop: height})).map((row) => (
                 Array.from(range({stop: width})).map((col) => {
                     const cell = board.get_cell(row, col);

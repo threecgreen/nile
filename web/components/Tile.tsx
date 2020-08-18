@@ -1,19 +1,13 @@
 import React from "react";
 import { Tile as TileEnum, Rotation } from "nile";
-// @ts-ignore
-import Straight from "../assets/tiles/Straight.svg"
-// @ts-ignore
-import Diagonal from "../assets/tiles/Diagonal.svg"
-// @ts-ignore
-import Center90 from "../assets/tiles/Center90.svg"
-// @ts-ignore
-import Corner90 from "../assets/tiles/Corner90.svg"
-// @ts-ignore
-import Tile45 from "../assets/tiles/45.svg";
-// @ts-ignore
-import Tile135 from "../assets/tiles/135.svg";
-// @ts-ignore
-import Universal from "../assets/tiles/Universal.svg";
+import Straight from "assets/tiles/Straight.svg"
+import Diagonal from "assets/tiles/Diagonal.svg"
+import Center90 from "assets/tiles/Center90.svg"
+import Corner90 from "assets/tiles/Corner90.svg"
+import Tile45 from "assets/tiles/45.svg";
+import Tile135 from "assets/tiles/135.svg";
+import Universal from "assets/tiles/Universal.svg";
+import styles from "components/Tile.module.css";
 
 interface IRCProps {
     row: number,
@@ -80,15 +74,11 @@ export const Tile: React.FC<IProps> = ({tile, rotation, ...props}) => {
             throw new Error("Unknown tile type");
     }
     return (
-        <div style={ {
-            gridColumn: `${props.column + 1} / ${props.totalColumns}`,
-            gridRow: props.row + 1,
-            height: "40px",
-            width: "40px",
-            border: "solid",
-            borderWidth: "1px",
-            margin: "-0.5px",
-            transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
+        <div className={ styles.tile }
+            style={ {
+                gridColumn: `${props.column + 1} / ${props.totalColumns}`,
+                gridRow: props.row + 1,
+                transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
         >
             { svg }
         </div>
@@ -97,14 +87,10 @@ export const Tile: React.FC<IProps> = ({tile, rotation, ...props}) => {
 Tile.displayName = "Tile";
 
 export const EmptyTile: React.FC<IRCProps> = (props) => (
-    <div style={ {
+    <div className={ styles.tile }
+     style={ {
         gridColumn: `${props.column + 1} / ${props.totalColumns + 1}`,
         gridRow: props.row + 1,
-        height: "40px",
-        width: "40px",
-        border: "solid",
-        borderWidth: "1px",
-        margin: "-0.5px",
     } } />
 )
 EmptyTile.displayName = "EmptyTile";
