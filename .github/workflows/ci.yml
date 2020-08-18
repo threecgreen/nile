@@ -18,7 +18,7 @@ jobs:
     - name: Build
       run: wasm-pack build
     - name: Test
-      run: cargo test
+      run: wasm-pack test --node
     - name: Lint
       run: |
         rustup component add clippy || exit 0
