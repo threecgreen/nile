@@ -1,55 +1,61 @@
+import { Board } from "components/Board";
+import { Tile } from "components/Tile";
+import { Player, Rotation, Tile as TileEnum, WasmNile, Coordinates } from "nile";
 import React from "react";
-import { Tile as TileEnum, Rotation, WasmNile } from "nile";
-import { Tile, EmptyTile } from "components/Tile";
-import styles from "./App.module.css";
-
-interface IRangeArgs {
-    start?: number;
-    stop?: number;
-    step?: number;
-}
-/**
- * Creates an iterable range of numbersonClick.
- * @param start First number of the range
- * @param stop End of the range (exclusive)
- * @param step Increment of the range
- */
-export function* range({ start, stop, step }: IRangeArgs): IterableIterator<number> {
-    step = step || 1;
-    start = start || 0;
-    stop = stop || Number.MAX_SAFE_INTEGER;
-    for (let i = start; i < stop; i += step) {
-        yield i;
-    }
-}
+import { TileRack } from "components/TileRack";
 
 export const App: React.FC = () => {
-    const [nile, _] = React.useState(() => new WasmNile(["player1", "player2"]));
-    const board = nile.board();
+    // Wasm state
+    const players = ["player1", "player2"];
+    const [nile, _] = React.useState(() => new WasmNile(players));
+    const [board, setBoard] = React.useState(() => nile.board());
+    const [playerData, setPlayerData] = React.useState(() => nile.players());
     const width = board.width();
     const height = board.height();
+    // Other state
+    const [currentTurnPlayerId, setCurrentTurnPlayerId] = React.useState<number>(0);
+    const [draggedTile, setDraggedTile] = React.useState<TileEnum | null>(null);
+
+    // Event handlers
+    const onDrop = (row: number, column: number) => {
+        if (draggedTile) {
+            // Move this to another file
+            try {
+                nile.handle_event({ PlaceTile: { tile: draggedTile, coordinates: new Coordinates(row, column), rotation: Rotation.None }});
+                setBoard(nile.board());
+                setPlayerData(nile.players());
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }
+
+    // Render
     return (
-        <div className={ styles.board }>
-            { Array.from(range({stop: height})).map((row) => (
-                Array.from(range({stop: width})).map((col) => {
-                    const cell = board.get_cell(row, col);
-                    const tile = cell.tile();
-                    return tile
-                        ? <Tile row={ row }
-                            key={ `${row} | ${col}` }
-                            column={ col }
-                            totalColumns={ width }
-                            tile={ tile.tile }
-                            rotation={ tile.rotation }
-                        />
-                        : <EmptyTile row={ row }
-                            key={ `${row} | ${col}` }
-                            column={ col }
-                            totalColumns={ width }
-                        />
-                })
-            )) }
-        </div>
+        <>
+            <ul>
+                {playerData.map((player, id) => {
+                    const playerName = players[id];
+                    const tiles: string[] = player.get_tiles();
+                    return (
+                        <li key={ playerName }>
+                            <h2>{ playerName }</h2>
+                            <TileRack tiles={tiles.map((t) =>
+                                // @ts-ignore
+                                TileEnum[t as keyof TileEnum])}
+                                isCurrentTurn={id === currentTurnPlayerId}
+                                onDrag={setDraggedTile}
+                            />
+                        </li>
+                    );
+                })}
+            </ul>
+            <Board height={height}
+                width={width}
+                board={board}
+                onDrop={onDrop}
+            />
+        </>
     );
 };
 App.displayName = "App";

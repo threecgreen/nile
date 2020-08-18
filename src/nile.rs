@@ -115,4 +115,8 @@ impl Nile {
     fn advance_turn(&mut self) {
         self.current_turn = (self.current_turn + 1) % self.players.len();
     }
+
+    pub fn current_turn(&self) -> usize {
+        self.current_turn
+    }
 }

@@ -3,4 +3,6 @@
     gap: 0px;
     column-width: 40px;
     width: 890px;
+    align-self: center;
+    margin: auto; /* Horizontally centered */
 }

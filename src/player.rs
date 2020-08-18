@@ -1,9 +1,11 @@
-use crate::tile::{Tile, TileBox};
 use crate::score::TurnScore;
+use crate::tile::{Tile, TileBox};
 
 use std::collections::VecDeque;
+use wasm_bindgen::prelude::*;
 
-#[derive(Debug)]
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
 pub struct Player {
     name: String,
     tile_rack: VecDeque<Tile>,
@@ -55,7 +57,9 @@ impl Player {
     /// The player is placing a tile of variant `tile`. Validate the player has at least one of
     /// these tiles and remove it from their rack.
     pub fn place_tile(&mut self, tile: Tile) -> Option<Tile> {
-        self.tile_rack.iter().position(|t| t == t)
+        self.tile_rack
+            .iter()
+            .position(|t| t == t)
             .and_then(|idx| self.tile_rack.remove(idx))
     }
 
@@ -75,7 +79,9 @@ impl Player {
     }
 
     pub fn total_score(&self) -> i16 {
-        self.scores.iter().fold(0, |total, score| total + score.score())
+        self.scores
+            .iter()
+            .fold(0, |total, score| total + score.score())
     }
 
     pub fn discard_tiles(&mut self) -> Vec<Tile> {

@@ -1,7 +1,9 @@
 use crate::board::Board;
 use crate::nile::Nile;
+use crate::player::Player;
 
 use js_sys::Array;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 /// Wrapper for access from wasm that handles the serialization and type
@@ -43,5 +45,29 @@ impl WasmNile {
         let event = event.into_serde().map_err(|_| "Invalid event")?;
 
         self.nile.handle_event(event).map_err(|e| e.into())
+    }
+
+    /// @returns an array of `Player`
+    pub fn players(&self) -> Array {
+        self.nile
+            .players()
+            .to_owned()
+            .into_iter()
+            .map(JsValue::from)
+            .collect()
+    }
+
+    pub fn current_turn_player_id(&self) -> usize {
+        self.nile.current_turn()
+    }
+}
+
+#[wasm_bindgen]
+impl Player {
+    pub fn get_tiles(&self) -> Array {
+        self.tiles()
+            .into_iter()
+            .map(|t| JsValue::from_serde(t).unwrap())
+            .collect()
     }
 }

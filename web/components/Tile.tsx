@@ -9,16 +9,10 @@ import Tile135 from "assets/tiles/135.svg";
 import Universal from "assets/tiles/Universal.svg";
 import styles from "components/Tile.module.css";
 
-interface IRCProps {
-    row: number,
-    column: number,
-    totalColumns: number,
-}
-
-type IProps = {
+interface IProps {
     tile: TileEnum,
     rotation: Rotation,
-} & IRCProps;
+};
 
 const rotationToCSs = (rotation: Rotation): string => {
     switch (rotation) {
@@ -37,7 +31,7 @@ const reflectToCss = (reflect: boolean): string => {
     return reflect ? "scaleX(-1)" : "";
 }
 
-export const Tile: React.FC<IProps> = ({tile, rotation, ...props}) => {
+export const Tile: React.FC<IProps> = ({tile, rotation}) => {
     let svg;
     let reflect = false;
     switch (tile) {
@@ -75,22 +69,25 @@ export const Tile: React.FC<IProps> = ({tile, rotation, ...props}) => {
     }
     return (
         <div className={ styles.tile }
-            style={ {
-                gridColumn: `${props.column + 1} / ${props.totalColumns}`,
-                gridRow: props.row + 1,
-                transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
+            style={ { transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
         >
             { svg }
         </div>
-    )
+    );
 }
 Tile.displayName = "Tile";
 
-export const EmptyTile: React.FC<IRCProps> = (props) => (
-    <div className={ styles.tile }
-     style={ {
-        gridColumn: `${props.column + 1} / ${props.totalColumns + 1}`,
-        gridRow: props.row + 1,
-    } } />
-)
+export const EmptyTile: React.FC<{onDrop: () => void}> = (props) => {
+    const onDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        props.onDrop();
+    }
+    return (
+        <div className={ styles.tile }
+            // Allow tiles to be dropped here
+            onDragOver={ (e) => e.preventDefault() }
+            onDrop={ onDrop }
+        />
+    );
+}
 EmptyTile.displayName = "EmptyTile";

@@ -1,7 +1,7 @@
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::ops::Add;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -59,6 +59,7 @@ impl Offset {
     }
 }
 
+#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 pub struct Coordinates(pub i8, pub i8);
 
@@ -70,9 +71,17 @@ impl Add<Offset> for Coordinates {
     }
 }
 
+#[wasm_bindgen]
+impl Coordinates {
+    #[wasm_bindgen(constructor)]
+    pub fn new(row: i8, column: i8) -> Self {
+        Self(row, column)
+    }
+}
+
 #[repr(u8)]
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Tile {
     /// ```text
     ///
