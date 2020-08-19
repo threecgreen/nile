@@ -9,10 +9,10 @@ interface IProps {
     board: BoardState;
     height: number;
     width: number;
-    onDrop: (row: number, column: number) => void;
+    onDropFromRack: (row: number, column: number) => void;
 }
 
-export const Board: React.FC<IProps> = ({board, height, width, onDrop}) => (
+export const Board: React.FC<IProps> = ({board, height, width, onDropFromRack: onDrop}) => (
     <div className={ styles.board }>
         { Array.from(range({stop: height})).map((row) => (
             Array.from(range({stop: width})).map((col) => {

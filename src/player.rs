@@ -59,7 +59,7 @@ impl Player {
     pub fn place_tile(&mut self, tile: Tile) -> Option<Tile> {
         self.tile_rack
             .iter()
-            .position(|t| t == t)
+            .position(|t| *t == tile)
             .and_then(|idx| self.tile_rack.remove(idx))
     }
 

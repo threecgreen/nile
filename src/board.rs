@@ -41,7 +41,7 @@ impl Cell {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.tile.is_some()
+        self.tile.is_none()
     }
 
     pub fn score(&self) -> TurnScore {

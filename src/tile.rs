@@ -36,7 +36,7 @@ impl Direction {
 
 #[repr(u8)]
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Deserialize)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
 pub enum Rotation {
     None,
     Clockwise90,
@@ -60,7 +60,7 @@ impl Offset {
 }
 
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Coordinates(pub i8, pub i8);
 
 impl Add<Offset> for Coordinates {

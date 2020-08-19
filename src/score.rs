@@ -1,9 +1,22 @@
 use std::ops::{Add, AddAssign, Neg};
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Default)]
 pub struct TurnScore {
     add: i16,
     sub: i16,
+}
+
+#[wasm_bindgen]
+impl TurnScore {
+    pub fn add(&self) -> i16 {
+        self.add
+    }
+
+    pub fn sub(&self) -> i16 {
+        self.sub
+    }
 }
 
 impl TurnScore {
@@ -53,5 +66,7 @@ impl Neg for TurnScore {
 }
 
 pub fn sum_scores(scores: &Vec<TurnScore>) -> TurnScore {
-    scores.iter().fold(TurnScore::default(), |acc, ts| acc + *ts)
+    scores
+        .iter()
+        .fold(TurnScore::default(), |acc, ts| acc + *ts)
 }

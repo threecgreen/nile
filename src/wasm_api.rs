@@ -1,9 +1,10 @@
 use crate::board::Board;
 use crate::nile::Nile;
 use crate::player::Player;
+use crate::score::TurnScore;
+use crate::tile::{Coordinates, Rotation, Tile};
 
 use js_sys::Array;
-use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 /// Wrapper for access from wasm that handles the serialization and type
@@ -40,13 +41,6 @@ impl WasmNile {
         self.nile.board().to_owned()
     }
 
-    /// Progress the game in some manner
-    pub fn handle_event(&mut self, event: &JsValue) -> Result<(), JsValue> {
-        let event = event.into_serde().map_err(|_| "Invalid event")?;
-
-        self.nile.handle_event(event).map_err(|e| e.into())
-    }
-
     /// @returns an array of `Player`
     pub fn players(&self) -> Array {
         self.nile
@@ -59,6 +53,57 @@ impl WasmNile {
 
     pub fn current_turn_player_id(&self) -> usize {
         self.nile.current_turn()
+    }
+
+    pub fn can_undo(&self) -> bool {
+        self.nile.can_undo()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        self.nile.can_redo()
+    }
+
+    pub fn place_tile(
+        &mut self,
+        tile: Tile,
+        coordinates: Coordinates,
+        rotation: Rotation,
+    ) -> Result<TurnScore, JsValue> {
+        self.nile
+            .place_tile(tile, coordinates, rotation)
+            .map_err(JsValue::from)
+    }
+
+    pub fn rotate_tile(
+        &mut self,
+        coordinates: Coordinates,
+        rotation: Rotation,
+    ) -> Result<(), JsValue> {
+        self.nile
+            .rotate_tile(coordinates, rotation)
+            .map_err(JsValue::from)
+    }
+
+    pub fn remove_tile(&mut self, coordinates: Coordinates) -> Result<TurnScore, JsValue> {
+        self.nile.remove_tile(coordinates).map_err(JsValue::from)
+    }
+
+    pub fn move_tile(
+        &mut self,
+        old_coordinates: Coordinates,
+        new_coordinates: Coordinates,
+    ) -> Result<TurnScore, JsValue> {
+        self.nile
+            .move_tile(old_coordinates, new_coordinates)
+            .map_err(JsValue::from)
+    }
+
+    pub fn undo(&mut self) -> Result<Option<TurnScore>, JsValue> {
+        self.nile.undo().map_err(JsValue::from)
+    }
+
+    pub fn redo(&mut self) -> Result<Option<TurnScore>, JsValue> {
+        self.nile.redo().map_err(JsValue::from)
     }
 }
 
