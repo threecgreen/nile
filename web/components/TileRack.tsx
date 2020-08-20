@@ -31,6 +31,9 @@ export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, ...props}) => 
                     >
                         <Tile rotation={ Rotation.None }
                             tile={ tile }
+                            // TODO: break up this functionality
+                            isSelected={ false }
+                            onSelect={ () => undefined }
                         />
                     </div>
                 </GridCell>

@@ -38,7 +38,10 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
     switch (action.type) {
         case "setDraggedTile":
             return {...state, draggedTile: action.tile};
-        case "placeTile":
+        case "selectTile":
+            return {...state, selectedTile: action.coordinates};
+        case "placeTile": {
+            // Place tile on board
             const [i, j] = action.coordinates;
             const board = [...state.board];
             const column = [...board[i]];
@@ -51,19 +54,34 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
 
             const playerDataArray = [...state.playerData];
             const playerData: PlayerData = {...playerDataArray[state.currentPlayerId]};
+            // Update scores
             playerData.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
+            // Remove tile from tile rack
             const tileRack = [...playerData.tileRack];
             const idx = playerData.tileRack.findIndex((t) => t === action.tile);
             tileRack.splice(idx, 1);
             playerData.tileRack = tileRack;
             playerDataArray[state.currentPlayerId] = playerData;
 
-            console.log(state.board === board);
-            console.log(state.board[i] === column);
-            console.log(state.board[i][j] === cell);
-
             return {...state, board, playerData: playerDataArray};
-        case "rotateTile":
+        }
+        case "rotateTile": {
+            const [i, j] = action.coordinates;
+            const board = [...state.board];
+            const column = [...board[i]];
+            if(column[j].tilePlacement === null) {
+                console.warn("Tried to rotate empty tile");
+                return state;
+            }
+            const cell: Cell = {...column[j], tilePlacement: {
+                tile: column[j].tilePlacement!.tile,
+                rotation: action.rotation,
+            }};
+            column[j] = cell;
+            board[i] = column;
+
+            return {...state, board};
+        }
         default:
             return state;
     }

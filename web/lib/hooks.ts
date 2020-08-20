@@ -7,10 +7,12 @@ interface IState<S> {
 }
 
 // Credit to @johanquiroga https://github.com/johanquiroga
+// TODO: this probably needs to be integrated with state.ts to clear past and
+// future at the end of each turn and skip some events like selection
 export function useUndoReducer<R extends Reducer<any, any>>(
     reducer: R,
     initState: ReducerState<R> | (() => ReducerState<R>)
-): [IState<ReducerState<R>>, Dispatch<ReducerAction<R>>] {
+): [ReducerState<R>, Dispatch<ReducerAction<R>>] {
     type IUndoState = IState<ReducerState<R>>;
     const undoState: IUndoState = {
         past: [],
@@ -50,7 +52,7 @@ export function useUndoReducer<R extends Reducer<any, any>>(
     };
 
     const [state, dispatch] = React.useReducer(undoReducer, undoState);
-    return [state, dispatch];
+    return [state.present, dispatch];
 };
 
 export type UndoAction =

@@ -18,3 +18,8 @@ export function* range({ start, stop, step }: IRangeArgs): IterableIterator<numb
     }
 }
 
+/** `%` is a remainder operator rather than a true modulus */
+export const mod = (x: number, y: number): number => (
+    ((x % y) + y) % y
+)
+

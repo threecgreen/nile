@@ -5,6 +5,7 @@ import { useUndoReducer } from "lib/hooks";
 import { initState, reducer } from "lib/state";
 import { Coordinates, Rotation } from "nile";
 import React from "react";
+import { mod } from "lib/utils";
 
 export const App: React.FC = () => {
     // State
@@ -13,24 +14,26 @@ export const App: React.FC = () => {
 
     // Event handlers
     const onDropFromRack = (row: number, column: number) => {
-        if (state.present.draggedTile !== null) {
+        if (state.draggedTile !== null) {
             // Move this to another file
             try {
                 const rotation = Rotation.None;
-                const score = state.present.nile.place_tile(state.present.draggedTile, new Coordinates(row, column), rotation);
-                dispatch({type: "placeTile", tile: state.present.draggedTile, coordinates: [row, column], rotation, score});
+                const score = state.nile.place_tile(state.draggedTile, new Coordinates(row, column), rotation);
+                dispatch({type: "placeTile", tile: state.draggedTile, coordinates: [row, column], rotation, score});
             } catch (e) {
                 console.error(e);
             }
         }
     }
     const onRotate = (isClockwise: boolean) => {
-        if(state.present.selectedTile) {
-            const [row, column] = state.present.selectedTile;
-            const cell = state.present.board[row][column];
+        if(state.selectedTile) {
+            const [row, column] = state.selectedTile;
+            const cell = state.board[row][column];
             if(cell.tilePlacement) {
                 try {
-                    const newRotation = (cell.tilePlacement.rotation + (isClockwise ? 1 : -1)) % 4 // 4 different rotations
+                    const newRotation = mod(cell.tilePlacement.rotation + (isClockwise ? 1 : -1), 4)    // 4 different rotations
+                    console.log(newRotation);
+                    state.nile.rotate_tile(new Coordinates(row, column), newRotation);
                     dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
                 } catch (e) {
                     console.error(e);
@@ -41,7 +44,7 @@ export const App: React.FC = () => {
     const onEndTurn = () => {}
     const onUndo = () => {
         try {
-            const score = state.present.nile.undo();
+            const score = state.nile.undo();
             dispatch({type: "undo"});
         } catch (e) {
             console.error(e);
@@ -49,7 +52,7 @@ export const App: React.FC = () => {
     }
     const onRedo = () => {
         try {
-            const score = state.present.nile.redo();
+            const score = state.nile.redo();
             dispatch({type: "redo"});
         } catch (e) {
             console.error(e);
@@ -60,12 +63,12 @@ export const App: React.FC = () => {
     return (
         <>
             <ul>
-                { state.present.playerData.map((player, id) => {
+                { state.playerData.map((player, id) => {
                     return (
                         <li key={ player.name }>
                             <h2>{ player.name }</h2>
                             <TileRack tiles={ player.tileRack }
-                                isCurrentTurn={ id === state.present.currentPlayerId }
+                                isCurrentTurn={ id === state.currentPlayerId }
                                 onDrag={ (tile) => dispatch({type: "setDraggedTile", tile}) }
                             />
                         </li>
@@ -73,36 +76,36 @@ export const App: React.FC = () => {
                 }) }
             </ul>
             <div>
-                <Button enabled={ state.present.selectedTile !== null }
+                <Button enabled={ state.selectedTile !== null }
                     onClick={ () => onRotate(true) }
                 >
                     Rotate Clockwise
                 </Button>
-                <Button enabled={ state.present.selectedTile !== null }
+                <Button enabled={ state.selectedTile !== null }
                     onClick={ () => onRotate(false) }
                 >
                     Rotate Counter-Clockwise
                 </Button>
-                <Button enabled={ state.present.nile.can_undo() }
+                <Button enabled={ state.nile.can_undo() }
                     onClick={ onUndo }
                 >
                     Undo
                 </Button>
-                <Button enabled={ state.present.nile.can_redo() }
+                <Button enabled={ state.nile.can_redo() }
                     onClick={ onRedo }
                 >
                     Redo
                 </Button>
                 <Button
                     // Must have played at least one tile
-                    enabled={ state.present.currentTurnTiles.length > 0 }
+                    enabled={ state.currentTurnTiles.length > 0 }
                     onClick={ onEndTurn }
                 >
                     End Turn
                 </Button>
             </div>
-            <Board board={ state.present.board }
-                selectedTile={ state.present.selectedTile }
+            <Board board={ state.board }
+                selectedTile={ state.selectedTile }
                 onDropFromRack={ onDropFromRack }
                 onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
             />
