@@ -10,20 +10,24 @@ interface IProps {
 }
 
 export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, ...props}) => {
-    const onDrag = (e: React.DragEvent, tile: TileEnum) => {
+    const onDrag = (e: React.DragEvent) => {
         e.preventDefault();
+    }
+
+    const onDragStart = (_: React.DragEvent, tile: TileEnum) => {
         props.onDrag(tile);
     }
 
     return (
         <Grid width={ tiles.length * 41 + 1 }>
             { tiles.map((tile, i) => (
-                <GridCell key={ i }
+                <GridCell key={ `${tile} - ${i}` }
                     column={ i }
                     row={ 0 }
                 >
                     <div draggable={ isCurrentTurn }
-                        onDrag={ (e) => onDrag(e, tile) }
+                        onDrag={ onDrag }
+                        onDragStart={ (e) => onDragStart(e, tile) }
                     >
                         <Tile rotation={ Rotation.None }
                             tile={ tile }

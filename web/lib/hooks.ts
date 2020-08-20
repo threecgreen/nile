@@ -10,7 +10,7 @@ interface IState<S> {
 export function useUndoReducer<R extends Reducer<any, any>>(
     reducer: R,
     initState: ReducerState<R> | (() => ReducerState<R>)
-): [ReducerState<R>, Dispatch<ReducerAction<R>>] {
+): [IState<ReducerState<R>>, Dispatch<ReducerAction<R>>] {
     type IUndoState = IState<ReducerState<R>>;
     const undoState: IUndoState = {
         past: [],
@@ -50,7 +50,7 @@ export function useUndoReducer<R extends Reducer<any, any>>(
     };
 
     const [state, dispatch] = React.useReducer(undoReducer, undoState);
-    return [state.present, dispatch];
+    return [state, dispatch];
 };
 
 export type UndoAction =

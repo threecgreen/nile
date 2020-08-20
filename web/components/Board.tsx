@@ -9,7 +9,7 @@ interface IProps {
     onDropFromRack: (row: number, column: number) => void;
 }
 
-export const Board: React.FC<IProps> = ({board, onDropFromRack: onDrop}) => (
+export const Board: React.FC<IProps> = ({board, onDropFromRack}) => (
     <div className={ styles.board }>
         { board.map((row, i) => (
             row.map((cell, j) => (
@@ -21,7 +21,10 @@ export const Board: React.FC<IProps> = ({board, onDropFromRack: onDrop}) => (
                     ? <Tile tile={ cell.tilePlacement.tile }
                         rotation={ cell.tilePlacement.rotation }
                     />
-                    : <EmptyTile onDrop={ () => onDrop(i, j) } /> }
+                    : <EmptyTile onDrop={ () => {
+                        console.log("Ondrop")
+                        onDropFromRack(i, j)
+                    } } /> }
                 </GridCell>
             ))
         )) }

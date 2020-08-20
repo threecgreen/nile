@@ -51,7 +51,15 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             const playerDataArray = [...state.playerData];
             const playerData: PlayerData = {...playerDataArray[state.currentPlayerId]};
             playerData.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
+            const tileRack = [...playerData.tileRack];
+            const idx = playerData.tileRack.findIndex((t) => t === action.tile);
+            tileRack.splice(idx, 1);
+            playerData.tileRack = tileRack;
             playerDataArray[state.currentPlayerId] = playerData;
+
+            console.log(state.board === board);
+            console.log(state.board[i] === column);
+            console.log(state.board[i][j] === cell);
 
             return {...state, board, playerData: playerDataArray};
         case "rotateTile":
