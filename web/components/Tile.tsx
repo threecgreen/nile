@@ -8,6 +8,7 @@ import Tile45 from "assets/tiles/45.svg";
 import Tile135 from "assets/tiles/135.svg";
 import Universal from "assets/tiles/Universal.svg";
 import styles from "components/Tile.module.css";
+import { c } from "lib/utils";
 
 interface IProps {
     tile: TileEnum;
@@ -76,7 +77,7 @@ export const Tile: React.FC<IProps> = ({tile, rotation, isSelected, ...props}) =
     }
 
     return (
-        <div className={ `${styles.tile} ${isSelected ? styles.selected : ""}` }
+        <div className={ c([styles.tile, isSelected ? styles.selected : undefined]) }
             style={ { transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
             onClick={ onSelect }
         >
@@ -86,17 +87,34 @@ export const Tile: React.FC<IProps> = ({tile, rotation, isSelected, ...props}) =
 }
 Tile.displayName = "Tile";
 
-export const EmptyTile: React.FC<{onDrop: () => void}> = (props) => {
+interface IEmptyTileProps {
+    bonus: number;
+    onDrop: () => void;
+}
+
+export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, ...props}) => {
     const onDrop = (e: React.DragEvent) => {
         e.preventDefault();
         props.onDrop();
     }
     return (
-        <div className={ styles.tile }
+        <div className={ c([styles.tile, bonusToClassName(bonus)]) }
             // Allow tiles to be dropped here
             onDragOver={ (e) => e.preventDefault() }
             onDrop={ onDrop }
-        />
+        >
+            { bonus ? Math.abs(bonus) : null }
+        </div>
     );
 }
 EmptyTile.displayName = "EmptyTile";
+
+const bonusToClassName = (bonus: number): string | undefined => {
+    if (bonus > 0) {
+        return styles.bonus;
+    }
+    if (bonus < 0) {
+        return styles.penalty;
+    }
+    return undefined;
+}

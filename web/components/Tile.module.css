@@ -3,9 +3,26 @@
     width: 40px;
     border: solid;
     border-width: 1px;
-    margin: -0.5px
+    margin: -0.5px;
+
+    /* For bonus/penalty text */
+    vertical-align: middle;
+    display: table-cell;
+    text-align: center;
 }
 
 .selected {
     background-color: lightcyan;
+}
+
+.penalty {
+    background-color: orangered;
+}
+
+.bonus {
+    background-color: green;
+}
+
+.end-game {
+    background-color: royalblue;
 }

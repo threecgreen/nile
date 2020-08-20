@@ -1,6 +1,7 @@
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation, TilePlacement};
 
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -79,12 +80,67 @@ impl Board {
     }
 }
 
+macro_rules! hash_map(
+    { $($key:expr => $value:expr),+ } => {
+        {
+            let mut m = ::std::collections::HashMap::new();
+            $(
+                m.insert($key, $value);
+            )+
+            m
+        }
+     };
+);
+
 impl Board {
     pub fn new() -> Board {
         let bonus_order: Vec<i16> = vec![50, 50, 50, 50, 75, 75, 100, 100, 150, 200, 500];
+        let bonuses: HashMap<(usize, usize), i16> = hash_map!(
+            (1, 6) => -80,
+            (1, 10) => -100,
+            (1, 14) => -120,
+            (2, 2) => -40,
+            (2, 3) => -40,
+            (2, 17) => -160,
+            (2, 18) => -160,
+            (3, 2) => -40,
+            (3, 8) => 140,
+            (3, 12) => 220,
+            (3, 18) => -160,
+            (4, 2) => -40,
+            (4, 3) => -40,
+            (4, 17) => -160,
+            (4, 18) => -160,
+            (5, 6) => -80,
+            (5, 10) => -100,
+            (5, 14) => -120,
+            (7, 2) => 60,
+            (7, 10) => 240,
+            (7, 18) => 250,
+            (8, 7) => 240,
+            (8, 13) => 240,
+            (9, 5) => -60,
+            (9, 9) => -40,
+            (9, 11) => -40,
+            (9, 15) => -140,
+            (10, 10) => -60,
+            (10, 18) => -160
+        );
+        let cells: Vec<Cell> = (0..BOARD_SIZE * BOARD_SIZE)
+            .into_iter()
+            .map(|i| {
+                let row = i / BOARD_SIZE;
+                let col = i % BOARD_SIZE;
+                // Board is reflected across horizontal axis
+                let adj_row = if row > 10 { BOARD_SIZE - 1 - row } else { row };
+                bonuses
+                    .get(&(adj_row, col))
+                    .map(|b| Cell::with_bonus(*b))
+                    .unwrap_or_default()
+            })
+            .collect();
         Self {
-            // TODO: set penalties and bonuses
-            cells: vec![Cell::default(); BOARD_SIZE * BOARD_SIZE],
+            cells,
             // Symmetrical
             end_of_game_cells: bonus_order
                 .iter()

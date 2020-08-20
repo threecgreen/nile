@@ -15,6 +15,7 @@ export const Board: React.FC<IProps> = ({board, selectedTile, onDropFromRack, on
     <div className={ styles.board }>
         { board.map((row, i) => (
             row.map((cell, j) => (
+                // TODO: maybe just use a table...
                 <GridCell key={ `${i} | ${j}` }
                     row={ i }
                     column={ j }
@@ -26,10 +27,9 @@ export const Board: React.FC<IProps> = ({board, selectedTile, onDropFromRack, on
                             && i === selectedTile[0] && j === selectedTile[1] }
                         rotation={ cell.tilePlacement.rotation }
                     />
-                    : <EmptyTile onDrop={ () => {
-                        console.log("Ondrop")
-                        onDropFromRack(i, j)
-                    } } /> }
+                    : <EmptyTile bonus={ cell.bonus }
+                        onDrop={ () => onDropFromRack(i, j) }
+                    /> }
                 </GridCell>
             ))
         )) }
