@@ -73,11 +73,15 @@ impl Log {
         }
     }
 
-    pub fn undo(&mut self) -> Option<Event> {
-        self.undo_events.pop().and_then(|e| e.revert()).map(|e| {
+    pub fn begin_undo(&mut self) -> Option<Event> {
+        self.undo_events.pop().and_then(|e| {
             self.redo_events.push(e.clone());
-            e
+            e.revert()
         })
+    }
+
+    pub fn end_undo(&mut self) {
+        self.undo_events.pop();
     }
 
     pub fn redo(&mut self) -> Option<Event> {
@@ -135,11 +139,42 @@ impl Log {
         self.events.append(&mut self.undo_events);
     }
 
+    /// Whether there are events that can be undone
     pub fn can_undo(&self) -> bool {
         !self.undo_events.is_empty()
     }
 
+    /// Whether there are events that can be redone
     pub fn can_redo(&self) -> bool {
         !self.redo_events.is_empty()
+    }
+
+    /// Check if a cell (specified by a set of coordinates) was changed during
+    /// the current turn.
+    pub fn cell_changed_in_turn(&self, coordinates: Coordinates) -> bool {
+        // Don't need to validate if there's still a tile there because that will be handled by
+        // `crate::board::Board`
+        self.undo_events.iter().rev().any(|e| match e {
+            Event::PlaceTile(tpe) | Event::RemoveTile(tpe) if tpe.coordinates == coordinates => {
+                true
+            }
+            Event::MoveTile(mte) if mte.new == coordinates => true,
+            Event::RotateTile(rte) if rte.new.coordinates == coordinates => true,
+            _ => false,
+        }) || self
+            .redo_events
+            .iter()
+            .any(|e| Self::event_matches_coordinates(e, coordinates))
+    }
+
+    fn event_matches_coordinates(event: &Event, coordinates: Coordinates) -> bool {
+        match event {
+            Event::PlaceTile(tpe) | Event::RemoveTile(tpe) if tpe.coordinates == coordinates => {
+                true
+            }
+            Event::MoveTile(mte) if mte.new == coordinates => true,
+            Event::RotateTile(rte) if rte.new.coordinates == coordinates => true,
+            _ => false,
+        }
     }
 }

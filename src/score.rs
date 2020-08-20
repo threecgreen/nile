@@ -65,8 +65,8 @@ impl Neg for TurnScore {
     }
 }
 
-pub fn sum_scores(scores: &Vec<TurnScore>) -> TurnScore {
-    scores
-        .iter()
-        .fold(TurnScore::default(), |acc, ts| acc + *ts)
-}
+// pub fn sum_scores(scores: &Vec<TurnScore>) -> TurnScore {
+//     scores
+//         .iter()
+//         .fold(TurnScore::default(), |acc, ts| acc + *ts)
+// }

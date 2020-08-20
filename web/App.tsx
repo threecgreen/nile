@@ -49,7 +49,15 @@ export const App: React.FC = () => {
             console.error(e);
         }
     }
-    const onRedo = () => {}
+    const onRedo = () => {
+        try {
+            const score = nile.redo();
+            setBoard(nile.board());
+            setPlayerData(nile.players());
+        } catch (e) {
+            console.error(e);
+        }
+    }
 
     // Render
     return (

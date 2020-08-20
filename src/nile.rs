@@ -85,16 +85,25 @@ impl Nile {
         coordinates: tile::Coordinates,
         rotation: Rotation,
     ) -> Result<(), String> {
-        let player = self.players.get_mut(self.current_turn).expect("Player");
-        // TODO: tile at coordinates validate tile was placed on this turn
+        let old_rotation = self
+            .board
+            .get_cell(coordinates.0, coordinates.1)
+            .tile()
+            .ok_or_else(|| "No tile there".to_owned())?
+            .rotation;
+        if !self.log.cell_changed_in_turn(coordinates) {
+            return Err("Can't change tiles from another turn".to_owned());
+        }
         self.board.rotate_tile(coordinates, rotation)?;
-        // FIXME: log
-        // self.log.rotate_tile(coordinates, rotation);
+        self.log.rotate_tile(coordinates, old_rotation, rotation);
         Ok(())
     }
 
     pub fn remove_tile(&mut self, coordinates: Coordinates) -> Result<TurnScore, String> {
         let player = self.players.get_mut(self.current_turn).expect("Player");
+        if !self.log.cell_changed_in_turn(coordinates) {
+            return Err("Can't change tiles from another turn".to_owned());
+        }
         let (tile_placement, event_score) = self
             .board
             .remove_tile(coordinates)
@@ -111,7 +120,9 @@ impl Nile {
         old_coordinates: Coordinates,
         new_coordinates: Coordinates,
     ) -> Result<TurnScore, String> {
-        let player = self.players.get_mut(self.current_turn).expect("Player");
+        if !self.log.cell_changed_in_turn(old_coordinates) {
+            return Err("Can't change tiles from another turn".to_owned());
+        }
         // FIXME: implement
         self.log.move_tile(old_coordinates, new_coordinates);
         // TODO: return score diff
@@ -147,9 +158,11 @@ impl Nile {
     pub fn undo(&mut self) -> Result<Option<TurnScore>, String> {
         let event = self
             .log
-            .undo()
+            .begin_undo()
             .ok_or_else(|| "Nothing to undo".to_owned())?;
-        self.dispatch(event)
+        let res = self.dispatch(event);
+        self.log.end_undo();
+        res
     }
 
     pub fn redo(&mut self) -> Result<Option<TurnScore>, String> {
