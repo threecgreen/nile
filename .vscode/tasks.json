@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "start",
+			"path": "web/",
+			"problemMatcher": [
+				"$ts-webpack-watch"
+			],
+			"label": "npm: start - web",
+			"detail": "webpack-dev-server",
+			"isBackground": true,
+		}
+	]
+}
