@@ -1,8 +1,6 @@
 import { Rotation, Tile, TurnScore, WasmNile } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, toBoardArray, toPlayerDataArray } from "./common";
 
-
-
 interface IState {
     nile: WasmNile;
     board: BoardArray;
@@ -11,10 +9,12 @@ interface IState {
     draggedTile: Tile | null;
     /** Used for determining if placed tile is movable, rotatable, etc. */
     currentTurnTiles: Array<[number, number]>;
+    selectedTile: CoordinateTuple | null;
 }
 
 type Action =
     | {type: "setDraggedTile", tile: Tile}
+    | {type: "selectTile", coordinates: CoordinateTuple}
     | {type: "placeTile", tile: Tile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore}
     | {type: "rotateTile", coordinates: CoordinateTuple, rotation: Rotation}
     | {type: "removeTile"}
@@ -30,6 +30,7 @@ export const initState = (playerNames: string[]): IState => {
         playerData: toPlayerDataArray(nile.players()),
         draggedTile: null,
         currentTurnTiles: [],
+        selectedTile: null,
     };
 }
 

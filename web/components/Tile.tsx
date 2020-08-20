@@ -10,8 +10,10 @@ import Universal from "assets/tiles/Universal.svg";
 import styles from "components/Tile.module.css";
 
 interface IProps {
-    tile: TileEnum,
-    rotation: Rotation,
+    tile: TileEnum;
+    rotation: Rotation;
+    isSelected: boolean;
+    onSelect: () => void;
 };
 
 const rotationToCSs = (rotation: Rotation): string => {
@@ -31,7 +33,7 @@ const reflectToCss = (reflect: boolean): string => {
     return reflect ? "scaleX(-1)" : "";
 }
 
-export const Tile: React.FC<IProps> = ({tile, rotation}) => {
+export const Tile: React.FC<IProps> = ({tile, rotation, isSelected, ...props}) => {
     let svg;
     let reflect = false;
     switch (tile) {
@@ -67,9 +69,16 @@ export const Tile: React.FC<IProps> = ({tile, rotation}) => {
         default:
             throw new Error(`Unknown tile type: ${tile}`);
     }
+
+    const onSelect = (e: React.MouseEvent) => {
+        e.preventDefault();
+        props.onSelect();
+    }
+
     return (
-        <div className={ styles.tile }
+        <div className={ `${styles.tile} ${isSelected ? styles.selected : ""}` }
             style={ { transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
+            onClick={ onSelect }
         >
             { svg }
         </div>

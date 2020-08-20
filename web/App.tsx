@@ -17,12 +17,24 @@ export const App: React.FC = () => {
             // Move this to another file
             try {
                 const rotation = Rotation.None;
-                console.log("PLacing tile");
                 const score = state.present.nile.place_tile(state.present.draggedTile, new Coordinates(row, column), rotation);
-                console.log("Received swasm response");
                 dispatch({type: "placeTile", tile: state.present.draggedTile, coordinates: [row, column], rotation, score});
             } catch (e) {
                 console.error(e);
+            }
+        }
+    }
+    const onRotate = (isClockwise: boolean) => {
+        if(state.present.selectedTile) {
+            const [row, column] = state.present.selectedTile;
+            const cell = state.present.board[row][column];
+            if(cell.tilePlacement) {
+                try {
+                    const newRotation = (cell.tilePlacement.rotation + (isClockwise ? 1 : -1)) % 4 // 4 different rotations
+                    dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
+                } catch (e) {
+                    console.error(e);
+                }
             }
         }
     }
@@ -61,6 +73,16 @@ export const App: React.FC = () => {
                 }) }
             </ul>
             <div>
+                <Button enabled={ state.present.selectedTile !== null }
+                    onClick={ () => onRotate(true) }
+                >
+                    Rotate Clockwise
+                </Button>
+                <Button enabled={ state.present.selectedTile !== null }
+                    onClick={ () => onRotate(false) }
+                >
+                    Rotate Counter-Clockwise
+                </Button>
                 <Button enabled={ state.present.nile.can_undo() }
                     onClick={ onUndo }
                 >
@@ -80,7 +102,9 @@ export const App: React.FC = () => {
                 </Button>
             </div>
             <Board board={ state.present.board }
+                selectedTile={ state.present.selectedTile }
                 onDropFromRack={ onDropFromRack }
+                onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
             />
         </>
     );
