@@ -20,20 +20,26 @@ export function useUndoReducer<R extends Reducer<any, any>>(
 
     const undoReducer: Reducer<IUndoState, ReducerAction<R>> = (state, action) => {
         if (action.type === "undo") {
-            const [newPresent, ...past] = state.past;
-            return {
-                past,
-                present: newPresent,
-                future: [state.present, ...state.future]
-            };
+            if (state.past.length > 0) {
+                const [newPresent, ...past] = state.past;
+                return {
+                    past,
+                    present: newPresent,
+                    future: [state.present, ...state.future]
+                };
+            }
+            return state;
         }
         if (action.type === "redo") {
-            const [newPresent, ...future] = state.future;
-            return {
-                past: [state.present, ...state.past],
-                present: newPresent,
-                future
-            };
+            if (state.future.length > 0) {
+                const [newPresent, ...future] = state.future;
+                return {
+                    past: [state.present, ...state.past],
+                    present: newPresent,
+                    future
+                };
+            }
+            return state;
         }
         const newPresent = reducer(state.present, action);
         return {
