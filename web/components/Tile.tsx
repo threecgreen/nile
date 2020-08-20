@@ -65,7 +65,7 @@ export const Tile: React.FC<IProps> = ({tile, rotation}) => {
             svg = <Universal />;
             break;
         default:
-            throw new Error("Unknown tile type");
+            throw new Error(`Unknown tile type: ${tile}`);
     }
     return (
         <div className={ styles.tile }

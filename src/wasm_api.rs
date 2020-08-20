@@ -109,6 +109,10 @@ impl WasmNile {
 
 #[wasm_bindgen]
 impl Player {
+    pub fn get_name(&self) -> JsValue {
+        JsValue::from(self.name())
+    }
+
     pub fn get_tiles(&self) -> Array {
         self.tiles()
             .into_iter()
