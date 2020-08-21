@@ -12,10 +12,13 @@ interface IProps {
 }
 
 export const Board: React.FC<IProps> = ({board, selectedTile, onDropFromRack, onSelect}) => (
-    <table>
+    <table className={ styles.board }>
         <tbody>
             { board.map((row, i) => (
                 <tr key={ i }>
+                    <td>
+                        { i == 10 ? <p className={ styles.arrow}>→</p> : null }
+                    </td>
                     { row.map((cell, j) => (
                         <GridCell key={ j }>
                             { cell.tilePlacement
