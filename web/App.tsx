@@ -32,7 +32,6 @@ export const App: React.FC = () => {
             if(cell.tilePlacement) {
                 try {
                     const newRotation = mod(cell.tilePlacement.rotation + (isClockwise ? 1 : -1), 4)    // 4 different rotations
-                    console.log(newRotation);
                     state.nile.rotate_tile(new Coordinates(row, column), newRotation);
                     dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
                 } catch (e) {

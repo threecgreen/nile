@@ -2,17 +2,12 @@ import React from "react";
 import styles from "./Grid.module.css"
 
 interface IProps {
-    row: number,
-    column: number,
 }
 
-export const GridCell: React.FC<IProps> = ({row, column, ...props}) => (
-    <div style={ {
-        gridColumn: `${column + 1}`,
-        gridRow: row + 1 } }
-    >
+export const GridCell: React.FC<IProps> = ({...props}) => (
+    <td>
         { props.children }
-    </div>
+    </td>
 )
 GridCell.displayName = "GridCell";
 

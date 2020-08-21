@@ -12,27 +12,27 @@ interface IProps {
 }
 
 export const Board: React.FC<IProps> = ({board, selectedTile, onDropFromRack, onSelect}) => (
-    <div className={ styles.board }>
-        { board.map((row, i) => (
-            row.map((cell, j) => (
-                // TODO: maybe just use a table...
-                <GridCell key={ `${i} | ${j}` }
-                    row={ i }
-                    column={ j }
-                >
-                    { cell.tilePlacement
-                    ? <Tile tile={ cell.tilePlacement.tile }
-                        onSelect={ () => onSelect([i, j]) }
-                        isSelected={ selectedTile !== null
-                            && i === selectedTile[0] && j === selectedTile[1] }
-                        rotation={ cell.tilePlacement.rotation }
-                    />
-                    : <EmptyTile bonus={ cell.bonus }
-                        onDrop={ () => onDropFromRack(i, j) }
-                    /> }
-                </GridCell>
-            ))
-        )) }
-    </div>
+    <table>
+        <tbody>
+            { board.map((row, i) => (
+                <tr key={ i }>
+                    { row.map((cell, j) => (
+                        <GridCell key={ j }>
+                            { cell.tilePlacement
+                            ? <Tile tile={ cell.tilePlacement.tile }
+                                onSelect={ () => onSelect([i, j]) }
+                                isSelected={ selectedTile !== null
+                                    && i === selectedTile[0] && j === selectedTile[1] }
+                                rotation={ cell.tilePlacement.rotation }
+                            />
+                            : <EmptyTile bonus={ cell.bonus }
+                                onDrop={ () => onDropFromRack(i, j) }
+                            /> }
+                        </GridCell>
+                    )) }
+                </tr>
+            )) }
+        </tbody>
+    </table>
 );
 Board.displayName = "Board";

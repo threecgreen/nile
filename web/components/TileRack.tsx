@@ -19,26 +19,27 @@ export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, ...props}) => 
     }
 
     return (
-        <Grid width={ tiles.length * 41 + 1 }>
-            { tiles.map((tile, i) => (
-                <GridCell key={ `${tile} - ${i}` }
-                    column={ i }
-                    row={ 0 }
-                >
-                    <div draggable={ isCurrentTurn }
-                        onDrag={ onDrag }
-                        onDragStart={ (e) => onDragStart(e, tile) }
-                    >
-                        <Tile rotation={ Rotation.None }
-                            tile={ tile }
-                            // TODO: break up this functionality
-                            isSelected={ false }
-                            onSelect={ () => undefined }
-                        />
-                    </div>
-                </GridCell>
-            )) }
-        </Grid>
+        <table>
+            <tbody>
+                <tr>
+                    { tiles.map((tile, i) => (
+                        <GridCell key={ `${tile} - ${i}` }>
+                            <div draggable={ isCurrentTurn }
+                                onDrag={ onDrag }
+                                onDragStart={ (e) => onDragStart(e, tile) }
+                            >
+                                <Tile rotation={ Rotation.None }
+                                    tile={ tile }
+                                    // TODO: break up this functionality
+                                    isSelected={ false }
+                                    onSelect={ () => undefined }
+                                />
+                            </div>
+                        </GridCell>
+                    )) }
+                </tr>
+            </tbody>
+        </table>
     );
 }
 TileRack.displayName = "TileRack";
