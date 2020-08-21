@@ -1,21 +1,17 @@
 import { Rotation, Tile as TileEnum } from "nile";
 import React from "react";
-import { Grid, GridCell } from "./Grid";
+import { GridCell } from "./Grid";
 import { Tile } from "./Tile";
 
 interface IProps {
     tiles: TileEnum[];
     isCurrentTurn: boolean;
-    onDrag: (tile: TileEnum) => void;
+    setDraggedTile: (idx: number, tile: TileEnum) => void;
 }
 
-export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, ...props}) => {
+export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, setDraggedTile}) => {
     const onDrag = (e: React.DragEvent) => {
         e.preventDefault();
-    }
-
-    const onDragStart = (_: React.DragEvent, tile: TileEnum) => {
-        props.onDrag(tile);
     }
 
     return (
@@ -26,7 +22,7 @@ export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, ...props}) => 
                         <GridCell key={ `${tile} - ${i}` }>
                             <div draggable={ isCurrentTurn }
                                 onDrag={ onDrag }
-                                onDragStart={ (e) => onDragStart(e, tile) }
+                                onDragStart={ (_) => setDraggedTile(i, tile) }
                             >
                                 <Tile rotation={ Rotation.None }
                                     tile={ tile }

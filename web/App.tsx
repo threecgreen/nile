@@ -6,6 +6,7 @@ import { initState, reducer } from "lib/state";
 import { Coordinates, Rotation } from "nile";
 import React from "react";
 import { mod } from "lib/utils";
+import { Player } from "components/Player";
 
 export const App: React.FC = () => {
     // State
@@ -18,8 +19,12 @@ export const App: React.FC = () => {
             // Move this to another file
             try {
                 const rotation = Rotation.None;
-                const score = state.nile.place_tile(state.draggedTile, new Coordinates(row, column), rotation);
-                dispatch({type: "placeTile", tile: state.draggedTile, coordinates: [row, column], rotation, score});
+                const score = state.nile.place_tile(state.draggedTile.tile, new Coordinates(row, column), rotation);
+                dispatch({
+                    type: "placeTile",
+                    tile: state.draggedTile.tile, coordinates: [row, column],
+                    rotation, score, idx: state.draggedTile.idx
+                });
             } catch (e) {
                 console.error(e);
             }
@@ -62,28 +67,32 @@ export const App: React.FC = () => {
     return (
         <>
             <ul>
-                { state.playerData.map((player, id) => {
-                    return (
-                        <li key={ player.name }>
-                            <h2>{ player.name }</h2>
-                            <TileRack tiles={ player.tileRack }
-                                isCurrentTurn={ id === state.currentPlayerId }
-                                onDrag={ (tile) => dispatch({type: "setDraggedTile", tile}) }
-                            />
-                        </li>
-                    );
-                }) }
+                { state.playerData.map((player, id) => (
+                    <Player player={ player }
+                        isCurrentTurn={ id === state.currentPlayerId }
+                        setDraggedTile={ (idx, tile) => dispatch({type: "setDraggedTile", tile, idx}) }
+                    />
+                    // return (
+                        // <li key={ player.name }>
+                        //     <h2>{ player.name }</h2>
+                        //     <TileRack tiles={ player.tileRack }
+                        //         isCurrentTurn={ id === state.currentPlayerId }
+                        //         onDrag={ (tile) => dispatch({type: "setDraggedTile", tile}) }
+                        //     />
+                        // </li>
+                    // );
+                )) }
             </ul>
             <div>
-                <Button enabled={ state.selectedTile !== null }
-                    onClick={ () => onRotate(true) }
-                >
-                    Rotate Clockwise
-                </Button>
                 <Button enabled={ state.selectedTile !== null }
                     onClick={ () => onRotate(false) }
                 >
                     Rotate Counter-Clockwise
+                </Button>
+                <Button enabled={ state.selectedTile !== null }
+                    onClick={ () => onRotate(true) }
+                >
+                    Rotate Clockwise
                 </Button>
                 <Button enabled={ state.nile.can_undo() }
                     onClick={ onUndo }

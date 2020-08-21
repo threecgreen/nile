@@ -1,21 +1,26 @@
 import { Rotation, Tile, TurnScore, WasmNile } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, toBoardArray, toPlayerDataArray } from "./common";
 
+interface IDraggedTile {
+    idx: number;
+    tile: Tile;
+}
+
 interface IState {
     nile: WasmNile;
     board: BoardArray;
     currentPlayerId: number;
     playerData: PlayerData[];
-    draggedTile: Tile | null;
+    draggedTile: IDraggedTile | null;
     /** Used for determining if placed tile is movable, rotatable, etc. */
     currentTurnTiles: Array<[number, number]>;
     selectedTile: CoordinateTuple | null;
 }
 
 type Action =
-    | {type: "setDraggedTile", tile: Tile}
+    | {type: "setDraggedTile", tile: Tile, idx: number}
     | {type: "selectTile", coordinates: CoordinateTuple}
-    | {type: "placeTile", tile: Tile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore}
+    | {type: "placeTile", tile: Tile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore, idx: number}
     | {type: "rotateTile", coordinates: CoordinateTuple, rotation: Rotation}
     | {type: "removeTile"}
     | {type: "undo"}
@@ -37,7 +42,7 @@ export const initState = (playerNames: string[]): IState => {
 export const reducer: React.Reducer<IState, Action> = (state, action) => {
     switch (action.type) {
         case "setDraggedTile":
-            return {...state, draggedTile: action.tile};
+            return {...state, draggedTile: {idx: action.idx, tile: action.tile}};
         case "selectTile":
             return {...state, selectedTile: action.coordinates};
         case "placeTile": {
@@ -58,12 +63,12 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             playerData.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
             // Remove tile from tile rack
             const tileRack = [...playerData.tileRack];
-            const idx = playerData.tileRack.findIndex((t) => t === action.tile);
-            tileRack.splice(idx, 1);
+            tileRack.splice(action.idx, 1);
             playerData.tileRack = tileRack;
             playerDataArray[state.currentPlayerId] = playerData;
+            // Update selectedTile
 
-            return {...state, board, playerData: playerDataArray};
+            return {...state, board, playerData: playerDataArray, selectedTile: action.coordinates};
         }
         case "rotateTile": {
             const [i, j] = action.coordinates;
