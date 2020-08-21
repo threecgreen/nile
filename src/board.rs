@@ -129,12 +129,18 @@ impl Board {
         let cells: Vec<Cell> = (0..BOARD_SIZE * BOARD_SIZE)
             .into_iter()
             .map(|i| {
-                let row = i / BOARD_SIZE;
+                let row = {
+                    let row = i / BOARD_SIZE;
+                    // Board is reflected across horizontal axis
+                    if row > 10 {
+                        BOARD_SIZE - 1 - row
+                    } else {
+                        row
+                    }
+                };
                 let col = i % BOARD_SIZE;
-                // Board is reflected across horizontal axis
-                let adj_row = if row > 10 { BOARD_SIZE - 1 - row } else { row };
                 bonuses
-                    .get(&(adj_row, col))
+                    .get(&(row, col))
                     .map(|b| Cell::with_bonus(*b))
                     .unwrap_or_default()
             })
@@ -151,8 +157,8 @@ impl Board {
     }
 
     fn get_index(&self, coordinates: Coordinates) -> usize {
-        let row = coordinates.1 as usize;
-        let column = coordinates.0 as usize;
+        let row = coordinates.0 as usize;
+        let column = coordinates.1 as usize;
         row * self.width() + column
     }
 

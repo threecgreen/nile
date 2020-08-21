@@ -6,8 +6,8 @@
     margin: -0.5px;
 
     /* For bonus/penalty text */
-    vertical-align: middle;
-    display: table-cell;
+    /* vertical-align: middle; */
+    /* display: table-cell; */
     text-align: center;
 }
 
