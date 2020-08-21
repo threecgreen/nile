@@ -3,7 +3,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use std::ops::Add;
+use std::ops::{Add, Neg};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[repr(u8)]
@@ -44,8 +44,8 @@ pub enum Rotation {
     Clockwise270,
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct Offset(i8, i8);
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct Offset(pub i8, pub i8);
 
 impl Offset {
     pub fn rotate(self, rotation: Rotation) -> Offset {
@@ -56,6 +56,14 @@ impl Offset {
             Rotation::Clockwise180 => Offset(-y, -x),
             Rotation::Clockwise270 => Offset(-y, x),
         }
+    }
+}
+
+impl Neg for Offset {
+    type Output = Offset;
+
+    fn neg(self) -> Self::Output {
+        Self(-self.0, -self.1)
     }
 }
 
@@ -71,6 +79,7 @@ impl Add<Offset> for Coordinates {
     }
 }
 
+/// A unique location on the board
 #[wasm_bindgen]
 impl Coordinates {
     #[wasm_bindgen(constructor)]
@@ -79,6 +88,7 @@ impl Coordinates {
     }
 }
 
+/// A game piece that's placed on the board
 #[repr(u8)]
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -175,6 +185,7 @@ pub struct TilePlacement {
     pub rotation: Rotation,
 }
 
+/// Holds tiles that can still be drawn by a player
 #[derive(Debug)]
 pub struct TileBox {
     tiles: VecDeque<Tile>,
@@ -183,9 +194,8 @@ pub struct TileBox {
 
 impl TileBox {
     pub fn new() -> Self {
-        // let mut tiles = VecDeque::with_capacity(104);
         let mut tiles = Vec::with_capacity(104);
-        // Frequencies from board
+        // Frequencies from the original game board
         Self::push_n(&mut tiles, Tile::Left135, 10);
         Self::push_n(&mut tiles, Tile::Center90, 10);
         Self::push_n(&mut tiles, Tile::Left45, 10);
@@ -211,6 +221,7 @@ impl TileBox {
         }
     }
 
+    /// Draw a `Tile` if any remain
     pub fn draw(&mut self) -> Option<Tile> {
         self.tiles.pop_front()
     }

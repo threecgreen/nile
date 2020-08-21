@@ -1,10 +1,10 @@
 mod board;
 mod log;
 mod nile;
+mod path;
 mod player;
 mod score;
 mod tile;
-mod validation;
 mod wasm_api;
 
 pub use board::{Board, Cell};

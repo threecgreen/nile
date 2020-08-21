@@ -13,7 +13,7 @@ interface IState {
     playerData: PlayerData[];
     draggedTile: IDraggedTile | null;
     /** Used for determining if placed tile is movable, rotatable, etc. */
-    currentTurnTiles: Array<[number, number]>;
+    currentTurnTiles: Array<CoordinateTuple>;
     selectedTile: CoordinateTuple | null;
 }
 
@@ -66,9 +66,11 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             tileRack.splice(action.idx, 1);
             playerData.tileRack = tileRack;
             playerDataArray[state.currentPlayerId] = playerData;
+            // Add to currentTurnTiles
+            const currentTurnTiles = [...state.currentTurnTiles, action.coordinates];
             // Update selectedTile
-
-            return {...state, board, playerData: playerDataArray, selectedTile: action.coordinates};
+            const selectedTile = action.coordinates;
+            return {...state, board, playerData: playerDataArray, currentTurnTiles, selectedTile};
         }
         case "rotateTile": {
             const [i, j] = action.coordinates;

@@ -45,7 +45,13 @@ export const App: React.FC = () => {
             }
         }
     }
-    const onEndTurn = () => {}
+    const onEndTurn = () => {
+        try {
+            // state.nile.endn
+        } catch {
+            console.error(e);
+        }
+    }
     const onUndo = () => {
         try {
             const score = state.nile.undo();
@@ -72,15 +78,6 @@ export const App: React.FC = () => {
                         isCurrentTurn={ id === state.currentPlayerId }
                         setDraggedTile={ (idx, tile) => dispatch({type: "setDraggedTile", tile, idx}) }
                     />
-                    // return (
-                        // <li key={ player.name }>
-                        //     <h2>{ player.name }</h2>
-                        //     <TileRack tiles={ player.tileRack }
-                        //         isCurrentTurn={ id === state.currentPlayerId }
-                        //         onDrag={ (tile) => dispatch({type: "setDraggedTile", tile}) }
-                        //     />
-                        // </li>
-                    // );
                 )) }
             </ul>
             <div>

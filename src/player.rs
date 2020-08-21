@@ -30,10 +30,16 @@ impl Player {
         }
     }
 
-    pub fn end_turn(&mut self, tile_box: &mut TileBox) {
+    pub fn end_turn(&mut self, tile_box: &mut TileBox) -> TurnScore {
+        if self.tile_rack.is_empty() {
+            // Bonus for using all tiles
+            self.add_score(TurnScore::new(20, 0));
+        }
+        let final_turn_score = self.current_turn_score;
         Self::fill_rack(&mut self.tile_rack, tile_box);
-        self.scores.push(self.current_turn_score);
+        self.scores.push(final_turn_score);
         self.current_turn_score = TurnScore::default();
+        final_turn_score
     }
 
     pub fn rack_is_empty(&self) -> bool {
