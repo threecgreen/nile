@@ -1,10 +1,12 @@
 use crate::board::{Board, TilePlacement};
 use crate::log::{Event, Log};
-use crate::path::TilePathType;
+use crate::path::{TilePath, TilePathType};
 use crate::player::Player;
 use crate::score::TurnScore;
 use crate::tile::{self, Coordinates, Rotation, Tile, TileBox};
 
+use js_sys::Array;
+use std::collections::VecDeque;
 use wasm_bindgen::prelude::*;
 
 /// Holds all state for one game
@@ -87,7 +89,6 @@ impl Nile {
             })?;
         let turn_score = player.add_score(event_score);
         self.log.place_tile(tile_path_type, coordinates, rotation);
-        // TODO: return score diff
         Ok(turn_score)
     }
 
@@ -129,6 +130,20 @@ impl Nile {
         Ok(turn_score)
     }
 
+    pub fn update_universal_path(
+        &mut self,
+        coordinates: Coordinates,
+        tile_path: TilePath,
+    ) -> Result<(), String> {
+        if !self.log.cell_changed_in_turn(coordinates) {
+            return Err("Can't change tiles from another turn".to_owned());
+        }
+        let old_tile_path = self.board.update_universal_path(coordinates, tile_path)?;
+        self.log
+            .update_universal_path(coordinates, old_tile_path, tile_path);
+        Ok(())
+    }
+
     pub fn move_tile(
         &mut self,
         old_coordinates: Coordinates,
@@ -160,13 +175,13 @@ impl Nile {
         Ok(())
     }
 
-    pub fn end_turn(&mut self) -> Result<i16, String> {
+    pub fn end_turn(&mut self) -> Result<EndTurnUpdate, String> {
         let player = self.players.get_mut(self.current_turn).expect("Player");
-        player.end_turn(&mut self.tile_box);
+        let turn_score = player.end_turn(&mut self.tile_box);
+        let tiles = player.tiles().to_owned();
         self.advance_turn();
         self.log.end_turn();
-        // TODO: return turn score and tiles
-        Ok(0)
+        Ok(EndTurnUpdate { tiles, turn_score })
     }
 
     pub fn undo(&mut self) -> Result<Option<TurnScore>, String> {
@@ -196,6 +211,9 @@ impl Nile {
                 .rotate_tile(re.new.coordinates, re.new.rotation)
                 .map(|_| None),
             Event::RemoveTile(tpe) => self.remove_tile(tpe.coordinates).map(Some),
+            Event::UpdateUniversalPath(uup) => self
+                .update_universal_path(uup.coordinates, uup.new_tile_path)
+                .map(|_| None),
             Event::MoveTile(mte) => self.move_tile(mte.old, mte.new).map(Some),
             e => Err(format!("Invalid event: {:?}", e)),
         }
@@ -203,5 +221,27 @@ impl Nile {
 
     fn advance_turn(&mut self) {
         self.current_turn = (self.current_turn + 1) % self.players.len();
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Debug)]
+pub struct EndTurnUpdate {
+    turn_score: TurnScore,
+    tiles: VecDeque<Tile>,
+}
+
+#[wasm_bindgen]
+impl EndTurnUpdate {
+    pub fn get_turn_score(&self) -> TurnScore {
+        self.turn_score
+    }
+
+    pub fn get_tiles(&self) -> Array {
+        self.tiles
+            .clone()
+            .into_iter()
+            .map(|t| JsValue::from_serde(&t).unwrap())
+            .collect()
     }
 }

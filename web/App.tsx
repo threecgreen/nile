@@ -50,7 +50,8 @@ export const App: React.FC = () => {
     }
     const onEndTurn = () => {
         try {
-            // state.nile.endn
+            const update = state.nile.end_turn();
+            dispatch({type: "endTurn", turnScore: update.get_turn_score(), tiles: update.get_tiles()});
         } catch(e) {
             console.error(e);
         }

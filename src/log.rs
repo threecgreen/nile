@@ -1,4 +1,4 @@
-use crate::path::TilePathType;
+use crate::path::{TilePath, TilePathType};
 use crate::tile::{self, Coordinates};
 
 #[derive(Clone, Debug)]
@@ -12,6 +12,13 @@ pub struct TilePlacementEvent {
 pub struct Rotation {
     pub coordinates: Coordinates,
     pub rotation: tile::Rotation,
+}
+
+#[derive(Clone, Debug)]
+pub struct UpdateUniversalPathEvent {
+    pub coordinates: Coordinates,
+    pub old_tile_path: TilePath,
+    pub new_tile_path: TilePath,
 }
 
 #[derive(Clone, Debug)]
@@ -31,6 +38,7 @@ pub enum Event {
     RotateTile(RotationEvent),
     RemoveTile(TilePlacementEvent),
     MoveTile(MoveTileEvent),
+    UpdateUniversalPath(UpdateUniversalPathEvent),
     CantPlay,
     EndTurn,
 }
@@ -48,6 +56,13 @@ impl Event {
                 new: move_tile.old,
                 old: move_tile.new,
             })),
+            Event::UpdateUniversalPath(update) => {
+                Some(Event::UpdateUniversalPath(UpdateUniversalPathEvent {
+                    old_tile_path: update.new_tile_path,
+                    new_tile_path: update.old_tile_path,
+                    coordinates: update.coordinates,
+                }))
+            }
             // Can't undo end of turn
             Event::CantPlay | Event::EndTurn => None,
         }
@@ -138,6 +153,20 @@ impl Log {
             old: old_coordinates,
             new: new_coordinates,
         }));
+    }
+
+    pub fn update_universal_path(
+        &mut self,
+        coordinates: Coordinates,
+        old_tile_path: TilePath,
+        new_tile_path: TilePath,
+    ) {
+        self.undo_events
+            .push(Event::UpdateUniversalPath(UpdateUniversalPathEvent {
+                coordinates,
+                new_tile_path,
+                old_tile_path,
+            }));
     }
 
     pub fn cant_play(&mut self) {

@@ -45,9 +45,9 @@ impl From<TilePath> for Tile {
             TilePath::Center90 => Tile::Center90,
             TilePath::Corner90 => Tile::Corner90,
             TilePath::Left45 => Tile::Left45,
-            TilePath::Right45 => Tile::Left45,
+            TilePath::Right45 => Tile::Right45,
             TilePath::Left135 => Tile::Left135,
-            TilePath::Right135 => Tile::Left135,
+            TilePath::Right135 => Tile::Right135,
         }
     }
 }
@@ -85,9 +85,9 @@ pub mod wasm {
                 Tile::Center90 => Ok(super::TilePath::Center90),
                 Tile::Corner90 => Ok(super::TilePath::Corner90),
                 Tile::Left45 => Ok(super::TilePath::Left45),
-                Tile::Right45 => Ok(super::TilePath::Left45),
+                Tile::Right45 => Ok(super::TilePath::Right45),
                 Tile::Left135 => Ok(super::TilePath::Left135),
-                Tile::Right135 => Ok(super::TilePath::Left135),
+                Tile::Right135 => Ok(super::TilePath::Right135),
                 Tile::Universal => Err("Can't convert universal tile to tile path".to_owned()),
             }
         }

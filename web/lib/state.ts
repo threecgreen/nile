@@ -1,6 +1,6 @@
 import { Rotation, Tile, TurnScore, WasmNile, TilePath } from "nile";
-import { BoardArray, Cell, CoordinateTuple, PlayerData, toBoardArray, toPlayerDataArray } from "./common";
-import { act } from "react-test-renderer";
+import { BoardArray, Cell, CoordinateTuple, PlayerData, toBoardArray, toPlayerDataArray, TilePlacement } from "./common";
+import { mod } from "./utils";
 
 interface IDraggedTile {
     idx: number;
@@ -21,13 +21,14 @@ interface IState {
 
 type Action =
     | {type: "setDraggedTile", tilePath: TilePath, isUniversal: boolean, idx: number}
-    | {type: "setUniversalPath", coordinates: CoordinateTuple, tilePath: TilePath}
     | {type: "selectTile", coordinates: CoordinateTuple}
+    | {type: "updateUniversalPath", coordinates: CoordinateTuple, tilePlacement: TilePlacement}
     | {type: "placeTile", draggedTile: IDraggedTile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore}
     | {type: "rotateTile", coordinates: CoordinateTuple, rotation: Rotation}
     | {type: "removeTile"}
     | {type: "undo"}
     | {type: "redo"}
+    | {type: "endTurn", turnScore: TurnScore, tiles: Tile[]}
 
 export const initState = (playerNames: string[]): IState => {
     const nile = new WasmNile(playerNames);
@@ -48,6 +49,15 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             return {...state, draggedTile: {...action}};
         case "selectTile":
             return {...state, selectedTile: action.coordinates};
+        case "updateUniversalPath": {
+            const [i, j] = action.coordinates;
+            const board = [...state.board];
+            const column = [...board[i]];
+            const cell: Cell = {...column[j], tilePlacement: action.tilePlacement};
+            column[j] = cell;
+            board[i] = column;
+            return {...state, board};
+        }
         case "placeTile": {
             // Place tile on board
             const [i, j] = action.coordinates;
@@ -92,6 +102,20 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             board[i] = column;
 
             return {...state, board};
+        }
+        case "endTurn": {
+            const playerDataArray = [...state.playerData];
+            const playerData: PlayerData = {...playerDataArray[state.currentPlayerId]};
+            // Update scores
+            playerData.currentTurnScore = {add: action.turnScore.add(), sub: action.turnScore.sub()};
+            playerData.tileRack = action.tiles.map((t) =>
+                // @ts-ignore
+                Tile[t] as Tile
+            );
+            playerDataArray[state.currentPlayerId] = playerData;
+            const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
+            // TODO: remove undo data
+            return {...state, playerData: playerDataArray, currentPlayerId, draggedTile: null, selectedTile: null, currentTurnTiles: []};
         }
         default:
             return state;

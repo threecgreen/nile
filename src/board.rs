@@ -1,4 +1,4 @@
-use crate::path::{self, TilePathType};
+use crate::path::{self, TilePath, TilePathType};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
 
@@ -58,10 +58,6 @@ impl Cell {
     pub fn bonus(&self) -> i16 {
         self.bonus
     }
-
-    pub fn update_tile(&mut self, tile: Option<TilePlacement>) {
-        self.tile = tile;
-    }
 }
 
 impl Cell {
@@ -94,6 +90,22 @@ impl Cell {
         } else {
             TurnScore::new(tile_score, self.bonus)
         }
+    }
+
+    pub fn update_universal_path(&mut self, tile_path: TilePath) -> Result<TilePath, String> {
+        let tile_placement = self
+            .tile
+            .as_mut()
+            .ok_or_else(|| "Cell is empty".to_owned())?;
+        let old_tile_path = match tile_placement.tile_path_type {
+            TilePathType::Normal(_) => {
+                return Err("Cell doesn't contain a universal tile".to_owned());
+            }
+            TilePathType::Universal(tp) => tp,
+        };
+        tile_placement.tile_path_type = TilePathType::Universal(tile_path);
+
+        Ok(old_tile_path)
     }
 }
 
@@ -220,6 +232,16 @@ impl Board {
     pub fn remove_tile(&mut self, coordinates: Coordinates) -> Option<(TilePlacement, TurnScore)> {
         let idx = self.get_index(coordinates);
         self.cells[idx].remove_tile()
+    }
+
+    /// Returns the old `TilePath`
+    pub fn update_universal_path(
+        &mut self,
+        coordinates: Coordinates,
+        tile_path: TilePath,
+    ) -> Result<TilePath, String> {
+        let idx = self.get_index(coordinates);
+        self.cells[idx].update_universal_path(tile_path)
     }
 
     pub fn rotate_tile(
