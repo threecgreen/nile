@@ -1,8 +1,46 @@
+use crate::path::{self, TilePathType};
 use crate::score::TurnScore;
-use crate::tile::{Coordinates, Rotation, TilePlacement};
+use crate::tile::{Coordinates, Rotation};
 
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub struct TilePlacement {
+    tile_path_type: TilePathType,
+    rotation: Rotation,
+}
+
+#[wasm_bindgen]
+impl TilePlacement {
+    pub fn get_tile_path_type(&self) -> path::wasm::TilePathType {
+        path::wasm::TilePathType::from(self.tile_path_type.clone())
+    }
+
+    pub fn get_rotation(&self) -> Rotation {
+        self.rotation
+    }
+}
+
+/// Accessor methods for rust. The fields can't be public because
+/// `TilePlacementType` isn't representable in wasm
+impl TilePlacement {
+    pub fn new(tile_path_type: TilePathType, rotation: Rotation) -> Self {
+        Self {
+            tile_path_type,
+            rotation,
+        }
+    }
+
+    pub fn tile_path_type(&self) -> &TilePathType {
+        &self.tile_path_type
+    }
+
+    pub fn rotation(&self) -> Rotation {
+        self.rotation
+    }
+}
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Default)]
@@ -14,7 +52,7 @@ pub struct Cell {
 #[wasm_bindgen]
 impl Cell {
     pub fn tile(&self) -> Option<TilePlacement> {
-        self.tile
+        self.tile.clone()
     }
 
     pub fn bonus(&self) -> i16 {
@@ -46,7 +84,11 @@ impl Cell {
     }
 
     pub fn score(&self) -> TurnScore {
-        let tile_score = self.tile.map(|t| t.tile.score()).unwrap_or(0);
+        let tile_score = self
+            .tile
+            .as_ref()
+            .map(|t| t.tile_path_type.score())
+            .unwrap_or(0);
         if self.bonus >= 0 {
             TurnScore::new(self.bonus + tile_score, 0)
         } else {

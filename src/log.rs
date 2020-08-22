@@ -1,8 +1,9 @@
-use crate::tile::{self, Coordinates, Tile};
+use crate::path::TilePathType;
+use crate::tile::{self, Coordinates};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct TilePlacementEvent {
-    pub tile: Tile,
+    pub tile_path_type: TilePathType,
     pub coordinates: Coordinates,
     pub rotation: tile::Rotation,
 }
@@ -88,9 +89,14 @@ impl Log {
         self.redo_events.pop()
     }
 
-    pub fn place_tile(&mut self, tile: Tile, coordinates: Coordinates, rotation: tile::Rotation) {
+    pub fn place_tile(
+        &mut self,
+        tile_path_type: TilePathType,
+        coordinates: Coordinates,
+        rotation: tile::Rotation,
+    ) {
         self.undo_events.push(Event::PlaceTile(TilePlacementEvent {
-            tile,
+            tile_path_type,
             coordinates,
             rotation,
         }));
@@ -114,9 +120,14 @@ impl Log {
         }));
     }
 
-    pub fn remove_tile(&mut self, tile: Tile, coordinates: Coordinates, rotation: tile::Rotation) {
+    pub fn remove_tile(
+        &mut self,
+        tile_path_type: TilePathType,
+        coordinates: Coordinates,
+        rotation: tile::Rotation,
+    ) {
         self.undo_events.push(Event::RemoveTile(TilePlacementEvent {
-            tile,
+            tile_path_type,
             coordinates,
             rotation,
         }));

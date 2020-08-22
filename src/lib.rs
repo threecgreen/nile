@@ -7,10 +7,11 @@ mod score;
 mod tile;
 mod wasm_api;
 
-pub use board::{Board, Cell};
+pub use board::{Board, Cell, TilePlacement};
 pub use nile::Nile;
+pub use path::{wasm::TilePathType, TilePath};
 pub use player::Player;
-pub use tile::{Coordinates, Rotation, Tile, TilePlacement};
+pub use tile::{Coordinates, Rotation, Tile};
 pub use wasm_api::WasmNile;
 
 use wasm_bindgen::prelude::*;

@@ -1,18 +1,25 @@
-use crate::board::Board;
+use crate::board::{Board, TilePlacement};
 use crate::log::{Event, Log};
+use crate::path::TilePathType;
 use crate::player::Player;
 use crate::score::TurnScore;
 use crate::tile::{self, Coordinates, Rotation, Tile, TileBox};
 
 use wasm_bindgen::prelude::*;
 
+/// Holds all state for one game
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct Nile {
+    // the game board
     board: Board,
+    /// tiles that have not yet been drawn
     tile_box: TileBox,
+    /// player-specific data
     players: Vec<Player>,
+    /// the index in `players` of the player whose turn it is
     current_turn: usize,
+    /// event log for undoing and redoing
     log: Log,
 }
 
@@ -58,24 +65,28 @@ impl Nile {
 
     pub fn place_tile(
         &mut self,
-        tile: Tile,
+        tile_path_type: TilePathType,
         coordinates: Coordinates,
         rotation: Rotation,
     ) -> Result<TurnScore, String> {
+        let tile = Tile::from(&tile_path_type);
         let player = self.players.get_mut(self.current_turn).expect("Player");
         player
             .place_tile(tile)
             .ok_or_else(|| format!("Player doesn't have a {:?}", tile))?;
         let event_score = self
             .board
-            .place_tile(coordinates, tile::TilePlacement { tile, rotation })
+            .place_tile(
+                coordinates,
+                TilePlacement::new(tile_path_type.clone(), rotation),
+            )
             .map_err(|e| {
                 // Player's tile rack should be unchanged
                 player.return_tile(tile);
                 e
             })?;
         let turn_score = player.add_score(event_score);
-        self.log.place_tile(tile, coordinates, rotation);
+        self.log.place_tile(tile_path_type, coordinates, rotation);
         // TODO: return score diff
         Ok(turn_score)
     }
@@ -90,7 +101,7 @@ impl Nile {
             .get_cell(coordinates.0, coordinates.1)
             .tile()
             .ok_or_else(|| "No tile there".to_owned())?
-            .rotation;
+            .rotation();
         if !self.log.cell_changed_in_turn(coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
@@ -108,10 +119,13 @@ impl Nile {
             .board
             .remove_tile(coordinates)
             .ok_or_else(|| "No tile there".to_owned())?;
-        player.return_tile(tile_placement.tile);
+        player.return_tile(Tile::from(tile_placement.tile_path_type()));
         let turn_score = player.add_score(event_score);
-        self.log
-            .remove_tile(tile_placement.tile, coordinates, tile_placement.rotation);
+        self.log.remove_tile(
+            tile_placement.tile_path_type().clone(),
+            coordinates,
+            tile_placement.rotation(),
+        );
         Ok(turn_score)
     }
 
@@ -176,7 +190,7 @@ impl Nile {
     fn dispatch(&mut self, event: Event) -> Result<Option<TurnScore>, String> {
         match event {
             Event::PlaceTile(tpe) => self
-                .place_tile(tpe.tile, tpe.coordinates, tpe.rotation)
+                .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation)
                 .map(Some),
             Event::RotateTile(re) => self
                 .rotate_tile(re.new.coordinates, re.new.rotation)

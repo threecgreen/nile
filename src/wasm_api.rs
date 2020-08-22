@@ -1,5 +1,6 @@
 use crate::board::Board;
 use crate::nile::Nile;
+use crate::path::{self, TilePathType};
 use crate::player::Player;
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation, Tile};
@@ -65,12 +66,12 @@ impl WasmNile {
 
     pub fn place_tile(
         &mut self,
-        tile: Tile,
+        tile_placement_type: path::wasm::TilePathType,
         coordinates: Coordinates,
         rotation: Rotation,
     ) -> Result<TurnScore, JsValue> {
         self.nile
-            .place_tile(tile, coordinates, rotation)
+            .place_tile(tile_placement_type.into(), coordinates, rotation)
             .map_err(JsValue::from)
     }
 

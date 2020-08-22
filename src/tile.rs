@@ -3,36 +3,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use std::ops::{Add, Neg};
 use wasm_bindgen::prelude::wasm_bindgen;
-
-#[repr(u8)]
-#[derive(Copy, Clone, Debug)]
-pub enum Direction {
-    SW,
-    W,
-    NW,
-    N,
-    NE,
-    E,
-    SE,
-    S,
-}
-
-impl Direction {
-    pub fn into_offset(self) -> Offset {
-        match self {
-            Direction::SW => Offset(-1, -1),
-            Direction::W => Offset(-1, 0),
-            Direction::NW => Offset(-1, 1),
-            Direction::N => Offset(0, 1),
-            Direction::NE => Offset(1, 1),
-            Direction::E => Offset(1, 0),
-            Direction::SE => Offset(1, -1),
-            Direction::S => Offset(0, -1),
-        }
-    }
-}
 
 #[repr(u8)]
 #[wasm_bindgen]
@@ -44,42 +15,11 @@ pub enum Rotation {
     Clockwise270,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct Offset(pub i8, pub i8);
-
-impl Offset {
-    pub fn rotate(self, rotation: Rotation) -> Offset {
-        let Offset(x, y) = self;
-        match rotation {
-            Rotation::None => Offset(x, y),
-            Rotation::Clockwise90 => Offset(y, -x),
-            Rotation::Clockwise180 => Offset(-y, -x),
-            Rotation::Clockwise270 => Offset(-y, x),
-        }
-    }
-}
-
-impl Neg for Offset {
-    type Output = Offset;
-
-    fn neg(self) -> Self::Output {
-        Self(-self.0, -self.1)
-    }
-}
-
+/// A unique location on the board
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Coordinates(pub i8, pub i8);
 
-impl Add<Offset> for Coordinates {
-    type Output = Self;
-
-    fn add(self, rhs: Offset) -> Self {
-        Self(self.0 + rhs.0, self.1 + rhs.1)
-    }
-}
-
-/// A unique location on the board
 #[wasm_bindgen]
 impl Coordinates {
     #[wasm_bindgen(constructor)]
@@ -88,7 +28,7 @@ impl Coordinates {
     }
 }
 
-/// A game piece that's placed on the board
+/// A game piece that can be placed on the board
 #[repr(u8)]
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -97,7 +37,7 @@ pub enum Tile {
     ///
     /// ---
     ///
-    /// ```
+    /// ```.clone()
     Straight,
     /// ```text
     /// \
@@ -141,6 +81,7 @@ pub enum Tile {
     //  /
     /// ```
     Right135,
+    /// Can represent any one of the other `Tile` variants
     Universal,
 }
 
@@ -153,36 +94,6 @@ impl Tile {
             Tile::Universal => 35,
         }
     }
-
-    pub fn directions(self) -> Vec<Direction> {
-        match self {
-            Tile::Straight => vec![Direction::S, Direction::N],
-            Tile::Diagonal => vec![Direction::SW, Direction::NE],
-            Tile::Center90 => vec![Direction::S, Direction::W],
-            Tile::Corner90 => vec![Direction::SW, Direction::SE],
-            Tile::Left45 => vec![Direction::S, Direction::NW],
-            Tile::Right45 => vec![Direction::S, Direction::NE],
-            Tile::Left135 => vec![Direction::S, Direction::SW],
-            Tile::Right135 => vec![Direction::S, Direction::SE],
-            Tile::Universal => vec![
-                Direction::S,
-                Direction::SW,
-                Direction::W,
-                Direction::NW,
-                Direction::N,
-                Direction::NE,
-                Direction::E,
-                Direction::SE,
-            ],
-        }
-    }
-}
-
-#[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-pub struct TilePlacement {
-    pub tile: Tile,
-    pub rotation: Rotation,
 }
 
 /// Holds tiles that can still be drawn by a player
