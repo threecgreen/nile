@@ -21,6 +21,7 @@ interface IState {
 
 type Action =
     | {type: "setDraggedTile", tilePath: TilePath, isUniversal: boolean, idx: number}
+    | {type: "setUniversalPath", coordinates: CoordinateTuple, tilePath: TilePath}
     | {type: "selectTile", coordinates: CoordinateTuple}
     | {type: "placeTile", draggedTile: IDraggedTile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore}
     | {type: "rotateTile", coordinates: CoordinateTuple, rotation: Rotation}

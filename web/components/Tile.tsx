@@ -1,14 +1,8 @@
-import React from "react";
-import { Tile as TileEnum, Rotation, TilePath, tile_path_to_tile } from "nile";
-import Straight from "assets/tiles/Straight.svg"
-import Diagonal from "assets/tiles/Diagonal.svg"
-import Center90 from "assets/tiles/Center90.svg"
-import Corner90 from "assets/tiles/Corner90.svg"
-import Tile45 from "assets/tiles/45.svg";
-import Tile135 from "assets/tiles/135.svg";
-import Universal from "assets/tiles/Universal.svg";
-import styles from "components/Tile.module.css";
 import { c } from "lib/utils";
+import { Rotation, Tile as TileEnum, TilePath, tile_path_to_tile } from "nile";
+import React from "react";
+import styles from "./Tile.module.css";
+import { TileSvg } from "./TileSvg";
 
 const rotationToCSs = (rotation: Rotation): string => {
     switch (rotation) {
@@ -23,10 +17,6 @@ const rotationToCSs = (rotation: Rotation): string => {
     }
 }
 
-const reflectToCss = (reflect: boolean): string => {
-    return reflect ? "scaleX(-1)" : "";
-}
-
 export const RackTile: React.FC<{tile: TileEnum}> = ({tile}) => (
     <div className={ styles.tile }>
         <TileSvg tile={ tile } />
@@ -34,35 +24,6 @@ export const RackTile: React.FC<{tile: TileEnum}> = ({tile}) => (
 )
 RackTile.displayName = "RackTile";
 
-const TileSvg: React.FC<{tile: TileEnum}> = ({tile}) => {
-    switch (tile) {
-        case TileEnum.Straight:
-            return <Straight />;
-        case TileEnum.Diagonal:
-            return <Diagonal />;
-        case TileEnum.Center90:
-            return <Center90 />;
-        case TileEnum.Corner90:
-            return <Corner90 />;
-        case TileEnum.Left45:
-            return <Tile45
-                style={ {transform: reflectToCss(true)} }
-            />;
-        case TileEnum.Right45:
-            return <Tile45 />;
-        case TileEnum.Left135:
-            return <Tile135
-                style={ {transform: reflectToCss(true)} }
-            />;
-        case TileEnum.Right135:
-            return <Tile135 />;
-        case TileEnum.Universal:
-            return <Universal />;
-        default:
-            throw new Error(`Unknown tile type: ${tile}`);
-    }
-}
-TileSvg.displayName = "TileSvg";
 
 interface IProps {
     tilePath: TilePath;
@@ -88,8 +49,15 @@ export const Tile: React.FC<IProps> = ({tilePath, isUniversal, rotation, isSelec
             style={ {transform: rotationToCSs(rotation)} }
             onClick={ onSelect }
         >
-            <TileSvg tile={ tile_path_to_tile(tilePath) } />
-            {/* TODO: place background universal tile if universal */}
+            {
+                isUniversal
+                && <TileSvg tile={ TileEnum.Universal }
+                    strokeColor="#666666"
+                />
+            }
+            <TileSvg tile={ tile_path_to_tile(tilePath) }
+                strokeColor="royalblue"
+            />
         </div>
     );
 }

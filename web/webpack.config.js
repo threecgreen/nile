@@ -20,15 +20,6 @@ module.exports = (_env, argv) => {
                     ]
                 },
                 {
-                    test: /\.svg$/,
-                    use: [
-                        {
-                            loader: '@svgr/webpack',
-                            // options: { typescript: true }
-                        }
-                    ],
-                },
-                {
                     test: /\.css$/i,
                     use: [
                         'style-loader',
