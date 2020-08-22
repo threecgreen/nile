@@ -1,7 +1,7 @@
-import { Rotation, Tile as TileEnum } from "nile";
+import { Tile as TileEnum } from "nile";
 import React from "react";
 import { GridCell } from "./Grid";
-import { Tile } from "./Tile";
+import { RackTile } from "./Tile";
 
 interface IProps {
     tiles: TileEnum[];
@@ -24,12 +24,7 @@ export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, setDraggedTile
                                 onDrag={ onDrag }
                                 onDragStart={ (_) => setDraggedTile(i, tile) }
                             >
-                                <Tile rotation={ Rotation.None }
-                                    tile={ tile }
-                                    // TODO: break up this functionality
-                                    isSelected={ false }
-                                    onSelect={ () => undefined }
-                                />
+                                <RackTile tile={ tile } />
                             </div>
                         </GridCell>
                     )) }

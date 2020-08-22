@@ -9,7 +9,10 @@ mod wasm_api;
 
 pub use board::{Board, Cell, TilePlacement};
 pub use nile::Nile;
-pub use path::{wasm::TilePathType, TilePath};
+pub use path::{
+    wasm::{tile_path_to_tile, TilePathType},
+    TilePath,
+};
 pub use player::Player;
 pub use tile::{Coordinates, Rotation, Tile};
 pub use wasm_api::WasmNile;

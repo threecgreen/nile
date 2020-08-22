@@ -1,5 +1,5 @@
 import React from "react";
-import { Tile as TileEnum, Rotation } from "nile";
+import { Tile as TileEnum, Rotation, TilePath, tile_path_to_tile } from "nile";
 import Straight from "assets/tiles/Straight.svg"
 import Diagonal from "assets/tiles/Diagonal.svg"
 import Center90 from "assets/tiles/Center90.svg"
@@ -9,13 +9,6 @@ import Tile135 from "assets/tiles/135.svg";
 import Universal from "assets/tiles/Universal.svg";
 import styles from "components/Tile.module.css";
 import { c } from "lib/utils";
-
-interface IProps {
-    tile: TileEnum;
-    rotation: Rotation;
-    isSelected: boolean;
-    onSelect: () => void;
-};
 
 const rotationToCSs = (rotation: Rotation): string => {
     switch (rotation) {
@@ -34,54 +27,69 @@ const reflectToCss = (reflect: boolean): string => {
     return reflect ? "scaleX(-1)" : "";
 }
 
-export const Tile: React.FC<IProps> = ({tile, rotation, isSelected, ...props}) => {
-    let svg;
-    let reflect = false;
+export const RackTile: React.FC<{tile: TileEnum}> = ({tile}) => (
+    <div className={ styles.tile }>
+        <TileSvg tile={ tile } />
+    </div>
+)
+RackTile.displayName = "RackTile";
+
+const TileSvg: React.FC<{tile: TileEnum}> = ({tile}) => {
     switch (tile) {
         case TileEnum.Straight:
-            svg = <Straight />;
-            break;
+            return <Straight />;
         case TileEnum.Diagonal:
-            svg = <Diagonal />;
-            break;
+            return <Diagonal />;
         case TileEnum.Center90:
-            svg = <Center90 />;
-            break;
+            return <Center90 />;
         case TileEnum.Corner90:
-            svg = <Corner90 />;
-            break;
+            return <Corner90 />;
         case TileEnum.Left45:
-            svg = <Tile45 />;
-            reflect = true;
-            break;
+            return <Tile45
+                style={ {transform: reflectToCss(true)} }
+            />;
         case TileEnum.Right45:
-            svg = <Tile45 />;
-            break;
+            return <Tile45 />;
         case TileEnum.Left135:
-            svg = <Tile135 />;
-            reflect = true;
-            break;
+            return <Tile135
+                style={ {transform: reflectToCss(true)} }
+            />;
         case TileEnum.Right135:
-            svg = <Tile135 />;
-            break;
+            return <Tile135 />;
         case TileEnum.Universal:
-            svg = <Universal />;
-            break;
+            return <Universal />;
         default:
             throw new Error(`Unknown tile type: ${tile}`);
     }
+}
+TileSvg.displayName = "TileSvg";
 
+interface IProps {
+    tilePath: TilePath;
+    isUniversal: boolean;
+    rotation: Rotation;
+    isSelected: boolean;
+    onSelect: () => void;
+};
+
+export const Tile: React.FC<IProps> = ({tilePath, isUniversal, rotation, isSelected, ...props}) => {
     const onSelect = (e: React.MouseEvent) => {
         e.preventDefault();
         props.onSelect();
     }
 
     return (
-        <div className={ c([styles.tile, isSelected ? styles.selected : undefined]) }
-            style={ { transform: `${rotationToCSs(rotation)} ${reflectToCss(reflect)}`} }
+        <div
+            className={ c([
+                styles.tile,
+                isSelected ? styles.selected : undefined,
+                isUniversal ? styles.universal : undefined,
+            ]) }
+            style={ {transform: rotationToCSs(rotation)} }
             onClick={ onSelect }
         >
-            { svg }
+            <TileSvg tile={ tile_path_to_tile(tilePath) } />
+            {/* TODO: place background universal tile if universal */}
         </div>
     );
 }

@@ -1,9 +1,11 @@
-import { Rotation, Tile, TurnScore, WasmNile } from "nile";
+import { Rotation, Tile, TurnScore, WasmNile, TilePath } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, toBoardArray, toPlayerDataArray } from "./common";
+import { act } from "react-test-renderer";
 
 interface IDraggedTile {
     idx: number;
-    tile: Tile;
+    tilePath: TilePath;
+    isUniversal: boolean;
 }
 
 interface IState {
@@ -18,9 +20,9 @@ interface IState {
 }
 
 type Action =
-    | {type: "setDraggedTile", tile: Tile, idx: number}
+    | {type: "setDraggedTile", tilePath: TilePath, isUniversal: boolean, idx: number}
     | {type: "selectTile", coordinates: CoordinateTuple}
-    | {type: "placeTile", tile: Tile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore, idx: number}
+    | {type: "placeTile", draggedTile: IDraggedTile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore}
     | {type: "rotateTile", coordinates: CoordinateTuple, rotation: Rotation}
     | {type: "removeTile"}
     | {type: "undo"}
@@ -42,7 +44,7 @@ export const initState = (playerNames: string[]): IState => {
 export const reducer: React.Reducer<IState, Action> = (state, action) => {
     switch (action.type) {
         case "setDraggedTile":
-            return {...state, draggedTile: {idx: action.idx, tile: action.tile}};
+            return {...state, draggedTile: {...action}};
         case "selectTile":
             return {...state, selectedTile: action.coordinates};
         case "placeTile": {
@@ -51,7 +53,8 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             const board = [...state.board];
             const column = [...board[i]];
             const cell: Cell = {...column[j], tilePlacement: {
-                tile: action.tile,
+                tilePath: action.draggedTile.tilePath,
+                isUniversal: action.draggedTile.isUniversal,
                 rotation: action.rotation,
             }};
             column[j] = cell;
@@ -63,7 +66,7 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             playerData.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
             // Remove tile from tile rack
             const tileRack = [...playerData.tileRack];
-            tileRack.splice(action.idx, 1);
+            tileRack.splice(action.draggedTile.idx, 1);
             playerData.tileRack = tileRack;
             playerDataArray[state.currentPlayerId] = playerData;
             // Add to currentTurnTiles
@@ -81,7 +84,7 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
                 return state;
             }
             const cell: Cell = {...column[j], tilePlacement: {
-                tile: column[j].tilePlacement!.tile,
+                ...column[j].tilePlacement!,
                 rotation: action.rotation,
             }};
             column[j] = cell;

@@ -1,9 +1,10 @@
-import { Board, Tile, Rotation, Player } from "nile";
+import { Board, Player, Rotation, Tile, TilePathType, TilePath } from "nile";
 import { range } from "./utils";
 
 export type CoordinateTuple = [number, number];
 export type TilePlacement = {
-    tile: Tile;
+    tilePath: TilePath;
+    isUniversal: boolean;
     rotation: Rotation;
 }
 export type Cell = {
@@ -21,13 +22,14 @@ export const toBoardArray = (board: Board): BoardArray => {
 
             const optTile = cell.tile();
             if (optTile) {
+                const tilePathType: TilePathType = optTile.get_tile_path_type();
                 boardArray[i].push({
                     bonus: cell.bonus(),
                     tilePlacement: {
+                        tile: TilePath[tilePathType.tile_path()],
+                        isUniversal: tilePathType.is_universal(),
                         // @ts-ignore
-                        tile: Tile[optTile.tile],
-                        // @ts-ignore
-                        rotation: Rotation[optTile.rotation],
+                        rotation: Rotation[optTile.get_rotation()],
                     },
                 });
             } else {

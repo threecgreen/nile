@@ -22,7 +22,8 @@ export const Board: React.FC<IProps> = ({board, selectedTile, onDropFromRack, on
                     { row.map((cell, j) => (
                         <GridCell key={ j }>
                             { cell.tilePlacement
-                            ? <Tile tile={ cell.tilePlacement.tile }
+                            ? <Tile tilePath={ cell.tilePlacement.tilePath }
+                                isUniversal={ cell.tilePlacement.isUniversal }
                                 onSelect={ () => onSelect([i, j]) }
                                 isSelected={ selectedTile !== null
                                     && i === selectedTile[0] && j === selectedTile[1] }

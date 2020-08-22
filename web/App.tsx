@@ -1,9 +1,8 @@
 import { Board } from "components/Board";
 import { Button } from "components/Button";
-import { TileRack } from "components/TileRack";
 import { useUndoReducer } from "lib/hooks";
 import { initState, reducer } from "lib/state";
-import { Coordinates, Rotation } from "nile";
+import { Coordinates, Rotation, TilePathType, Tile, TilePath } from "nile";
 import React from "react";
 import { mod } from "lib/utils";
 import { Player } from "components/Player";
@@ -19,11 +18,15 @@ export const App: React.FC = () => {
             // Move this to another file
             try {
                 const rotation = Rotation.None;
-                const score = state.nile.place_tile(state.draggedTile.tile, new Coordinates(row, column), rotation);
+                const tilePathType = state.draggedTile.isUniversal
+                    ? TilePathType.universal(state.draggedTile.tilePath)
+                    : TilePathType.normal(state.draggedTile.tilePath);
+                // TODO: support
+                const score = state.nile.place_tile(tilePathType, new Coordinates(row, column), rotation);
                 dispatch({
                     type: "placeTile",
-                    tile: state.draggedTile.tile, coordinates: [row, column],
-                    rotation, score, idx: state.draggedTile.idx
+                    draggedTile: state.draggedTile, coordinates: [row, column],
+                    rotation, score,
                 });
             } catch (e) {
                 console.error(e);
@@ -48,7 +51,7 @@ export const App: React.FC = () => {
     const onEndTurn = () => {
         try {
             // state.nile.endn
-        } catch {
+        } catch(e) {
             console.error(e);
         }
     }
@@ -76,7 +79,20 @@ export const App: React.FC = () => {
                 { state.playerData.map((player, id) => (
                     <Player player={ player }
                         isCurrentTurn={ id === state.currentPlayerId }
-                        setDraggedTile={ (idx, tile) => dispatch({type: "setDraggedTile", tile, idx}) }
+                        setDraggedTile={ (idx, tile) => {
+                            if (tile === Tile.Universal) {
+                                dispatch({
+                                    type: "setDraggedTile",
+                                    isUniversal: true, tilePath: TilePath.Straight, idx
+                                });
+                            } else {
+                                const tpt = TilePathType.tile_into_normal(tile);
+                                dispatch({
+                                    type: "setDraggedTile",
+                                    isUniversal: false, tilePath: tpt.tile_path(), idx
+                                });
+                            }
+                        } }
                     />
                 )) }
             </ul>

@@ -55,7 +55,12 @@ impl From<TilePath> for Tile {
 pub mod wasm {
     use crate::tile::Tile;
 
-    use wasm_bindgen::prelude::wasm_bindgen;
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen]
+    pub fn tile_path_to_tile(tile_path: super::TilePath) -> Tile {
+        Tile::from(tile_path)
+    }
 
     #[wasm_bindgen]
     #[derive(Clone, Debug)]
@@ -71,6 +76,28 @@ pub mod wasm {
 
         pub fn normal(tp: super::TilePath) -> Self {
             TilePathType(super::TilePathType::Normal(tp))
+        }
+
+        fn tile_path_from_tile(t: Tile) -> Result<super::TilePath, String> {
+            match t {
+                Tile::Straight => Ok(super::TilePath::Straight),
+                Tile::Diagonal => Ok(super::TilePath::Diagonal),
+                Tile::Center90 => Ok(super::TilePath::Center90),
+                Tile::Corner90 => Ok(super::TilePath::Corner90),
+                Tile::Left45 => Ok(super::TilePath::Left45),
+                Tile::Right45 => Ok(super::TilePath::Left45),
+                Tile::Left135 => Ok(super::TilePath::Left135),
+                Tile::Right135 => Ok(super::TilePath::Left135),
+                Tile::Universal => Err("Can't convert universal tile to tile path".to_owned()),
+            }
+        }
+
+        pub fn tile_into_normal(t: Tile) -> Result<TilePathType, JsValue> {
+            Ok(Self::normal(Self::tile_path_from_tile(t)?))
+        }
+
+        pub fn tile_into_universal(t: Tile) -> Result<TilePathType, JsValue> {
+            Ok(Self::universal(Self::tile_path_from_tile(t)?))
         }
 
         pub fn tile_path(&self) -> super::TilePath {
