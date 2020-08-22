@@ -1,7 +1,6 @@
 use crate::board::Board;
 use crate::nile::{EndTurnUpdate, Nile};
 use crate::path::{self, TilePath};
-use crate::player::Player;
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
 
@@ -117,19 +116,5 @@ impl WasmNile {
 
     pub fn redo(&mut self) -> Result<Option<TurnScore>, JsValue> {
         self.0.redo().map_err(JsValue::from)
-    }
-}
-
-#[wasm_bindgen]
-impl Player {
-    pub fn get_name(&self) -> JsValue {
-        JsValue::from(self.name())
-    }
-
-    pub fn get_tiles(&self) -> Array {
-        self.tiles()
-            .into_iter()
-            .map(|t| JsValue::from_serde(t).unwrap())
-            .collect()
     }
 }

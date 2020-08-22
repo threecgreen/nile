@@ -99,6 +99,27 @@ impl Player {
     }
 }
 
+pub mod wasm {
+    use super::Player;
+
+    use js_sys::Array;
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen]
+    impl Player {
+        pub fn get_name(&self) -> JsValue {
+            JsValue::from(self.name())
+        }
+
+        pub fn get_tiles(&self) -> Array {
+            self.tiles()
+                .into_iter()
+                .map(|t| JsValue::from_serde(t).unwrap())
+                .collect()
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

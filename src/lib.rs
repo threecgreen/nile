@@ -7,15 +7,15 @@ mod score;
 mod tile;
 mod wasm_api;
 
-pub use board::{Board, Cell, TilePlacement};
-pub use nile::Nile;
-pub use path::{
+pub use crate::board::{Board, Cell, TilePlacement};
+pub use crate::nile::Nile;
+pub use crate::path::{
     wasm::{tile_path_to_tile, TilePathType},
     TilePath,
 };
-pub use player::Player;
-pub use tile::{Coordinates, Rotation, Tile};
-pub use wasm_api::WasmNile;
+pub use crate::player::Player;
+pub use crate::tile::{Coordinates, Rotation, Tile};
+pub use crate::wasm_api::WasmNile;
 
 use wasm_bindgen::prelude::*;
 
