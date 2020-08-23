@@ -1,11 +1,11 @@
 import { Board } from "components/Board";
-import { Button } from "components/Button";
-import { Player } from "components/Player";
 import { useEventListener } from "lib/hooks";
 import { initState, reducer } from "lib/state";
 import { mod } from "lib/utils";
-import { Coordinates, Rotation, Tile, TilePath, TilePathType } from "nile";
+import { Coordinates, Rotation, TilePath, TilePathType } from "nile";
 import React from "react";
+import { Controls } from "./Controls";
+import { Players } from "./Players";
 
 export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
     // State
@@ -26,6 +26,14 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
         } else if (e.key === "x") {
             if (state.selectedTile) {
                 onRemoveTile();
+            }
+        } else if (e.key === "u") {
+            if (fullState.past.length > 0) {
+                onUndo();
+            }
+        } else if (e.key === "r") {
+            if (fullState.future.length > 0) {
+                onRedo();
             }
         }
     });
@@ -100,6 +108,21 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
             }
         }
     }
+    const onUpdateUniversalPath = (tilePath: TilePath) => {
+        if(state.selectedTile) {
+            const [row, column] = state.selectedTile;
+            const cell = state.board[row][column];
+            if(cell.tilePlacement && cell.tilePlacement.isUniversal) {
+                try {
+                    state.nile.update_universal_path(new Coordinates(row, column), tilePath);
+                    const tilePlacement = {...cell.tilePlacement, tilePath};
+                    dispatch({type: "updateUniversalPath", coordinates: [row, column], tilePlacement});
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+    }
     const onEndTurn = () => {
         try {
             const update = state.nile.end_turn();
@@ -125,64 +148,24 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
         }
     }
 
+    const selectedIsUniversal = state.selectedTile !== null && (state.board[state.selectedTile[0]][state.selectedTile[1]].tilePlacement?.isUniversal ?? false);
     // Render
     return (
         <>
-            <ul>
-                { state.playerData.map((player, id) => (
-                    <Player player={ player }
-                        isCurrentTurn={ id === state.currentPlayerId }
-                        setDraggedTile={ (idx, tile) => {
-                            if (tile === Tile.Universal) {
-                                dispatch({
-                                    type: "setDraggedTile",
-                                    isUniversal: true, tilePath: TilePath.Straight, idx
-                                });
-                            } else {
-                                const tpt = TilePathType.tile_into_normal(tile);
-                                dispatch({
-                                    type: "setDraggedTile",
-                                    isUniversal: false, tilePath: tpt.tile_path(), idx
-                                });
-                            }
-                        } }
-                    />
-                )) }
-            </ul>
-            <div>
-                <Button enabled={ state.selectedTile !== null }
-                    onClick={ () => onRotate(false) }
-                >
-                    Rotate counter-clockwise
-                </Button>
-                <Button enabled={ state.selectedTile !== null }
-                    onClick={ () => onRotate(true) }
-                >
-                    Rotate clockwise
-                </Button>
-                <Button enabled={ state.currentTurnTiles.length > 0 }
-                    onClick={ onRemoveTile }
-                >
-                    Remove tile
-                </Button>
-                <Button enabled={ state.nile.can_undo() }
-                    onClick={ onUndo }
-                >
-                    Undo
-                </Button>
-                <Button enabled={ state.nile.can_redo() }
-                    onClick={ onRedo }
-                >
-                    Redo
-                </Button>
-                <Button
-                    // Must have played at least one tile
-                    enabled={ state.currentTurnTiles.length > 0 }
-                    onClick={ onEndTurn }
-                >
-                    End Turn
-                </Button>
-            </div>
+            {/* TODO: sticky header */}
+            <Controls
+                hasPlacedTile={ state.currentTurnTiles.length > 0 }
+                hasSelectedTile={ state.selectedTile !== null }
+                selectedIsUniversal={ selectedIsUniversal }
+                canUndo={ fullState.past.length > 0 }
+                canRedo={ fullState.future.length > 0 }
+                onRotate={ onRotate }
+                onRemoveTile={ onRemoveTile }
+                onUpdateUniversalPath={ onUpdateUniversalPath }
+                onUndo={ onUndo }
+                onRedo={ onRedo }
+                onEndTurn={ onEndTurn }
+            />
             <Board board={ state.board }
                 selectedTile={ state.selectedTile }
                 currentTurnTiles={ state.currentTurnTiles }
@@ -190,6 +173,11 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                 onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
                 // TODO: may want separate logic for this in the future
                 onDragStart={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
+            />
+            {/* TODO: sticky footer */}
+            <Players currentPlayerId={ state.currentPlayerId }
+                playerData={ state.playerData }
+                setDraggedTile={ (isUniversal, tilePath, idx) => dispatch({type: "setDraggedTile", isUniversal, tilePath, idx}) }
             />
         </>
     );

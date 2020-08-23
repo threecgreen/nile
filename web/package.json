@@ -25,6 +25,7 @@
   "license": "MIT",
   "homepage": "https://github.com/threecgreen/nile#README.md",
   "dependencies": {
+    "@carbon/icons-react": "^10.16.0",
     "nile": "file:../pkg",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
@@ -33,6 +34,7 @@
     "@testing-library/jest-dom": "^5.11.3",
     "@testing-library/react": "^10.4.8",
     "@testing-library/react-hooks": "^3.4.1",
+    "@types/carbon__icons-react": "^10.14.0",
     "@types/react": "^16.9.46",
     "@types/react-dom": "^16.9.8",
     "copy-webpack-plugin": "^6.0.3",

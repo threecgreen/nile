@@ -52,7 +52,7 @@ export const Tile: React.FC<IProps> = ({tilePath, isUniversal, rotation, isSelec
             {
                 isUniversal
                 && <TileSvg tile={ TileEnum.Universal }
-                    strokeColor="#666666"
+                    strokeColor="#888888"
                 />
             }
             <TileSvg tile={ tile_path_to_tile(tilePath) }
@@ -79,7 +79,7 @@ export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, ...props}) => {
             onDragOver={ (e) => e.preventDefault() }
             onDrop={ onDrop }
         >
-            { bonus ? Math.abs(bonus) : null }
+            { bonus ? <p>{ Math.abs(bonus) }</p> : null }
         </div>
     );
 }

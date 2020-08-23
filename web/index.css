@@ -1,3 +1,10 @@
 * {
-    font-family: Helvetica, Arial, sans-serif;
+    font-family: Lato, sans-serif;
+}
+
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.05em;
 }

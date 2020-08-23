@@ -1,8 +1,4 @@
 .board {
-    /* display: grid;
-    gap: 0px;
-    column-width: 40px;
-    width: 890px; */
     align-self: center;
     margin: auto; /* Horizontally centered */
 }
@@ -11,7 +7,4 @@
     color: royalblue;
     font-size: 2rem;
     margin: 0;
-    /* border-width: 0 4px 4px 0; */
-    /* display: inline-block; */
-    /* padding: 4px; */
 }

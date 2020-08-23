@@ -1,9 +1,10 @@
 .tile {
-    height: 40px;
-    width: 40px;
+    height: 2rem;
+    width: 2rem;
     border: solid;
     border-width: 1px;
-    margin: -0.5px;
+
+    background-color: rgb(253, 255, 222);
 
     /* For bonus/penalty text */
     /* vertical-align: middle; */
@@ -12,7 +13,6 @@
 }
 
 .universal {
-    display: inline-block;
     position: relative;
 }
 .universal > :first-child ~ * {
@@ -28,11 +28,11 @@
 }
 
 .penalty {
-    background-color: orangered;
+    background-color: rgb(255, 123, 0);
 }
 
 .bonus {
-    background-color: green;
+    background-color: rgb(26, 173, 36);
 }
 
 .end-game {

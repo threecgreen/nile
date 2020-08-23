@@ -103,13 +103,10 @@ Universal.displayName = "Universal";
 
 const SvgWrapper: React.FC<{style?: CSSProperties}> = (props) => (
     <svg
-        // version="1.1"
-        // id="Layer_1"
-        // x="0px" y="0px"
-        width="40"
-        height="40"
-        // viewBox="0 0 40 40"
-        // enableBackground="new 0 0 40 40"
+        // width="2rem"
+        // height="2rem"
+        // We're drawing on a grid of [0, 40], [0, 40]
+        viewBox="0 0 40 40"
         style={ props.style ?? {} }
     >
         { props.children }
