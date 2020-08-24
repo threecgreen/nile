@@ -282,14 +282,7 @@ impl Nile {
                 .update_universal_path(uup.coordinates, uup.new_tile_path)
                 .map(|_| None),
             Event::MoveTile(mte) => self.move_tile(mte.old, mte.new).map(Some),
-            Event::CantPlay => {
-                self.cant_play()?;
-                Ok(None)
-            }
-            Event::EndTurn => {
-                self.end_turn()?;
-                Ok(None)
-            }
+            Event::CantPlay | Event::EndTurn => Err(format!("Unsupported event type: {:?}", event)),
         }
     }
 
@@ -331,10 +324,17 @@ pub struct CPUTurnUpdate {
 pub mod wasm {
     use super::*;
 
-#[wasm_bindgen]
-impl CPUTurnUpdate {
-    pub fn get_placements(&self) -> Vec<>
-}
+    use crate::log;
+
+    #[wasm_bindgen]
+    impl CPUTurnUpdate {
+        pub fn get_placements(&self) -> Array {
+            self.placements
+                .iter()
+                .map(|tpe| JsValue::from(log::wasm::TilePlacementEvent::from(tpe.to_owned())))
+                .collect()
+        }
+    }
 }
 
 #[cfg(test)]

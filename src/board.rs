@@ -558,4 +558,61 @@ mod test {
         let res = target.validate_turns_moves(coordinates_set);
         matches!(res, Err(msg) if msg.contains("cross over"));
     }
+
+    #[test]
+    fn universal_start() {
+        let mut target = Board::new();
+        let coordinates = vec![
+            Coordinates(10, 0),
+            Coordinates(11, 1),
+            Coordinates(12, 2),
+            Coordinates(13, 3),
+            Coordinates(12, 4),
+        ];
+        target
+            .place_tile(
+                coordinates[0],
+                TilePlacement::new(
+                    TilePathType::Universal(TilePath::Right45),
+                    Rotation::Clockwise90,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[1],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Diagonal),
+                    Rotation::Clockwise90,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[2],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Diagonal),
+                    Rotation::Clockwise90,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[3],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Corner90),
+                    Rotation::Clockwise180,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[4],
+                TilePlacement::new(TilePathType::Normal(TilePath::Left135), Rotation::None),
+            )
+            .unwrap();
+        let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
+        let res = target.validate_turns_moves(coordinates_set);
+        matches!(res, Ok(()));
+    }
 }
