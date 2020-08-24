@@ -8,7 +8,7 @@ interface IProps {
 
 // TODO: make expandable to view full history
 export const Scoreboard: React.FC<IProps> = ({currentPlayerId, playerData}) => {
-    let a = currentPlayerId;
+    let c = currentPlayerId;
     return (
         <table>
             <thead>

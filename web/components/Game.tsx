@@ -35,6 +35,10 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
             if (fullState.future.length > 0) {
                 onRedo();
             }
+        } else if (e.key === "E") {
+            if (state.currentTurnTiles.length > 0) {
+                onEndTurn();
+            }
         }
     });
     const onDrop = (row: number, column: number) => {
@@ -152,33 +156,38 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
     // Render
     return (
         <>
-            {/* TODO: sticky header */}
-            <Controls
-                hasPlacedTile={ state.currentTurnTiles.length > 0 }
-                hasSelectedTile={ state.selectedTile !== null }
-                selectedIsUniversal={ selectedIsUniversal }
-                canUndo={ fullState.past.length > 0 }
-                canRedo={ fullState.future.length > 0 }
-                onRotate={ onRotate }
-                onRemoveTile={ onRemoveTile }
-                onUpdateUniversalPath={ onUpdateUniversalPath }
-                onUndo={ onUndo }
-                onRedo={ onRedo }
-                onEndTurn={ onEndTurn }
-            />
-            <Board board={ state.board }
-                selectedTile={ state.selectedTile }
-                currentTurnTiles={ state.currentTurnTiles }
-                onDropFromRack={ onDrop }
-                onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
-                // TODO: may want separate logic for this in the future
-                onDragStart={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
-            />
-            {/* TODO: sticky footer */}
-            <Players currentPlayerId={ state.currentPlayerId }
-                playerData={ state.playerData }
-                setDraggedTile={ (isUniversal, tilePath, idx) => dispatch({type: "setDraggedTile", isUniversal, tilePath, idx}) }
-            />
+            <main>
+                <h1>Nile</h1>
+                {/* TODO: sticky header */}
+                <Controls
+                    hasPlacedTile={ state.currentTurnTiles.length > 0 }
+                    hasSelectedTile={ state.selectedTile !== null }
+                    selectedIsUniversal={ selectedIsUniversal }
+                    canUndo={ fullState.past.length > 0 }
+                    canRedo={ fullState.future.length > 0 }
+                    onRotate={ onRotate }
+                    onRemoveTile={ onRemoveTile }
+                    onUpdateUniversalPath={ onUpdateUniversalPath }
+                    onUndo={ onUndo }
+                    onRedo={ onRedo }
+                    onEndTurn={ onEndTurn }
+                />
+                <Board board={ state.board }
+                    selectedTile={ state.selectedTile }
+                    currentTurnTiles={ state.currentTurnTiles }
+                    onDropFromRack={ onDrop }
+                    onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
+                    // TODO: may want separate logic for this in the future
+                    onDragStart={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
+                />
+            </main>
+            <footer>
+                {/* TODO: sticky footer */}
+                <Players currentPlayerId={ state.currentPlayerId }
+                    playerData={ state.playerData }
+                    setDraggedTile={ (isUniversal, tilePath, idx) => dispatch({type: "setDraggedTile", isUniversal, tilePath, idx}) }
+                />
+            </footer>
         </>
     );
 };

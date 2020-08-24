@@ -14,6 +14,11 @@ export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, setDraggedTile
         e.preventDefault();
     }
 
+    const onClick = (e: React.MouseEvent, i: number, tile: TileEnum) => {
+        e.preventDefault();
+        setDraggedTile(i, tile);
+    }
+
     return (
         <table>
             <tbody>
@@ -23,6 +28,9 @@ export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, setDraggedTile
                             <div draggable={ isCurrentTurn }
                                 onDrag={ onDrag }
                                 onDragStart={ (_) => setDraggedTile(i, tile) }
+                                onTouchStart={ (_) => setDraggedTile(i, tile) }
+                                // TODO: how to show visually
+                                onClick={ (e) => onClick(e, i, tile) }
                             >
                                 <RackTile tile={ tile } />
                             </div>

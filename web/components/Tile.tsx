@@ -74,10 +74,16 @@ export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, isEndGame, ...props
         e.preventDefault();
         props.onDrop();
     }
+    const onTouchEnd = (e: React.TouchEvent) => {
+        e.preventDefault();
+        props.onDrop();
+    }
+
     return (
         <div className={ c([styles.tile, bonusToClassName(bonus), isEndGame ? styles.endGame : undefined]) }
             // Allow tiles to be dropped here
             onDragOver={ (e) => e.preventDefault() }
+            onTouchEnd={ onTouchEnd }
             onDrop={ onDrop }
         >
             { bonus ? <p>{ Math.abs(bonus) }</p> : null }
