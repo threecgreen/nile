@@ -13,7 +13,7 @@ interface IProps {
 
 export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, setDraggedTile}) => {
     const scoreFwd = player.scores.reduce((acc, score) => (
-        acc + score.add + score.sub
+        acc + score.add - score.sub
     ), 0);
     return (
         <section
@@ -42,7 +42,7 @@ export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, setDraggedT
                         </td>
                         <td>{ player.currentTurnScore.add }</td>
                         <td>{ player.currentTurnScore.sub }</td>
-                        <td>{ scoreFwd + player.currentTurnScore.add + player.currentTurnScore.sub }</td>
+                        <td>{ scoreFwd + player.currentTurnScore.add - player.currentTurnScore.sub }</td>
                     </tr>
                 </tbody>
             </table>
