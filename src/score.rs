@@ -59,8 +59,8 @@ impl Neg for TurnScore {
 
     fn neg(self) -> Self::Output {
         Self {
-            add: -self.sub,
-            sub: -self.add,
+            add: -self.add,
+            sub: -self.sub,
         }
     }
 }

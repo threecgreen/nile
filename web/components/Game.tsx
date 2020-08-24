@@ -26,7 +26,7 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
             }
         } else if (e.key === "x") {
             if (state.selectedTile) {
-                // remove
+                onRemoveTile();
             }
         }
     });
@@ -59,6 +59,20 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                     const newRotation = mod(cell.tilePlacement.rotation + (isClockwise ? 1 : -1), 4)    // 4 different rotations
                     state.nile.rotate_tile(new Coordinates(row, column), newRotation);
                     dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+    }
+    const onRemoveTile = () => {
+        if(state.selectedTile) {
+            const [row, column] = state.selectedTile;
+            const cell = state.board[row][column];
+            if(cell.tilePlacement) {
+                try {
+                    const score = state.nile.remove_tile(new Coordinates(row, column));
+                    dispatch({type: "removeTile", coordinates: state.selectedTile, score});
                 } catch (e) {
                     console.error(e);
                 }
@@ -118,12 +132,17 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                 <Button enabled={ state.selectedTile !== null }
                     onClick={ () => onRotate(false) }
                 >
-                    Rotate Counter-Clockwise
+                    Rotate counter-clockwise
                 </Button>
                 <Button enabled={ state.selectedTile !== null }
                     onClick={ () => onRotate(true) }
                 >
-                    Rotate Clockwise
+                    Rotate clockwise
+                </Button>
+                <Button enabled={ state.currentTurnTiles.length > 0 }
+                    onClick={ onRemoveTile }
+                >
+                    Remove tile
                 </Button>
                 <Button enabled={ state.nile.can_undo() }
                     onClick={ onUndo }
