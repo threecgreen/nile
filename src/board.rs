@@ -90,7 +90,7 @@ impl Cell {
         if self.bonus >= 0 {
             TurnScore::new(self.bonus + tile_score, 0)
         } else {
-            TurnScore::new(tile_score, self.bonus)
+            TurnScore::new(tile_score, self.bonus.abs())
         }
     }
 

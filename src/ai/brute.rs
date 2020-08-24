@@ -1,6 +1,6 @@
 use super::CPUPlayer;
 use crate::board::Board;
-use crate::log::{Event, TilePlacementEvent};
+use crate::log::TilePlacementEvent;
 use crate::path::{eval_placement, Offset, TilePath, TilePathType};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation, Tile};
@@ -158,8 +158,8 @@ impl Brute {
         // game is zero-sum
         const ADJUSTMENT: i16 = 2;
         match board.cell(next_coordinates) {
-            Some(cell) if cell.bonus() > 0 => TurnScore::new(0, cell.bonus() / ADJUSTMENT),
-            Some(cell) if cell.bonus() < 0 => TurnScore::new(-cell.bonus() / ADJUSTMENT, 0),
+            Some(cell) if cell.bonus() > 0 => TurnScore::new(0, cell.bonus().abs() / ADJUSTMENT),
+            Some(cell) if cell.bonus() < 0 => TurnScore::new(cell.bonus().abs() / ADJUSTMENT, 0),
             _ => TurnScore::default(),
         }
     }
