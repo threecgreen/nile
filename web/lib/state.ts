@@ -8,15 +8,23 @@ interface IDraggedTile {
     isUniversal: boolean;
 }
 
-interface IState {
+interface IInnerState {
     nile: WasmNile;
     board: BoardArray;
     currentPlayerId: number;
     playerData: PlayerData[];
+    /** A tile in the process of being dragged */
     draggedTile: IDraggedTile | null;
     /** Used for determining if placed tile is movable, rotatable, etc. */
     currentTurnTiles: Array<CoordinateTuple>;
+    /** Coordinates the selected tile on the board */
     selectedTile: CoordinateTuple | null;
+}
+
+interface IState {
+    past: IInnerState[];
+    now: IInnerState;
+    future: IInnerState[];
 }
 
 type Action =
@@ -33,22 +41,42 @@ type Action =
 export const initState = (playerNames: string[]): IState => {
     const nile = new WasmNile(playerNames);
     return {
-        nile,
-        board: toBoardArray(nile.board()),
-        currentPlayerId: 0,
-        playerData: toPlayerDataArray(nile.players()),
-        draggedTile: null,
-        currentTurnTiles: [],
-        selectedTile: null,
+        past: [],
+        now: {
+            nile,
+            board: toBoardArray(nile.board()),
+            currentPlayerId: 0,
+            playerData: toPlayerDataArray(nile.players()),
+            draggedTile: null,
+            currentTurnTiles: [],
+            selectedTile: null,
+        },
+        future: [],
     };
 }
 
-export const reducer: React.Reducer<IState, Action> = (state, action) => {
+const update = (prevState: IState, newState: IInnerState): IState => ({
+    ...prevState,
+    now: newState,
+});
+const undoableUpdate = (prevState: IState, newState: IInnerState): IState => ({
+    past: [prevState.now, ...prevState.past],
+    now: newState,
+    future: [],
+});
+const updateAndReset = (newState: IInnerState): IState => ({
+    past: [],
+    now: newState,
+    future: [],
+});
+
+export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
+    const state = prevState.now;
     switch (action.type) {
         case "setDraggedTile":
-            return {...state, draggedTile: {...action}};
+            return update(prevState, {...state, draggedTile: {...action}});
         case "selectTile":
-            return {...state, selectedTile: action.coordinates};
+            return update(prevState, {...state, selectedTile: action.coordinates});
         case "updateUniversalPath": {
             const [i, j] = action.coordinates;
             const board = [...state.board];
@@ -56,7 +84,7 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             const cell: Cell = {...column[j], tilePlacement: action.tilePlacement};
             column[j] = cell;
             board[i] = column;
-            return {...state, board};
+            return undoableUpdate(prevState, {...state, board});
         }
         case "placeTile": {
             // Place tile on board
@@ -84,7 +112,10 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             const currentTurnTiles = [...state.currentTurnTiles, action.coordinates];
             // Update selectedTile
             const selectedTile = action.coordinates;
-            return {...state, board, playerData: playerDataArray, currentTurnTiles, selectedTile};
+            return undoableUpdate(
+                prevState,
+                {...state, board, playerData: playerDataArray, currentTurnTiles, selectedTile}
+            );
         }
         case "rotateTile": {
             const [i, j] = action.coordinates;
@@ -92,7 +123,7 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             const column = [...board[i]];
             if(column[j].tilePlacement === null) {
                 console.warn("Tried to rotate empty tile");
-                return state;
+                return prevState;
             }
             const cell: Cell = {...column[j], tilePlacement: {
                 ...column[j].tilePlacement!,
@@ -101,7 +132,7 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             column[j] = cell;
             board[i] = column;
 
-            return {...state, board};
+            return undoableUpdate(prevState, {...state, board});
         }
         case "endTurn": {
             const playerDataArray = [...state.playerData];
@@ -114,10 +145,37 @@ export const reducer: React.Reducer<IState, Action> = (state, action) => {
             );
             playerDataArray[state.currentPlayerId] = playerData;
             const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
-            // TODO: remove undo data
-            return {...state, playerData: playerDataArray, currentPlayerId, draggedTile: null, selectedTile: null, currentTurnTiles: []};
+            return updateAndReset({
+                ...state,
+                playerData: playerDataArray,
+                currentPlayerId,
+                draggedTile: null,
+                selectedTile: null,
+                currentTurnTiles: []
+            });
         }
+        case "undo": {
+            if (prevState.past.length > 0) {
+                const [now, ...past] = prevState.past;
+                return {
+                    past,
+                    now,
+                    future: [prevState.now, ...prevState.future],
+                };
+            }
+            // fallthrough
+        }
+        case "redo":
+            if (prevState.future.length > 0) {
+                const [now, ...future] = prevState.future;
+                return {
+                    past: [prevState.now, ...prevState.past],
+                    now,
+                    future,
+                };
+            }
+            // fallthrough
         default:
-            return state;
+            return prevState;
     }
 }
