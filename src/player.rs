@@ -36,7 +36,7 @@ impl Player {
     pub fn end_turn(&mut self, tile_box: &mut TileBox) -> TurnScore {
         if self.tile_rack.is_empty() {
             // Bonus for using all tiles
-            self.add_score(TurnScore::new(20, 0));
+            self.add_score(TurnScore::from(20));
         }
         let final_turn_score = self.current_turn_score;
         Self::fill_rack(&mut self.tile_rack, tile_box);
@@ -140,7 +140,7 @@ mod test {
     #[test]
     fn adding_score_changes_score() {
         let (_, mut target) = setup();
-        let turn_score = TurnScore::new(7, 7);
+        let turn_score = TurnScore { add: 7, sub: 7 };
         let updated_score = target.add_score(turn_score);
         assert_eq!(updated_score, turn_score);
     }
@@ -149,22 +149,22 @@ mod test {
     #[test]
     fn opposite_returns_original_score() {
         let (_, mut target) = setup();
-        let score = TurnScore::new(30, 10);
+        let score = TurnScore { add: 30, sub: 10 };
         let mut current_score = target.add_score(score);
         assert_eq!(current_score, score);
         current_score = target.add_score(-score);
-        assert_eq!(current_score, TurnScore::new(0, 0));
+        assert_eq!(current_score, TurnScore { add: 0, sub: 0 });
     }
 
     #[test]
     fn end_turn_updates_scores() {
         let (mut tile_box, mut target) = setup();
         assert_eq!(target.scores, []);
-        target.add_score(TurnScore::new(10, 10));
-        let current_score = target.add_score(TurnScore::new(25, 60));
-        assert_eq!(current_score, TurnScore::new(35, 70));
+        target.add_score(TurnScore { add: 10, sub: 10 });
+        let current_score = target.add_score(TurnScore { add: 25, sub: 60 });
+        assert_eq!(current_score, TurnScore { add: 35, sub: 70 });
         assert_eq!(current_score, target.end_turn(&mut tile_box));
-        assert_eq!(target.scores, vec![TurnScore::new(35, 70)]);
+        assert_eq!(target.scores, vec![TurnScore { add: 35, sub: 70 }]);
     }
 
     #[test]
@@ -173,6 +173,9 @@ mod test {
         for tile in target.tiles().clone() {
             target.place_tile(tile);
         }
-        assert_eq!(TurnScore::new(20, 0), target.end_turn(&mut tile_box));
+        assert_eq!(
+            TurnScore { add: 20, sub: 0 },
+            target.end_turn(&mut tile_box)
+        );
     }
 }

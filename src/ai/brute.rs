@@ -7,17 +7,26 @@ use crate::tile::{Coordinates, Rotation, Tile};
 
 use std::collections::VecDeque;
 
-#[derive(Debug, Default)]
-pub struct Brute {}
+#[derive(Debug)]
+pub struct Brute {
+    player_count: usize,
+}
+
+impl Brute {
+    pub fn new(player_count: usize) -> Self {
+        Self { player_count }
+    }
+}
 
 impl CPUPlayer for Brute {
+    /// TODO: Return expected score and log error if actual doesn't match
     fn take_turn(
         &mut self,
         tiles: &VecDeque<Tile>,
         board: &Board,
     ) -> Option<Vec<TilePlacementEvent>> {
         let last_placement = board.last_placement();
-        match Self::best_moves(
+        match self.best_moves(
             board,
             last_placement.0,
             last_placement.1,
@@ -71,6 +80,7 @@ fn tile_paths_from_tile(t: Tile) -> Vec<TilePath> {
 
 impl Brute {
     fn best_moves(
+        &self,
         board: &Board,
         last_coordinates: Coordinates,
         last_offset: Offset,
@@ -112,18 +122,18 @@ impl Brute {
                             let mut new_placements = placements.clone();
                             new_placements.push(placement);
                             let new_score = turn_score
-                                + TurnScore::new(tile.score(), 0)
+                                + TurnScore::from(tile.score())
                                 + cell.score()
                                 + if tiles.len() == 1 {
                                     // Bonus for using all tiles
-                                    TurnScore::new(20, 0)
+                                    TurnScore::from(20)
                                 } else {
                                     TurnScore::default()
                                 };
                             let set_of_moves = PotentialSetOfMoves {
                                 placements: new_placements.clone(),
                                 score: new_score
-                                    + Self::next_tile_adjustment(
+                                    + self.next_tile_adjustment(
                                         board,
                                         next_coordinates + next_offset,
                                     ),
@@ -133,7 +143,7 @@ impl Brute {
                                 // Recurse
                                 let mut rem_tiles = tiles.clone();
                                 rem_tiles.remove(idx).unwrap();
-                                Self::best_moves(
+                                self.best_moves(
                                     board,
                                     next_coordinates,
                                     next_offset,
@@ -153,13 +163,13 @@ impl Brute {
             .max_by(|p1, p2| p1.score.cmp(&p2.score))
     }
 
-    fn next_tile_adjustment(board: &Board, next_coordinates: Coordinates) -> TurnScore {
+    fn next_tile_adjustment(&self, board: &Board, next_coordinates: Coordinates) -> TurnScore {
         // this should be a function of the number of players. In a two-player game, the
         // game is zero-sum
-        const ADJUSTMENT: i16 = 2;
         match board.cell(next_coordinates) {
-            Some(cell) if cell.bonus() > 0 => TurnScore::new(0, cell.bonus().abs() / ADJUSTMENT),
-            Some(cell) if cell.bonus() < 0 => TurnScore::new(cell.bonus().abs() / ADJUSTMENT, 0),
+            // when player count is 2, it's a zero-sum game, so forced
+            // are as valuable as bonuses for the player
+            Some(cell) => -cell.score() * 2 / self.player_count as i16,
             _ => TurnScore::default(),
         }
     }
@@ -172,7 +182,7 @@ mod test {
 
     #[test]
     fn maximizes_score() {
-        let mut target = Brute::default();
+        let mut target = Brute::new(2);
         let board = Board::new();
         // Tiles to get to 60 bonus on first turn using all tiles
         let tiles = VecDeque::from(vec![
@@ -208,7 +218,7 @@ mod test {
 
     #[test]
     fn second_turn() {
-        let mut target = Brute::default();
+        let mut target = Brute::new(2);
         let mut board = Board::with_last_placement(Coordinates(10, 0), Offset(0, 1));
         board
             .place_tile(

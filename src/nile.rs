@@ -174,7 +174,10 @@ impl Nile {
         // FIXME: can pass in `self.tile_box` to `player` and have it handle most of this
         let tiles = player.discard_tiles();
         let tile_score = tiles.iter().fold(0, |acc, t| acc + t.score());
-        let turn_score = TurnScore::new(0, tile_score);
+        let turn_score = TurnScore {
+            add: 0,
+            sub: tile_score,
+        };
         player.add_score(turn_score);
         self.tile_box.discard(tiles);
         player.end_turn(&mut self.tile_box);
@@ -226,7 +229,7 @@ impl Nile {
         let player_id = self.current_turn;
         // Hard-code CPU implementation for now
         Some(
-            match Brute::default().take_turn(player.tiles(), &self.board) {
+            match Brute::new(self.players.len()).take_turn(player.tiles(), &self.board) {
                 Some(tile_placement_events) => {
                     for tpe in tile_placement_events.iter() {
                         if let Err(err) = self.place_tile(

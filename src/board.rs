@@ -87,11 +87,7 @@ impl Cell {
             .as_ref()
             .map(|t| t.tile_path_type.score())
             .unwrap_or(0);
-        if self.bonus >= 0 {
-            TurnScore::new(self.bonus + tile_score, 0)
-        } else {
-            TurnScore::new(tile_score, self.bonus.abs())
-        }
+        TurnScore::from(tile_score) + TurnScore::from(self.bonus)
     }
 
     pub fn update_universal_path(&mut self, tile_path: TilePath) -> Result<TilePath, String> {

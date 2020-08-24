@@ -79,7 +79,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
 
             const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
                 // Update scores
-                player.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
+                player.currentTurnScore = action.score;
                 // Remove tile from tile rack
                 const tileRack = [...player.tileRack];
                 tileRack.splice(action.draggedTile.idx, 1);
@@ -125,7 +125,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
 
                 const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
                     // Update scores
-                    player.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
+                    player.currentTurnScore = action.score;
                     // Return tile from tile rack
                     player.tileRack = [...player.tileRack, tile_path_to_tile(tilePath)];
                     return player;
@@ -159,7 +159,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                 return cell;
             });
             const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
-                player.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
+                player.currentTurnScore = action.score;
                 return player;
             })
             const currentTurnTiles = state.currentTurnTiles.filter(
@@ -171,7 +171,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
         case "endTurn": {
             const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
                 // Update scores
-                player.scores = [...player.scores, {add: action.turnScore.add(), sub: action.turnScore.sub()}];
+                player.scores = [...player.scores, action.turnScore];
                 player.currentTurnScore = {add: 0, sub: 0};
                 player.tileRack = action.tiles.map((t) =>
                     // @ts-ignore
@@ -217,7 +217,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
             return prevState;
         case "cpuTurn": {
             const playerData = updatePlayer(state.playerData, action.cpuUpdate.player_id, (player) => {
-                player.scores = [...player.scores, {add: action.cpuUpdate.turn_score.add(), sub: action.cpuUpdate.turn_score.sub()}];
+                player.scores = [...player.scores, action.cpuUpdate.turn_score];
                 return player;
             });
             const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
