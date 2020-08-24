@@ -237,7 +237,7 @@ mod test {
         ]);
 
         let moves = target.take_turn(&tiles, &board).unwrap();
-        assert_eq!(moves.len(), 3);
+        assert_eq!(moves.len(), 2);
     }
 
     #[test]

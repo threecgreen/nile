@@ -442,6 +442,18 @@ mod test {
     }
 
     #[test]
+    fn score_includes_penalty() {
+        let bonus = -80;
+        let mut target = Cell::with_bonus(bonus);
+        assert_eq!(target.score().score(), bonus);
+        target.set_tile(TilePlacement {
+            rotation: Rotation::None,
+            tile_path_type: TilePathType::Normal(TilePath::Right45),
+        });
+        assert_eq!(target.score().score(), bonus + 8);
+    }
+
+    #[test]
     fn update_universal_path_on_cell_fails_for_empty() {
         let mut target = Cell::with_bonus(0);
         let res = target.update_universal_path(TilePath::Diagonal);
@@ -610,5 +622,62 @@ mod test {
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
         matches!(res, Ok(()));
+    }
+
+    #[test]
+    fn crossover_is_invalid() {
+        let mut target = Board::new();
+        let coordinates = vec![
+            Coordinates(14, 5),
+            Coordinates(14, 4),
+            Coordinates(14, 3),
+            Coordinates(13, 2),
+            Coordinates(13, 3),
+        ];
+        target
+            .place_tile(
+                coordinates[0],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Left135),
+                    Rotation::Clockwise90,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[1],
+                TilePlacement::new(TilePathType::Normal(TilePath::Straight), Rotation::None),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[2],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Right45),
+                    Rotation::Clockwise270,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[3],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Left135),
+                    Rotation::Clockwise270,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[4],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Center90),
+                    Rotation::Clockwise180,
+                ),
+            )
+            .unwrap();
+        let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
+        let res = target.validate_turns_moves(coordinates_set);
+        matches!(res, Err(_));
     }
 }

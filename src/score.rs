@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::*;
 /// Both `add` and `sub` should be >= 0, unless the `TurnScore` instance is
 /// part of an undo or revert option like removing a tile.
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub struct TurnScore {
     pub add: i16,
     pub sub: i16,
@@ -92,6 +92,18 @@ impl Sub for TurnScore {
     }
 }
 
+impl PartialOrd for TurnScore {
+    fn partial_cmp(&self, other: &TurnScore) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for TurnScore {
+    fn cmp(&self, other: &TurnScore) -> std::cmp::Ordering {
+        self.score().cmp(&other.score())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -156,5 +168,14 @@ mod test {
         let rhs = TurnScore { add: 16, sub: 0 };
         copy += rhs;
         assert_eq!(copy, target + rhs);
+    }
+
+    // Need custom ordering implementation. This is especially important
+    // to the AIs for choosing the correct move
+    #[test]
+    fn negative_scores_sorted_less_than_positive() {
+        let left = TurnScore::from(40);
+        let right = TurnScore::from(-80);
+        assert_eq!(left.max(right), left);
     }
 }
