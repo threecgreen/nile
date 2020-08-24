@@ -1,4 +1,4 @@
-import { Rotation, Tile, TilePath, tile_path_to_tile, TurnScore, WasmNile } from "nile";
+import { Rotation, Tile, TilePath, tile_path_to_tile, TurnScore, WasmNile, CPUTurnUpdate, TilePlacementEvent } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
 import { mod } from "./utils";
 
@@ -37,7 +37,9 @@ type Action =
     | {type: "moveTile", oldCoordinates: CoordinateTuple, newCoordinates: CoordinateTuple, tilePlacement: TilePlacement, score: TurnScore}
     | {type: "undo"}
     | {type: "redo"}
+    /** Same event for cantPlay */
     | {type: "endTurn", turnScore: TurnScore, tiles: Tile[]}
+    | {type: "cpuTurn", cpuUpdate: CPUTurnUpdate}
 
 export const initState = (playerNames: string[], aiPlayerCount: number): IState => {
     // TODO: move WasmNile behind interface for easier testing
@@ -213,6 +215,32 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                 };
             }
             return prevState;
+        case "cpuTurn": {
+            const playerData = updatePlayer(state.playerData, action.cpuUpdate.player_id, (player) => {
+                player.scores = [...player.scores, {add: action.cpuUpdate.turn_score.add(), sub: action.cpuUpdate.turn_score.sub()}];
+                return player;
+            });
+            const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
+            let board = state.board;
+            action.cpuUpdate.get_placements().forEach((placement: TilePlacementEvent) => {
+                const coordinates = placement.get_coordinates();
+                const tilePathType = placement.get_tile_path_type();
+                board = updateCell(board, [coordinates[0], coordinates[1]], (cell) => {
+                    cell.tilePlacement = {
+                        isUniversal: tilePathType.is_universal(),
+                        rotation: placement.get_rotation(),
+                        tilePath: tilePathType.tile_path()
+                    };
+                    return cell;
+                });
+            });
+            return updateAndReset({
+                ...state,
+                playerData,
+                currentPlayerId,
+                board,
+             });
+        }
         default:
             return prevState;
     }

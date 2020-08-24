@@ -1,5 +1,5 @@
 use crate::board::Board;
-use crate::nile::{EndTurnUpdate, Nile};
+use crate::nile::{CPUTurnUpdate, EndTurnUpdate, Nile};
 use crate::path::{self, TilePath};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
@@ -110,11 +110,19 @@ impl WasmNile {
         self.0.end_turn().map_err(JsValue::from)
     }
 
+    pub fn cant_play(&mut self) -> Result<EndTurnUpdate, JsValue> {
+        self.0.cant_play().map_err(JsValue::from)
+    }
+
     pub fn undo(&mut self) -> Result<Option<TurnScore>, JsValue> {
         self.0.undo().map_err(JsValue::from)
     }
 
     pub fn redo(&mut self) -> Result<Option<TurnScore>, JsValue> {
         self.0.redo().map_err(JsValue::from)
+    }
+
+    pub fn take_cpu_turn(&mut self) -> Option<CPUTurnUpdate> {
+        self.0.take_cpu_turn()
     }
 }

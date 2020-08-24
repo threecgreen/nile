@@ -13,6 +13,15 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
     // Never want to mutate history
     const state = fullState.now;
 
+    React.useEffect(() => {
+        if (state.playerData[state.currentPlayerId].isCpu) {
+            const cpuUpdate = state.nile.take_cpu_turn();
+            if (cpuUpdate) {
+                dispatch({type: "cpuTurn", cpuUpdate});
+            }
+        }
+    }, [state.currentPlayerId]);
+
     // Event handlers
     useEventListener("keydown", (e: KeyboardEvent) => {
         if (e.key === "q") {
@@ -135,6 +144,15 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
             alert(e);
         }
     }
+    const onCantPlay = () => {
+        try {
+            const update = state.nile.cant_play();
+            /// Save event as endTurn
+            dispatch({type: "endTurn", turnScore: update.get_turn_score(), tiles: update.get_tiles()});
+        } catch(e) {
+            alert(e);
+        }
+    }
     const onUndo = () => {
         try {
             const _score = state.nile.undo();
@@ -171,6 +189,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
                     onUndo={ onUndo }
                     onRedo={ onRedo }
                     onEndTurn={ onEndTurn }
+                    onCantPlay={ onCantPlay }
                 />
                 <Board board={ state.board }
                     selectedTile={ state.selectedTile }

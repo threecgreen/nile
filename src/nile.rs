@@ -1,5 +1,6 @@
 use crate::ai::{Brute, CPUPlayer};
 use crate::board::{Board, TilePlacement};
+use crate::log;
 use crate::log::{Event, Log, TilePlacementEvent};
 use crate::path::{TilePath, TilePathType};
 use crate::player::Player;
@@ -37,7 +38,7 @@ impl Nile {
                 .map(|player| Player::new(player, &mut tile_box, false))
                 .collect();
             for i in 0..ai_count {
-                players.push(Player::new(format!("cpu{}", i), &mut tile_box, false))
+                players.push(Player::new(format!("cpu{}", i), &mut tile_box, true))
             }
             Ok(Self {
                 board: Board::new(),
@@ -176,6 +177,7 @@ impl Nile {
         let turn_score = TurnScore::new(0, tile_score);
         player.add_score(turn_score);
         self.tile_box.discard(tiles);
+        player.end_turn(&mut self.tile_box);
         let update = EndTurnUpdate {
             tiles: player.tiles().clone(),
             turn_score,
@@ -227,12 +229,17 @@ impl Nile {
             match Brute::default().take_turn(player.tiles(), &self.board) {
                 Some(tile_placement_events) => {
                     for tpe in tile_placement_events.iter() {
-                        if let Err(_err) = self.place_tile(
+                        if let Err(err) = self.place_tile(
                             tpe.tile_path_type.clone(),
                             tpe.coordinates,
                             tpe.rotation,
                         ) {
-                            // TODO: log error
+                            unsafe {
+                                log(&format!(
+                                    "Failed to place a tile from CPU player: {:?}",
+                                    err
+                                ));
+                            }
                             let end_turn_update = self.cant_play().unwrap();
                             return Some(CPUTurnUpdate {
                                 placements: Vec::new(),
@@ -248,6 +255,9 @@ impl Nile {
                             turn_score: end_turn_update.turn_score,
                         },
                         Err(e) => {
+                            unsafe {
+                                log(&format!("Failed to end CPU player turn: {:?}", e));
+                            }
                             let end_turn_update = self.cant_play().unwrap();
                             CPUTurnUpdate {
                                 placements: Vec::new(),

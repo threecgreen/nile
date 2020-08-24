@@ -52,6 +52,7 @@ export type PlayerData = {
     tileRack: Tile[];
     scores: TurnScore[];
     currentTurnScore: TurnScore;
+    isCpu: boolean;
 }
 
 export const toPlayerDataArray = (players: Player[]): PlayerData[] => (
@@ -64,6 +65,7 @@ export const toPlayerDataArray = (players: Player[]): PlayerData[] => (
             )),
             scores: p.total_score() !== 0 ? [{add: p.total_score(), sub: 0}] : [],
             currentTurnScore: {add: 0, sub: 0},
+            isCpu: p.is_cpu(),
         };
     })
 )

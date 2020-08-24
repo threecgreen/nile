@@ -13,9 +13,9 @@ export const App: React.FC = () => {
     const [state, setState] = React.useState<IState>({
         // playerNames: [""],
         // hasConfirmed: false,
-        playerNames: ["player1", "player2"],
+        playerNames: ["player1"],
         hasConfirmed: true,
-        aiPlayerCount: 0,
+        aiPlayerCount: 1,
     });
     if(state.hasConfirmed) {
         return (

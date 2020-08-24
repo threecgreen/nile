@@ -1,11 +1,10 @@
 import { DownToBottom20, Redo24, RotateClockwise24, RotateCounterclockwise24, Undo24 } from "@carbon/icons-react";
+import { c } from "lib/utils";
 import { TilePath, tile_path_to_tile } from "nile";
 import React from "react";
 import { Button } from "./Button";
 import styles from "./Controls.module.css";
-import { TileSvg } from "./TileSvg";
 import { RackTile } from "./Tile";
-import { c } from "lib/utils";
 
 interface IProps {
     hasPlacedTile: boolean;
@@ -19,11 +18,12 @@ interface IProps {
     onUndo: () => void;
     onRedo: () => void;
     onEndTurn: () => void;
+    onCantPlay: () => void;
 }
 
 export const Controls: React.FC<IProps> = ({
     hasPlacedTile, hasSelectedTile, selectedIsUniversal,  canUndo, canRedo,
-    onRotate, onRemoveTile, onUpdateUniversalPath, onUndo, onRedo, onEndTurn
+    onRotate, onRemoveTile, onUpdateUniversalPath, onUndo, onRedo, onEndTurn, onCantPlay,
 }) => {
     return (
         <div className={ styles.controls }>
@@ -97,6 +97,12 @@ export const Controls: React.FC<IProps> = ({
                 onClick={ onEndTurn }
             >
                 End Turn
+            </Button>
+            <Button
+                enabled={ !hasPlacedTile }
+                onClick={ onCantPlay }
+            >
+                Can't play
             </Button>
         </div>
     );
