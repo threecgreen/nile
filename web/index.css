@@ -8,15 +8,3 @@ h1 {
     text-align: center;
     letter-spacing: -0.05em;
 }
-
-/* Sticky footer */
-#app-container {
-    display: flex;
-    min-height: 100vh;
-    flex-direction: column;
-}
-main {
-    flex: 1 0 auto;
-    max-height: 90vh;
-    overflow-y: scroll;
-}
