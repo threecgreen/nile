@@ -15,7 +15,6 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
 
     // Event handlers
     useEventListener("keydown", (e: KeyboardEvent) => {
-        console.log(e.key)
         if (e.key === "q") {
             if (state.selectedTile) {
                 onRotate(false);
@@ -30,7 +29,7 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
             }
         }
     });
-    const onDropFromRack = (row: number, column: number) => {
+    const onDrop = (row: number, column: number) => {
         if (state.draggedTile !== null) {
             // Move this to another file
             try {
@@ -38,7 +37,6 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                 const tilePathType = state.draggedTile.isUniversal
                     ? TilePathType.universal(state.draggedTile.tilePath)
                     : TilePathType.normal(state.draggedTile.tilePath);
-                // TODO: support
                 const score = state.nile.place_tile(tilePathType, new Coordinates(row, column), rotation);
                 dispatch({
                     type: "placeTile",
@@ -47,6 +45,29 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                 });
             } catch (e) {
                 console.error(e);
+            }
+        // TODO: possibly separate this logic
+        } else if (state.selectedTile !== null) {
+            const oldCell = state.board[state.selectedTile[0]][state.selectedTile[1]];
+            if (oldCell.tilePlacement) {
+                try {
+                    const tilePlacement = oldCell.tilePlacement;
+                    const score = state.nile.move_tile(
+                        new Coordinates(state.selectedTile[0], state.selectedTile[1]),
+                        new Coordinates(row, column)
+                    );
+                    dispatch({
+                        type: "moveTile",
+                        oldCoordinates: state.selectedTile,
+                        newCoordinates: [row, column],
+                        tilePlacement,
+                        score,
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                console.warn("Tried to move tile from cell with no tile");
             }
         }
     }
@@ -164,8 +185,11 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
             </div>
             <Board board={ state.board }
                 selectedTile={ state.selectedTile }
-                onDropFromRack={ onDropFromRack }
+                currentTurnTiles={ state.currentTurnTiles }
+                onDropFromRack={ onDrop }
                 onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
+                // TODO: may want separate logic for this in the future
+                onDragStart={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
             />
         </>
     );

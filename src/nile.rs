@@ -112,7 +112,6 @@ impl Nile {
     }
 
     pub fn remove_tile(&mut self, coordinates: Coordinates) -> Result<TurnScore, String> {
-        let player = self.players.get_mut(self.current_turn).expect("Player");
         if !self.log.cell_changed_in_turn(coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
@@ -120,6 +119,7 @@ impl Nile {
             .board
             .remove_tile(coordinates)
             .ok_or_else(|| "No tile there".to_owned())?;
+        let player = self.players.get_mut(self.current_turn).expect("Player");
         player.return_tile(Tile::from(tile_placement.tile_path_type()));
         let turn_score = player.add_score(event_score);
         self.log.remove_tile(
@@ -152,10 +152,11 @@ impl Nile {
         if !self.log.cell_changed_in_turn(old_coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
-        // FIXME: implement
+        let score_change = self.board.move_tile(old_coordinates, new_coordinates)?;
+        let player = self.players.get_mut(self.current_turn).expect("Player");
+        let turn_score = player.add_score(score_change);
         self.log.move_tile(old_coordinates, new_coordinates);
-        // TODO: return score diff
-        Ok(TurnScore::default())
+        Ok(turn_score)
     }
 
     pub fn cant_play(&mut self) -> Result<(), String> {
@@ -243,5 +244,64 @@ impl EndTurnUpdate {
             .into_iter()
             .map(|t| JsValue::from_serde(&t).unwrap())
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn setup() -> Nile {
+        Nile::new(vec!["player1".to_owned(), "player2".to_owned()]).unwrap()
+    }
+
+    fn get_normal_tile(target: &mut Nile) -> Tile {
+        target.players[0]
+            .tiles()
+            .iter()
+            .find(|t| **t != Tile::Universal)
+            .expect("Non-universal tile (there's max four)")
+            .clone()
+    }
+
+    /// Placing and removing a tile should have no net effect on the score
+    #[test]
+    fn place_remove_no_score_change() {
+        let mut target = setup();
+        let tile = get_normal_tile(&mut target);
+        let inter_score = target
+            .place_tile(
+                crate::path::wasm::TilePathType::tile_into_normal(tile)
+                    .unwrap()
+                    .into(),
+                Coordinates::new(10, 0),
+                Rotation::Clockwise90,
+            )
+            .unwrap();
+        assert_ne!(inter_score, TurnScore::default());
+        assert_ne!(inter_score.score(), 0);
+        let final_score = target.remove_tile(Coordinates::new(10, 0)).unwrap();
+        assert_eq!(final_score, TurnScore::default());
+        assert_eq!(final_score.score(), 0);
+    }
+
+    #[test]
+    fn move_tile_has_no_score_change_except_for_bonues() {
+        let mut target = setup();
+        let tile = get_normal_tile(&mut target);
+        let begin_score = target
+            .place_tile(
+                crate::path::wasm::TilePathType::tile_into_normal(tile)
+                    .unwrap()
+                    .into(),
+                Coordinates::new(10, 0),
+                Rotation::Clockwise90,
+            )
+            .unwrap();
+        let end_score = target
+            // Neither cell has a bonus
+            .move_tile(Coordinates::new(10, 0), Coordinates::new(9, 0))
+            .unwrap();
+        assert_eq!(begin_score, end_score);
     }
 }

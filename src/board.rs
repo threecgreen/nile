@@ -229,6 +229,20 @@ impl Board {
         }
     }
 
+    pub fn rotate_tile(
+        &mut self,
+        coordinates: Coordinates,
+        rotation: Rotation,
+    ) -> Result<(), String> {
+        let idx = self.get_index(coordinates);
+        if let Some(ref mut tile) = self.cells[idx].tile {
+            tile.rotation = rotation;
+            Ok(())
+        } else {
+            Err("Cell is empty".to_owned())
+        }
+    }
+
     pub fn remove_tile(&mut self, coordinates: Coordinates) -> Option<(TilePlacement, TurnScore)> {
         let idx = self.get_index(coordinates);
         self.cells[idx].remove_tile()
@@ -244,18 +258,24 @@ impl Board {
         self.cells[idx].update_universal_path(tile_path)
     }
 
-    pub fn rotate_tile(
+    pub fn move_tile(
         &mut self,
-        coordinates: Coordinates,
-        rotation: Rotation,
-    ) -> Result<(), String> {
-        let idx = self.get_index(coordinates);
-        if let Some(ref mut tile) = self.cells[idx].tile {
-            tile.rotation = rotation;
-            Ok(())
-        } else {
-            Err("Cell is empty".to_owned())
-        }
+        old_coordinates: Coordinates,
+        new_coordinates: Coordinates,
+    ) -> Result<TurnScore, String> {
+        let (tile_placement, removal_score) = self
+            .remove_tile(old_coordinates)
+            .ok_or_else(|| "Can't move tile when there's no tile at old coordinates".to_owned())?;
+        let placement_score = self
+            .place_tile(new_coordinates, tile_placement.clone())
+            .map_err(|e| {
+                // Try to replace the tile
+                self.place_tile(old_coordinates, tile_placement)
+                    .expect("should be able to replace tile");
+                e
+            })?;
+        // `removal_score` should already be negative to revert the score effect of placement
+        Ok(placement_score + removal_score)
     }
 
     pub fn has_tile(&self, coordinates: Coordinates) -> bool {
