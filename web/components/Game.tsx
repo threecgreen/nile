@@ -1,9 +1,8 @@
 import { Board } from "components/Board";
-import { Player } from "components/Player";
 import { useEventListener } from "lib/hooks";
 import { initState, reducer } from "lib/state";
 import { mod } from "lib/utils";
-import { Coordinates, Rotation, Tile, TilePath, TilePathType } from "nile";
+import { Coordinates, Rotation, TilePath, TilePathType } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
 import { Players } from "./Players";
@@ -109,6 +108,21 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
             }
         }
     }
+    const onUpdateUniversalPath = (tilePath: TilePath) => {
+        if(state.selectedTile) {
+            const [row, column] = state.selectedTile;
+            const cell = state.board[row][column];
+            if(cell.tilePlacement && cell.tilePlacement.isUniversal) {
+                try {
+                    state.nile.update_universal_path(new Coordinates(row, column), tilePath);
+                    const tilePlacement = {...cell.tilePlacement, tilePath};
+                    dispatch({type: "updateUniversalPath", coordinates: [row, column], tilePlacement});
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+    }
     const onEndTurn = () => {
         try {
             const update = state.nile.end_turn();
@@ -134,16 +148,20 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
         }
     }
 
+    const selectedIsUniversal = state.selectedTile !== null && (state.board[state.selectedTile[0]][state.selectedTile[1]].tilePlacement?.isUniversal ?? false);
     // Render
     return (
         <>
+            {/* TODO: sticky header */}
             <Controls
                 hasPlacedTile={ state.currentTurnTiles.length > 0 }
                 hasSelectedTile={ state.selectedTile !== null }
+                selectedIsUniversal={ selectedIsUniversal }
                 canUndo={ fullState.past.length > 0 }
                 canRedo={ fullState.future.length > 0 }
                 onRotate={ onRotate }
                 onRemoveTile={ onRemoveTile }
+                onUpdateUniversalPath={ onUpdateUniversalPath }
                 onUndo={ onUndo }
                 onRedo={ onRedo }
                 onEndTurn={ onEndTurn }
@@ -156,6 +174,7 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                 // TODO: may want separate logic for this in the future
                 onDragStart={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
             />
+            {/* TODO: sticky footer */}
             <Players currentPlayerId={ state.currentPlayerId }
                 playerData={ state.playerData }
                 setDraggedTile={ (isUniversal, tilePath, idx) => dispatch({type: "setDraggedTile", isUniversal, tilePath, idx}) }

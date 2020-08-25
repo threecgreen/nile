@@ -3,7 +3,7 @@
     margin: 1rem;
 }
 
-.controls > button {
+.controls button {
     color: black;
     background: rgb(96, 129, 228);
     border: none;
@@ -16,11 +16,35 @@
     text-transform: uppercase;
 }
 
-.controls > button:hover {
+.controls button:hover {
     background: #333;
     color: whitesmoke;
 }
 
-.controls > button:disabled {
+.controls button:disabled {
     background: rgb(192, 201, 229)
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdownContent {
+    display: none;
+    position: absolute;
+    box-shadow: 0px 2rem 2rem 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdownContent a {
+    text-decoration: none;
+    display: block;
+    width: 2rem;
+    height: 2rem;
+}
+
+.dropdown:hover button:enabled ~ .dropdownContent {
+    background-color: rgb(253, 255, 222);
+    display: block;
 }
