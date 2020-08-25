@@ -112,11 +112,15 @@ impl Brute {
                                 continue;
                             }
                             // Can't replay in same place
-                            if placements
-                                .iter()
-                                .any(|placement| placement.coordinates == next_coordinates)
-                                || !cell.is_empty()
+                            if placements.iter().any(|placement| {
+                                placement.coordinates == next_coordinates
+                                    || placement.coordinates == next_coordinates + next_offset
+                            }) || !cell.is_empty()
+                                || board.has_tile(next_coordinates + next_offset)
                             {
+                                continue;
+                            }
+                            if let Err(_) = board.no_crossover(next_coordinates, next_offset) {
                                 continue;
                             }
                             let mut new_placements = placements.clone();
@@ -143,15 +147,16 @@ impl Brute {
                                 // Recurse
                                 let mut rem_tiles = tiles.clone();
                                 rem_tiles.remove(idx).unwrap();
-                                self.best_moves(
+                                if let Some(moves) = self.best_moves(
                                     board,
                                     next_coordinates,
                                     next_offset,
                                     new_score,
                                     &rem_tiles,
                                     &new_placements,
-                                )
-                                .map(|moves| potential_placements.push(moves));
+                                ) {
+                                    potential_placements.push(moves);
+                                }
                             }
                         }
                     }

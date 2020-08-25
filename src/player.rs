@@ -110,7 +110,7 @@ pub mod wasm {
 
         pub fn get_tiles(&self) -> Array {
             self.tiles()
-                .into_iter()
+                .iter()
                 .map(|t| JsValue::from_serde(t).unwrap())
                 .collect()
         }

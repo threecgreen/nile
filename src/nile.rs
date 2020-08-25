@@ -243,6 +243,7 @@ impl Nile {
                                     err
                                 ));
                             }
+                            self.undo_all();
                             let end_turn_update = self.cant_play().unwrap();
                             return Some(CPUTurnUpdate {
                                 placements: Vec::new(),
@@ -261,6 +262,7 @@ impl Nile {
                             unsafe {
                                 log(&format!("Failed to end CPU player turn: {:?}", e));
                             }
+                            self.undo_all();
                             let end_turn_update = self.cant_play().unwrap();
                             CPUTurnUpdate {
                                 placements: Vec::new(),
@@ -296,6 +298,12 @@ impl Nile {
                 .map(|_| None),
             Event::MoveTile(mte) => self.move_tile(mte.old, mte.new).map(Some),
             Event::CantPlay | Event::EndTurn => Err(format!("Unsupported event type: {:?}", event)),
+        }
+    }
+
+    fn undo_all(&mut self) {
+        while self.can_undo() {
+            self.undo().expect("Undo event");
         }
     }
 

@@ -42,6 +42,14 @@ impl TilePlacement {
     pub fn rotation(&self) -> Rotation {
         self.rotation
     }
+
+    pub fn offsets(&self) -> Vec<Offset> {
+        self.tile_path_type
+            .directions()
+            .iter()
+            .map(|d| d.into_offset().rotate(self.rotation))
+            .collect()
+    }
 }
 
 #[wasm_bindgen]
@@ -165,7 +173,6 @@ impl Board {
             (10, 18) => -160
         );
         let cells: Vec<Cell> = (0..BOARD_SIZE * BOARD_SIZE)
-            .into_iter()
             .map(|i| {
                 let row = {
                     let row = i / BOARD_SIZE;
@@ -291,7 +298,7 @@ impl Board {
 
     pub fn has_tile(&self, coordinates: Coordinates) -> bool {
         self.cell(coordinates)
-            .map(|cell| cell.is_empty())
+            .map(|cell| !cell.is_empty())
             .unwrap_or_default()
     }
 
@@ -300,27 +307,35 @@ impl Board {
         &mut self,
         mut turn_coordinates: HashSet<Coordinates>,
     ) -> Result<(), String> {
-        let mut last_placement = self.last_placement.clone();
+        let mut last_placement = self.last_placement;
         while !turn_coordinates.is_empty() {
-            let next_coordinates = last_placement.0 + last_placement.1;
+            let coordinates = last_placement.0 + last_placement.1;
             let cell = self
-                .cell(next_coordinates)
-                .ok_or_else(|| format!("Invalid coordinates {:?}", next_coordinates))?;
+                .cell(coordinates)
+                .ok_or_else(|| format!("Invalid coordinates {:?}", coordinates))?;
             let tile = cell
                 .tile()
-                .ok_or_else(|| format!("Non-contiguous path. No tile at {:?}", next_coordinates))?;
+                .ok_or_else(|| format!("Non-contiguous path. No tile at {:?}", coordinates))?;
             last_placement = eval_placement(
                 last_placement,
                 &TilePlacementEvent {
                     tile_path_type: tile.tile_path_type,
                     rotation: tile.rotation,
-                    coordinates: next_coordinates,
+                    coordinates,
                 },
             )?;
-            // self.no_crossover(last_placement.0, last_placement.1)?;
+            self.no_crossover(last_placement.0, last_placement.1)?;
             if !turn_coordinates.remove(&last_placement.0) {
                 return Err("Can't reuse a tile from another turn".to_owned());
             }
+        }
+        // Check last tile doesn't end in another tile
+        if self.has_tile(last_placement.0 + last_placement.1) {
+            return Err(format!(
+                "Can't play a tile at {:?} because it dead-ends into the rest of the river at {:?}",
+                last_placement.0 + last_placement.1,
+                last_placement.0,
+            ));
         }
         self.last_placement = last_placement;
         Ok(())
@@ -332,37 +347,45 @@ impl Board {
             && (0..self.height() as i8).contains(&coordinates.1)
     }
 
-    // / Checks whether a placement would result in a crossover. This is invalid
-    // / and can only happen with diagonal offsets. Orthogonal offsets would collide
-    // / with another tile and that's handled by other checks.
-    // //
-    // / A path like the drawing below is invalid.
-    // / ```text
-    // /  |\ /
-    // /  | X
-    // /  |/ \
-    //// ```
-    // pub fn no_crossover(&self, coordinates: Coordinates, offset: Offset) -> Result<(), String> {
-    //     // FIXME: need to check offset of at least one of the cells to see if they actually cross
-    //     if self.cell(coordinates + Offset(offset.0, 0)).and_then(|c| {
-    //         c.tile().map(|t| {
-    //             TilePath::from(t.tile_path_type)
-    //                 .directions()
-    //                 .iter()
-    //                 .any(|d| d.offset().is_diagonal())
-    //         })
-    //     })
-    //     // if self.has_tile()
-    //     // && self.has_tile(coordinates + Offset(0, offset.1))
-    //     {
-    //         Err(format!(
-    //             "The river cannot cross over itself. Invalid tile placement at {:?}",
-    //             coordinates
-    //         ))
-    //     } else {
-    //         Ok(())
-    //     }
-    // }
+    /// Checks whether a placement would result in a crossover. This is invalid
+    /// and can only happen with diagonal offsets. Orthogonal offsets would collide
+    /// with another tile and that's handled by other checks.
+    ///
+    /// A path like the drawing below is invalid.
+    /// ```text
+    ///  |\ /
+    ///  | X
+    ///  |/ \
+    /// ```
+    pub fn no_crossover(&self, coordinates: Coordinates, offset: Offset) -> Result<(), String> {
+        if !offset.is_diagonal() {
+            return Ok(());
+        }
+        let coordinates1 = coordinates + Offset(offset.0, 0);
+        let coordinates2 = coordinates + Offset(0, offset.1);
+        if let (Some(tp1), Some(tp2)) = (
+            self.cell(coordinates1).and_then(|c| c.tile.as_ref()),
+            self.cell(coordinates2).and_then(|c| c.tile.as_ref()),
+        ) {
+            if tp1
+                .offsets()
+                .into_iter()
+                .any(|o| coordinates1 + o == coordinates2)
+                && tp2
+                    .offsets()
+                    .into_iter()
+                    .any(|o| coordinates2 + o == coordinates1)
+            {
+                return Err(format!(
+                    "The river cannot cross over existing path between {:?} and {:?}. Invalid tile placement at {:?}",
+                    coordinates1,
+                    coordinates2,
+                    coordinates
+                ));
+            }
+        }
+        Ok(())
+    }
 
     // /// Determines if river is completely encircled and there is not 'escape'.
     // /// This incidates one or more moves are invalid
@@ -388,7 +411,7 @@ pub mod wasm {
 
         pub fn get_cell(&self, row: i8, column: i8) -> Result<Cell, JsValue> {
             self.cell(Coordinates(row, column))
-                .map(|cell| cell.clone())
+                .cloned()
                 .ok_or_else(|| JsValue::from("Invalid coordinates"))
         }
     }
@@ -679,5 +702,66 @@ mod test {
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
         matches!(res, Err(_));
+    }
+
+    #[test]
+    fn end_with_dead_end() {
+        let mut target = Board::new();
+        let coordinates = vec![
+            Coordinates(6, 2),
+            Coordinates(7, 3),
+            Coordinates(7, 2),
+            Coordinates(7, 1),
+        ];
+        target
+            .place_tile(
+                coordinates[0],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Diagonal),
+                    Rotation::Clockwise270,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[1],
+                TilePlacement::new(
+                    TilePathType::Universal(TilePath::Left135),
+                    Rotation::Clockwise90,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[2],
+                TilePlacement::new(TilePathType::Normal(TilePath::Straight), Rotation::None),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[3],
+                TilePlacement::new(
+                    TilePathType::Universal(TilePath::Right135),
+                    Rotation::Clockwise270,
+                ),
+            )
+            .unwrap();
+        let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
+        let res = target.validate_turns_moves(coordinates_set);
+        matches!(res, Err(_));
+    }
+
+    #[test]
+    fn has_tile() {
+        let mut target = Board::new();
+        let coordinates = Coordinates(10, 3);
+        assert!(!target.has_tile(coordinates));
+        target
+            .place_tile(
+                coordinates,
+                TilePlacement::new(TilePathType::Normal(TilePath::Straight), Rotation::None),
+            )
+            .unwrap();
+        assert!(target.has_tile(coordinates));
     }
 }
