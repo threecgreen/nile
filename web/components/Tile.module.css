@@ -4,6 +4,8 @@
     border: solid;
     border-width: 1px;
 
+    background-color: rgb(253, 255, 222);
+
     /* For bonus/penalty text */
     /* vertical-align: middle; */
     /* display: table-cell; */
@@ -26,11 +28,11 @@
 }
 
 .penalty {
-    background-color: orangered;
+    background-color: rgb(255, 123, 0);
 }
 
 .bonus {
-    background-color: green;
+    background-color: rgb(26, 173, 36);
 }
 
 .end-game {

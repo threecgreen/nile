@@ -79,7 +79,7 @@ export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, ...props}) => {
             onDragOver={ (e) => e.preventDefault() }
             onDrop={ onDrop }
         >
-            { bonus ? Math.abs(bonus) : null }
+            { bonus ? <p>{ Math.abs(bonus) }</p> : null }
         </div>
     );
 }
