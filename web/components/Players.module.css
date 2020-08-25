@@ -1,0 +1,10 @@
+.players {
+    display: grid;
+    align-content: center;
+}
+
+.players > div {
+    margin: auto;
+    display: grid;
+    gap: 2rem;
+}

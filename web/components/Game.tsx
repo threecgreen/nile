@@ -1,13 +1,12 @@
 import { Board } from "components/Board";
-import { Button } from "components/Button";
 import { Player } from "components/Player";
 import { useEventListener } from "lib/hooks";
 import { initState, reducer } from "lib/state";
 import { mod } from "lib/utils";
 import { Coordinates, Rotation, Tile, TilePath, TilePathType } from "nile";
 import React from "react";
-import { RotateClockwise24, RotateCounterclockwise24, FilterRemove24, Redo24, Undo24 } from "@carbon/icons-react";
 import { Controls } from "./Controls";
+import { Players } from "./Players";
 
 export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
     // State
@@ -28,6 +27,14 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
         } else if (e.key === "x") {
             if (state.selectedTile) {
                 onRemoveTile();
+            }
+        } else if (e.key === "u") {
+            if (fullState.past.length > 0) {
+                onUndo();
+            }
+        } else if (e.key === "r") {
+            if (fullState.future.length > 0) {
+                onRedo();
             }
         }
     });
@@ -130,27 +137,6 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
     // Render
     return (
         <>
-            <ul>
-                { state.playerData.map((player, id) => (
-                    <Player player={ player }
-                        isCurrentTurn={ id === state.currentPlayerId }
-                        setDraggedTile={ (idx, tile) => {
-                            if (tile === Tile.Universal) {
-                                dispatch({
-                                    type: "setDraggedTile",
-                                    isUniversal: true, tilePath: TilePath.Straight, idx
-                                });
-                            } else {
-                                const tpt = TilePathType.tile_into_normal(tile);
-                                dispatch({
-                                    type: "setDraggedTile",
-                                    isUniversal: false, tilePath: tpt.tile_path(), idx
-                                });
-                            }
-                        } }
-                    />
-                )) }
-            </ul>
             <Controls
                 hasPlacedTile={ state.currentTurnTiles.length > 0 }
                 hasSelectedTile={ state.selectedTile !== null }
@@ -169,6 +155,10 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                 onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
                 // TODO: may want separate logic for this in the future
                 onDragStart={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
+            />
+            <Players currentPlayerId={ state.currentPlayerId }
+                playerData={ state.playerData }
+                setDraggedTile={ (isUniversal, tilePath, idx) => dispatch({type: "setDraggedTile", isUniversal, tilePath, idx}) }
             />
         </>
     );
