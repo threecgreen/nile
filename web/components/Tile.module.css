@@ -3,7 +3,6 @@
     width: 40px;
     border: solid;
     border-width: 1px;
-    margin: -0.5px;
 
     /* For bonus/penalty text */
     /* vertical-align: middle; */
@@ -12,7 +11,6 @@
 }
 
 .universal {
-    display: inline-block;
     position: relative;
 }
 .universal > :first-child ~ * {
