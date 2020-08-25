@@ -6,6 +6,8 @@ import { initState, reducer } from "lib/state";
 import { mod } from "lib/utils";
 import { Coordinates, Rotation, Tile, TilePath, TilePathType } from "nile";
 import React from "react";
+import { RotateClockwise24, RotateCounterclockwise24, FilterRemove24, Redo24, Undo24 } from "@carbon/icons-react";
+import { Controls } from "./Controls";
 
 export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
     // State
@@ -149,40 +151,17 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
                     />
                 )) }
             </ul>
-            <div>
-                <Button enabled={ state.selectedTile !== null }
-                    onClick={ () => onRotate(false) }
-                >
-                    Rotate counter-clockwise
-                </Button>
-                <Button enabled={ state.selectedTile !== null }
-                    onClick={ () => onRotate(true) }
-                >
-                    Rotate clockwise
-                </Button>
-                <Button enabled={ state.currentTurnTiles.length > 0 }
-                    onClick={ onRemoveTile }
-                >
-                    Remove tile
-                </Button>
-                <Button enabled={ state.nile.can_undo() }
-                    onClick={ onUndo }
-                >
-                    Undo
-                </Button>
-                <Button enabled={ state.nile.can_redo() }
-                    onClick={ onRedo }
-                >
-                    Redo
-                </Button>
-                <Button
-                    // Must have played at least one tile
-                    enabled={ state.currentTurnTiles.length > 0 }
-                    onClick={ onEndTurn }
-                >
-                    End Turn
-                </Button>
-            </div>
+            <Controls
+                hasPlacedTile={ state.currentTurnTiles.length > 0 }
+                hasSelectedTile={ state.selectedTile !== null }
+                canUndo={ fullState.past.length > 0 }
+                canRedo={ fullState.future.length > 0 }
+                onRotate={ onRotate }
+                onRemoveTile={ onRemoveTile }
+                onUndo={ onUndo }
+                onRedo={ onRedo }
+                onEndTurn={ onEndTurn }
+            />
             <Board board={ state.board }
                 selectedTile={ state.selectedTile }
                 currentTurnTiles={ state.currentTurnTiles }

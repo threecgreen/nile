@@ -17,10 +17,10 @@ export const Player: React.FC<IProps> = ({player, isCurrentTurn, setDraggedTile}
     return (
         <li key={ player.name }>
             <h2>{ player.name }</h2>
-            <TileRack tiles={ player.tileRack }
+            { isCurrentTurn && <TileRack tiles={ player.tileRack }
                 isCurrentTurn={ isCurrentTurn }
                 setDraggedTile={ setDraggedTile }
-            />
+            /> }
             <table className={ styles.scores }>
                 <thead>
                     <tr>

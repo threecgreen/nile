@@ -2,11 +2,12 @@ import React from "react";
 
 interface IProps {
     onClick: () => void;
+    className?: string;
     enabled?: boolean;
+    title?: string;
 }
 
-// TODO: use icons
-export const Button: React.FC<IProps> = ({enabled, ...props}) => {
+export const Button: React.FC<IProps> = ({className, enabled, title, ...props}) => {
     enabled = enabled ?? true;
     const onClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -15,7 +16,9 @@ export const Button: React.FC<IProps> = ({enabled, ...props}) => {
 
     return (
         <button onClick={ onClick }
+            className={ className }
             disabled={ !enabled }
+            title={ title }
         >
             { props.children }
         </button>
