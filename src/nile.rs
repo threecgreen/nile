@@ -25,6 +25,10 @@ pub struct Nile {
     current_turn: usize,
     /// event log for undoing and redoing
     log: Log,
+    /// Count of consecutive "can't plays"
+    cant_play_count: u8,
+    /// Whether the game has ended
+    has_ended: bool,
 }
 
 impl Nile {
@@ -46,6 +50,8 @@ impl Nile {
                 players,
                 current_turn: 0,
                 log: Log::new(),
+                cant_play_count: 0,
+                has_ended: false,
             })
         }
     }
@@ -70,12 +76,17 @@ impl Nile {
         self.log.can_redo()
     }
 
+    pub fn has_ended(&self) -> bool {
+        self.has_ended
+    }
+
     pub fn place_tile(
         &mut self,
         tile_path_type: TilePathType,
         coordinates: Coordinates,
         rotation: Rotation,
     ) -> Result<TurnScore, String> {
+        self.if_not_ended()?;
         let tile = Tile::from(&tile_path_type);
         let player = self.players.get_mut(self.current_turn).expect("Player");
         player
@@ -102,6 +113,7 @@ impl Nile {
         coordinates: tile::Coordinates,
         rotation: Rotation,
     ) -> Result<(), String> {
+        self.if_not_ended()?;
         let old_rotation = self
             .board
             .cell(coordinates)
@@ -119,6 +131,7 @@ impl Nile {
     }
 
     pub fn remove_tile(&mut self, coordinates: Coordinates) -> Result<TurnScore, String> {
+        self.if_not_ended()?;
         if !self.log.cell_changed_in_turn(coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
@@ -142,6 +155,7 @@ impl Nile {
         coordinates: Coordinates,
         tile_path: TilePath,
     ) -> Result<(), String> {
+        self.if_not_ended()?;
         if !self.log.cell_changed_in_turn(coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
@@ -156,6 +170,7 @@ impl Nile {
         old_coordinates: Coordinates,
         new_coordinates: Coordinates,
     ) -> Result<TurnScore, String> {
+        self.if_not_ended()?;
         if !self.log.cell_changed_in_turn(old_coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
@@ -167,6 +182,8 @@ impl Nile {
     }
 
     pub fn cant_play(&mut self) -> Result<EndTurnUpdate, String> {
+        self.if_not_ended()?;
+        let player_count = self.players.len();
         let player = self.players.get_mut(self.current_turn).expect("Player");
         if self.log.can_undo() {
             return Err("Player has made moves this turn".to_owned());
@@ -181,9 +198,12 @@ impl Nile {
         player.add_score(turn_score);
         self.tile_box.discard(tiles);
         player.end_turn(&mut self.tile_box);
+        self.cant_play_count += 1;
+        self.has_ended = self.cant_play_count as usize == player_count;
         let update = EndTurnUpdate {
             tiles: player.tiles().clone(),
             turn_score,
+            game_has_ended: self.has_ended,
         };
         self.advance_turn();
         self.log.cant_play();
@@ -191,18 +211,27 @@ impl Nile {
     }
 
     pub fn end_turn(&mut self) -> Result<EndTurnUpdate, String> {
-        self.board
+        self.if_not_ended()?;
+        self.has_ended = self
+            .board
             .validate_turns_moves(self.log.current_turn_coordinates())?;
         let player = self.players.get_mut(self.current_turn).expect("Player");
         let turn_score = player.end_turn(&mut self.tile_box);
         let tiles = player.tiles().to_owned();
         self.advance_turn();
         self.log.end_turn();
+        // Reset count
+        self.cant_play_count = 0;
 
-        Ok(EndTurnUpdate { tiles, turn_score })
+        Ok(EndTurnUpdate {
+            tiles,
+            turn_score,
+            game_has_ended: self.has_ended,
+        })
     }
 
     pub fn undo(&mut self) -> Result<Option<TurnScore>, String> {
+        self.if_not_ended()?;
         let event = self
             .log
             .begin_undo()
@@ -213,6 +242,7 @@ impl Nile {
     }
 
     pub fn redo(&mut self) -> Result<Option<TurnScore>, String> {
+        self.if_not_ended()?;
         let event = self
             .log
             .redo()
@@ -222,6 +252,9 @@ impl Nile {
 
     /// Process a CPU turn
     pub fn take_cpu_turn(&mut self) -> Option<CPUTurnUpdate> {
+        if self.has_ended {
+            return None;
+        }
         let player = self.players.get(self.current_turn).expect("player");
         if !player.is_cpu() {
             return None;
@@ -229,7 +262,12 @@ impl Nile {
         let player_id = self.current_turn;
         // Hard-code CPU implementation for now
         Some(
-            match Brute::new(self.players.len()).take_turn(player.tiles(), &self.board) {
+            match Brute::new(self.players.len()).take_turn(
+                player.tiles(),
+                &self.board,
+                player.total_score(),
+                self.other_player_scores(),
+            ) {
                 Some(tile_placement_events) => {
                     for tpe in tile_placement_events.iter() {
                         if let Err(err) = self.place_tile(
@@ -237,18 +275,17 @@ impl Nile {
                             tpe.coordinates,
                             tpe.rotation,
                         ) {
-                            unsafe {
-                                log(&format!(
-                                    "Failed to place a tile from CPU player: {:?}",
-                                    err
-                                ));
-                            }
+                            log(&format!(
+                                "Failed to place a tile from CPU player: {:?}",
+                                err
+                            ));
                             self.undo_all();
                             let end_turn_update = self.cant_play().unwrap();
                             return Some(CPUTurnUpdate {
                                 placements: Vec::new(),
                                 player_id,
                                 turn_score: end_turn_update.turn_score,
+                                game_has_ended: end_turn_update.game_has_ended,
                             });
                         }
                     }
@@ -257,17 +294,17 @@ impl Nile {
                             placements: tile_placement_events,
                             player_id,
                             turn_score: end_turn_update.turn_score,
+                            game_has_ended: end_turn_update.game_has_ended,
                         },
                         Err(e) => {
-                            unsafe {
-                                log(&format!("Failed to end CPU player turn: {:?}", e));
-                            }
+                            log(&format!("Failed to end CPU player turn: {:?}", e));
                             self.undo_all();
                             let end_turn_update = self.cant_play().unwrap();
                             CPUTurnUpdate {
                                 placements: Vec::new(),
                                 player_id,
                                 turn_score: end_turn_update.turn_score,
+                                game_has_ended: end_turn_update.game_has_ended,
                             }
                         }
                     }
@@ -278,6 +315,7 @@ impl Nile {
                         placements: Vec::new(),
                         player_id,
                         turn_score: end_turn_update.turn_score,
+                        game_has_ended: end_turn_update.game_has_ended,
                     }
                 }
             },
@@ -310,21 +348,41 @@ impl Nile {
     fn advance_turn(&mut self) {
         self.current_turn = (self.current_turn + 1) % self.players.len();
     }
+
+    fn if_not_ended(&self) -> Result<(), String> {
+        if self.has_ended {
+            Err("Game has already ended".to_owned())
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Get scores of players other than the current player
+    fn other_player_scores(&self) -> Vec<i16> {
+        self.players
+            .iter()
+            .enumerate()
+            .filter_map(|(id, player)| {
+                if id == self.current_turn {
+                    None
+                } else {
+                    Some(player.total_score())
+                }
+            })
+            .collect()
+    }
 }
 
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct EndTurnUpdate {
-    turn_score: TurnScore,
+    pub turn_score: TurnScore,
     tiles: VecDeque<Tile>,
+    pub game_has_ended: bool,
 }
 
 #[wasm_bindgen]
 impl EndTurnUpdate {
-    pub fn get_turn_score(&self) -> TurnScore {
-        self.turn_score
-    }
-
     pub fn get_tiles(&self) -> Array {
         self.tiles
             .clone()
@@ -334,12 +392,14 @@ impl EndTurnUpdate {
     }
 }
 
+// TODO: consolidate into `EndTurnUpdate`
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct CPUTurnUpdate {
     pub player_id: usize,
     pub turn_score: TurnScore,
     placements: Vec<TilePlacementEvent>,
+    pub game_has_ended: bool,
 }
 
 pub mod wasm {

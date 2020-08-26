@@ -12,6 +12,8 @@ pub trait CPUPlayer: std::fmt::Debug {
         &mut self,
         tiles: &VecDeque<Tile>,
         board: &Board,
+        score: i16,
+        other_scores: Vec<i16>,
     ) -> Option<Vec<TilePlacementEvent>>;
 }
 

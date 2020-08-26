@@ -47,6 +47,10 @@ export type TurnScore = {
     sub: number;
 }
 
+export const sumTurnScores = (scores: TurnScore[]): number => (
+    scores.reduce((acc, ts) => acc + ts.add - ts.sub, 0)
+);
+
 export type PlayerData = {
     name: string;
     tileRack: Tile[];

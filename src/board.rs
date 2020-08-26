@@ -302,11 +302,17 @@ impl Board {
             .unwrap_or_default()
     }
 
-    /// Called as part of end of turn
+    pub fn is_end_game_cell(&self, coordinates: Coordinates) -> bool {
+        let Coordinates(_, column) = coordinates;
+        column == self.width() as i8
+    }
+
+    /// Called as part of end of turn. Returns whether the game has ended, i.e.
+    /// a tile has been placed in the final column of cells.
     pub fn validate_turns_moves(
         &mut self,
         mut turn_coordinates: HashSet<Coordinates>,
-    ) -> Result<(), String> {
+    ) -> Result<bool, String> {
         let mut last_placement = self.last_placement;
         while !turn_coordinates.is_empty() {
             let coordinates = last_placement.0 + last_placement.1;
@@ -338,7 +344,21 @@ impl Board {
             ));
         }
         self.last_placement = last_placement;
-        Ok(())
+        // Check if mult
+        let end_of_game_cell_count = self
+            .end_of_game_cells
+            .iter()
+            .filter(|c| c.tile.is_some())
+            .count();
+        match end_of_game_cell_count {
+            1 if self.last_placement.1 == Offset(0, 1) => Ok(true),
+            1 => Err(format!(
+                "Tile in end-of-game column at {:?} must align with the dot",
+                self.last_placement.0,
+            )),
+            0 => Ok(false),
+            _ => Err("Can't play more than one tile in the end-of-game cells".to_owned()),
+        }
     }
 
     pub fn in_bounds(&self, coordinates: Coordinates) -> bool {
@@ -644,7 +664,7 @@ mod test {
             .unwrap();
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
-        matches!(res, Ok(()));
+        matches!(res, Ok(false));
     }
 
     #[test]
@@ -763,5 +783,14 @@ mod test {
             )
             .unwrap();
         assert!(target.has_tile(coordinates));
+    }
+
+    #[test]
+    fn is_end_game_cell() {
+        let target = Board::new();
+        assert!(target.is_end_game_cell(Coordinates(0, 21)));
+        assert!(target.is_end_game_cell(Coordinates(21, 21)));
+        assert!(!target.is_end_game_cell(Coordinates(21, 0)));
+        assert!(!target.is_end_game_cell(Coordinates(0, 0)));
     }
 }

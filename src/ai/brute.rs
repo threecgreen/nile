@@ -24,6 +24,8 @@ impl CPUPlayer for Brute {
         &mut self,
         tiles: &VecDeque<Tile>,
         board: &Board,
+        score: i16,
+        other_scores: Vec<i16>,
     ) -> Option<Vec<TilePlacementEvent>> {
         let last_placement = board.last_placement();
         match self.best_moves(
@@ -143,7 +145,7 @@ impl Brute {
                                     ),
                             };
                             potential_placements.push(set_of_moves);
-                            if tiles.len() > 1 {
+                            if tiles.len() > 1 && !board.is_end_game_cell(next_coordinates) {
                                 // Recurse
                                 let mut rem_tiles = tiles.clone();
                                 rem_tiles.remove(idx).unwrap();
@@ -178,6 +180,8 @@ impl Brute {
             _ => TurnScore::default(),
         }
     }
+
+    // fn end_game_adjustment(score: i16, player_scores: &Vec<i16>) -> TurnScore {}
 }
 
 #[cfg(test)]
@@ -197,7 +201,7 @@ mod test {
             Tile::Straight,
             Tile::Straight,
         ]);
-        let moves = target.take_turn(&tiles, &board).unwrap();
+        let moves = target.take_turn(&tiles, &board, 0, vec![0]).unwrap();
         assert_eq!(moves.len(), 5);
         matches!(
             &moves[0].tile_path_type,
@@ -241,7 +245,7 @@ mod test {
             Tile::Diagonal,
         ]);
 
-        let moves = target.take_turn(&tiles, &board).unwrap();
+        let moves = target.take_turn(&tiles, &board, 30, vec![50]).unwrap();
         assert_eq!(moves.len(), 2);
     }
 

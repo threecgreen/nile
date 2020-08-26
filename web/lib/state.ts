@@ -12,6 +12,8 @@ interface IInnerState {
     nile: WasmNile;
     board: BoardArray;
     currentPlayerId: number;
+    /** Whether the game has finished */
+    gameHasEnded: boolean;
     playerData: PlayerData[];
     /** A tile in the process of being dragged */
     draggedTile: IRackDraggedTile | null;
@@ -38,7 +40,7 @@ type Action =
     | {type: "undo"}
     | {type: "redo"}
     /** Same event for cantPlay */
-    | {type: "endTurn", turnScore: TurnScore, tiles: Tile[]}
+    | {type: "endTurn", turnScore: TurnScore, tiles: Tile[], hasEnded: boolean}
     | {type: "cpuTurn", cpuUpdate: CPUTurnUpdate}
 
 export const initState = (playerNames: string[], aiPlayerCount: number): IState => {
@@ -54,6 +56,7 @@ export const initState = (playerNames: string[], aiPlayerCount: number): IState 
             draggedTile: null,
             currentTurnTiles: [],
             selectedTile: null,
+            gameHasEnded: false,
         },
         future: [],
     };
@@ -182,13 +185,9 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
             const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
             return updateAndReset({
                 ...state,
-                // FIXME: temporary to test AI
-                // board: toBoardArray(state.nile.board()),
-                // playerData: toPlayerDataArray(state.nile.players()),
-                // currentPlayerId: mod(state.currentPlayerId + 2, state.playerData.length),
-
                 playerData,
                 currentPlayerId,
+                gameHasEnded: action.hasEnded,
                 draggedTile: null,
                 selectedTile: null,
                 currentTurnTiles: [],
@@ -239,6 +238,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                 playerData,
                 currentPlayerId,
                 board,
+                gameHasEnded: action.cpuUpdate.game_has_ended,
              });
         }
         default:

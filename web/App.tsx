@@ -15,7 +15,7 @@ export const App: React.FC = () => {
         // hasConfirmed: false,
         playerNames: ["player1"],
         hasConfirmed: true,
-        aiPlayerCount: 1,
+        aiPlayerCount: 3,
     });
     if(state.hasConfirmed) {
         return (

@@ -1,11 +1,12 @@
 import { Board } from "components/Board";
 import { useEventListener } from "lib/hooks";
 import { initState, reducer } from "lib/state";
-import { mod } from "lib/utils";
+import { mod, maxBy } from "lib/utils";
 import { Coordinates, Rotation, TilePath, TilePathType } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
 import { Players } from "./Players";
+import { sumTurnScores } from "lib/common";
 
 export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({playerNames, aiPlayerCount}) => {
     // State
@@ -139,7 +140,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
     const onEndTurn = () => {
         try {
             const update = state.nile.end_turn();
-            dispatch({type: "endTurn", turnScore: update.get_turn_score(), tiles: update.get_tiles()});
+            dispatch({type: "endTurn", turnScore: update.turn_score, tiles: update.get_tiles(), hasEnded: update.game_has_ended});
         } catch(e) {
             alert(e);
         }
@@ -148,7 +149,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
         try {
             const update = state.nile.cant_play();
             /// Save event as endTurn
-            dispatch({type: "endTurn", turnScore: update.get_turn_score(), tiles: update.get_tiles()});
+            dispatch({type: "endTurn", turnScore: update.turn_score, tiles: update.get_tiles(), hasEnded: update.game_has_ended});
         } catch(e) {
             alert(e);
         }
@@ -176,6 +177,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
         <>
             <main>
                 <h1>Nile</h1>
+                { state.gameHasEnded && <h2>{ maxBy(state.playerData, (p) => sumTurnScores(p.scores))?.name } has won</h2>}
                 {/* TODO: sticky header */}
                 <Controls
                     hasPlacedTile={ state.currentTurnTiles.length > 0 }
