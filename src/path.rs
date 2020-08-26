@@ -222,12 +222,15 @@ impl Add<Offset> for Coordinates {
     }
 }
 
-pub fn new_offset(
+/// Given the previous placement, evaluates and validates a single tile
+/// placement. The return value of this function can be fed to its next call.
+pub fn eval_placement(
     prev: (Coordinates, Offset),
     placement: &TilePlacementEvent,
-) -> Result<Offset, String> {
+) -> Result<(Coordinates, Offset), String> {
     // Handle board boundaries elsewhere
-    if prev.0 + prev.1 != placement.coordinates {
+    let new_coordinates = prev.0 + prev.1;
+    if new_coordinates != placement.coordinates {
         return Err("Coordinates dont't align with the rest of the river".to_owned());
     }
     let offsets: Vec<Offset> = placement
@@ -240,12 +243,12 @@ pub fn new_offset(
         .iter()
         .find(|o| placement.coordinates + **o == prev.0)
         .ok_or_else(|| "Tile and rotation don't align with the rest of the river".to_owned())?;
-    // TODO: fix for universal
     offsets
         .iter()
+        // Assumes there's only two offsets
         .find(|o| *o != rev_offset)
         .ok_or_else(|| "No valid output offset".to_owned())
-        .map(|o| *o)
+        .map(|o| (new_coordinates, *o))
 }
 
 #[cfg(test)]
@@ -254,7 +257,7 @@ mod test {
 
     #[test]
     fn wrong_coordinates() {
-        let res = new_offset(
+        let res = eval_placement(
             (Coordinates(0, 0), Offset(1, 1)),
             &TilePlacementEvent {
                 tile_path_type: TilePathType::Normal(TilePath::Diagonal),
@@ -267,7 +270,7 @@ mod test {
 
     #[test]
     fn wrong_tile() {
-        let res = new_offset(
+        let res = eval_placement(
             (Coordinates(0, 0), Offset(1, 1)),
             &TilePlacementEvent {
                 tile_path_type: TilePathType::Normal(TilePath::Straight),
@@ -280,7 +283,7 @@ mod test {
 
     #[test]
     fn wrong_rotation() {
-        let res = new_offset(
+        let res = eval_placement(
             (Coordinates(0, 0), Offset(1, 1)),
             &TilePlacementEvent {
                 tile_path_type: TilePathType::Normal(TilePath::Diagonal),
@@ -292,5 +295,15 @@ mod test {
     }
 
     #[test]
-    fn ok_new_offset() {}
+    fn ok_new_offset() {
+        let res = eval_placement(
+            (Coordinates(10, 0), Offset(-1, 1)),
+            &TilePlacementEvent {
+                tile_path_type: TilePathType::Normal(TilePath::Left135),
+                rotation: Rotation::None,
+                coordinates: Coordinates(9, 1),
+            },
+        );
+        matches!(res, Ok((Coordinates(9, 1), Offset(1, 0))));
+    }
 }

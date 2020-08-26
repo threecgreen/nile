@@ -1,4 +1,4 @@
-use crate::path::{self, TilePath, TilePathType};
+use crate::path::{self, Offset, TilePath, TilePathType};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
 
@@ -113,24 +113,33 @@ impl Cell {
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Board {
+    last_placement: (Coordinates, Offset),
     cells: Vec<Cell>,
     end_of_game_cells: Vec<Cell>,
 }
 
 static BOARD_SIZE: usize = 21;
 
-#[wasm_bindgen]
-impl Board {
-    pub fn height(&self) -> usize {
-        BOARD_SIZE
-    }
+pub mod wasm {
+    use super::{Board, Cell, Coordinates, BOARD_SIZE};
 
-    pub fn width(&self) -> usize {
-        BOARD_SIZE
-    }
+    use wasm_bindgen::prelude::*;
 
-    pub fn get_cell(&self, row: i8, column: i8) -> Cell {
-        self.cells[self.get_index(Coordinates(row, column))].clone()
+    #[wasm_bindgen]
+    impl Board {
+        pub fn height(&self) -> usize {
+            BOARD_SIZE
+        }
+
+        pub fn width(&self) -> usize {
+            BOARD_SIZE
+        }
+
+        pub fn get_cell(&self, row: i8, column: i8) -> Result<Cell, JsValue> {
+            self.cell(Coordinates(row, column))
+                .map(|cell| cell.clone())
+                .ok_or_else(|| JsValue::from("Invalid coordinates"))
+        }
     }
 }
 
@@ -200,6 +209,8 @@ impl Board {
             })
             .collect();
         Self {
+            // Start arrow placement and offset
+            last_placement: (Coordinates(10, -1), Offset(0, 1)),
             cells,
             // Symmetrical
             end_of_game_cells: bonus_order
@@ -210,10 +221,26 @@ impl Board {
         }
     }
 
-    fn get_index(&self, coordinates: Coordinates) -> usize {
-        let row = coordinates.0 as usize;
-        let column = coordinates.1 as usize;
-        row * self.width() + column
+    pub fn cell(&self, coordinates: Coordinates) -> Option<&Cell> {
+        let width = self.width();
+        if coordinates.1 as usize == self.width() {
+            self.end_of_game_cells.get(coordinates.0 as usize)
+        } else {
+            let row = coordinates.0 as usize;
+            let column = coordinates.1 as usize;
+            self.cells.get(row * width + column)
+        }
+    }
+
+    fn get_mut_cell(&mut self, coordinates: Coordinates) -> Option<&mut Cell> {
+        let width = self.width();
+        if coordinates.1 as usize == self.width() {
+            self.end_of_game_cells.get_mut(coordinates.0 as usize)
+        } else {
+            let row = coordinates.0 as usize;
+            let column = coordinates.1 as usize;
+            self.cells.get_mut(row * width + column)
+        }
     }
 
     pub fn place_tile(
@@ -221,11 +248,10 @@ impl Board {
         coordinates: Coordinates,
         tile_placement: TilePlacement,
     ) -> Result<TurnScore, String> {
-        let idx = self.get_index(coordinates);
-        if self.cells[idx].is_empty() {
-            Ok(self.cells[idx].set_tile(tile_placement))
-        } else {
-            Err("There's already a tile there".to_owned())
+        match self.get_mut_cell(coordinates) {
+            Some(cell) if cell.is_empty() => Ok(cell.set_tile(tile_placement)),
+            Some(_) => Err("There's already a tile there".to_owned()),
+            None => Err("Invalid coordinates".to_owned()),
         }
     }
 
@@ -234,8 +260,10 @@ impl Board {
         coordinates: Coordinates,
         rotation: Rotation,
     ) -> Result<(), String> {
-        let idx = self.get_index(coordinates);
-        if let Some(ref mut tile) = self.cells[idx].tile {
+        let cell = self
+            .get_mut_cell(coordinates)
+            .ok_or_else(|| "Invalid coordinates".to_owned())?;
+        if let Some(ref mut tile) = cell.tile {
             tile.rotation = rotation;
             Ok(())
         } else {
@@ -244,8 +272,10 @@ impl Board {
     }
 
     pub fn remove_tile(&mut self, coordinates: Coordinates) -> Option<(TilePlacement, TurnScore)> {
-        let idx = self.get_index(coordinates);
-        self.cells[idx].remove_tile()
+        match self.get_mut_cell(coordinates) {
+            Some(cell) => cell.remove_tile(),
+            None => None,
+        }
     }
 
     /// Returns the old `TilePath`
@@ -254,8 +284,10 @@ impl Board {
         coordinates: Coordinates,
         tile_path: TilePath,
     ) -> Result<TilePath, String> {
-        let idx = self.get_index(coordinates);
-        self.cells[idx].update_universal_path(tile_path)
+        match self.get_mut_cell(coordinates) {
+            Some(cell) => cell.update_universal_path(tile_path),
+            None => Err("Invalid coordinates".to_owned()),
+        }
     }
 
     pub fn move_tile(
@@ -279,7 +311,8 @@ impl Board {
     }
 
     pub fn has_tile(&self, coordinates: Coordinates) -> bool {
-        let idx = self.get_index(coordinates);
-        self.cells[idx].is_empty()
+        self.cell(coordinates)
+            .map(|cell| cell.is_empty())
+            .unwrap_or_default()
     }
 }

@@ -99,10 +99,12 @@ impl Nile {
     ) -> Result<(), String> {
         let old_rotation = self
             .board
-            .get_cell(coordinates.0, coordinates.1)
+            .cell(coordinates)
+            .ok_or_else(|| "Invalid coordinates".to_owned())?
             .tile()
             .ok_or_else(|| "No tile there".to_owned())?
             .rotation();
+
         if !self.log.cell_changed_in_turn(coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
