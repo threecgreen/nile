@@ -112,30 +112,32 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
         case "removeTile": {
             // Remove tile from board
             const [i, j] = action.coordinates;
-            let tilePath = state.board[i][j].tilePlacement?.tilePath;
-            const board = updateCell(state.board, action.coordinates, (cell) => {
-                cell.tilePlacement = null;
-                return cell;
-            });
+            const tilePlacement = state.board[i][j].tilePlacement;
+            if (tilePlacement !== null) {
+                const tilePath = tilePlacement.tilePath;
+                const board = updateCell(state.board, action.coordinates, (cell) => {
+                    cell.tilePlacement = null;
+                    return cell;
+                });
 
-            const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
-                // Update scores
-                player.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
-                // Return tile from tile rack
-                player.tileRack = tilePath
-                    ? [...player.tileRack, tile_path_to_tile(tilePath)]
-                    : player.tileRack;
-                return player;
-            });
-            // Remove from currentTurnTiles
-            const currentTurnTiles = state.currentTurnTiles.filter(([ci, cj]) => ci !== i && cj !== j);
-            // Update selectedTile
-            const selectedTile = null;
-            return undoableUpdate(
-                prevState, {
-                    ...state, board, playerData, currentTurnTiles, selectedTile
-                }
-            );
+                const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
+                    // Update scores
+                    player.currentTurnScore = {add: action.score.add(), sub: action.score.sub()};
+                    // Return tile from tile rack
+                    player.tileRack = [...player.tileRack, tile_path_to_tile(tilePath)];
+                    return player;
+                });
+                // Remove from currentTurnTiles
+                const currentTurnTiles = state.currentTurnTiles.filter(([ci, cj]) => ci !== i && cj !== j);
+                // Update selectedTile
+                const selectedTile = null;
+                return undoableUpdate(
+                    prevState, {
+                        ...state, board, playerData, currentTurnTiles, selectedTile
+                    }
+                );
+            }
+            return prevState;
         }
         case "updateUniversalPath": {
             const board = updateCell(state.board, action.coordinates, (cell) => {
@@ -193,7 +195,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                     future: [prevState.now, ...prevState.future],
                 };
             }
-            // fallthrough
+            return prevState;
         }
         case "redo":
             if (prevState.future.length > 0) {
@@ -204,7 +206,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                     future,
                 };
             }
-            // fallthrough
+            return prevState;
         default:
             return prevState;
     }

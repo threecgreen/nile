@@ -65,16 +65,17 @@ Tile.displayName = "Tile";
 
 interface IEmptyTileProps {
     bonus: number;
+    isEndGame: boolean;
     onDrop: () => void;
 }
 
-export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, ...props}) => {
+export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, isEndGame, ...props}) => {
     const onDrop = (e: React.DragEvent) => {
         e.preventDefault();
         props.onDrop();
     }
     return (
-        <div className={ c([styles.tile, bonusToClassName(bonus)]) }
+        <div className={ c([styles.tile, bonusToClassName(bonus), isEndGame ? styles.endGame : undefined]) }
             // Allow tiles to be dropped here
             onDragOver={ (e) => e.preventDefault() }
             onDrop={ onDrop }

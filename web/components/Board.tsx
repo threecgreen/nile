@@ -43,6 +43,7 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
                                     />
                                 </div>
                                 : <EmptyTile bonus={ cell.bonus }
+                                    isEndGame={ j === (board[0].length - 1) }
                                     onDrop={ () => onDropFromRack(i, j) }
                                 /> }
                             </GridCell>

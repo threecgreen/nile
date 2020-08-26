@@ -17,7 +17,7 @@ export const toBoardArray = (board: Board): BoardArray => {
     const boardArray: BoardArray = [];
     for (const i of range({stop: board.height()})) {
         boardArray.push([]);
-        for (const j of range({stop: board.width()})) {
+        for (const j of range({stop: board.width() + 1})) {
             const cell = board.get_cell(i, j);
 
             const optTile = cell.tile();
