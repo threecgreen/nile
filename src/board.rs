@@ -1,8 +1,9 @@
-use crate::path::{self, Offset, TilePath, TilePathType};
+use crate::log::TilePlacementEvent;
+use crate::path::{self, eval_placement, Offset, TilePath, TilePathType};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -108,6 +109,8 @@ impl Cell {
         Ok(old_tile_path)
     }
 }
+
+// TODO: figure out how to know all the placements from this turn. Probably log
 
 /// The board is 21x21 plus a special end of game column
 #[wasm_bindgen]
@@ -314,5 +317,35 @@ impl Board {
         self.cell(coordinates)
             .map(|cell| cell.is_empty())
             .unwrap_or_default()
+    }
+
+    /// Called as part of end of turn
+    pub fn validate_turns_moves(
+        &mut self,
+        mut turn_coordinates: HashSet<Coordinates>,
+    ) -> Result<(), String> {
+        let mut last_placement = self.last_placement.clone();
+        while !turn_coordinates.is_empty() {
+            let next_coordinates = last_placement.0 + last_placement.1;
+            let cell = self
+                .cell(next_coordinates)
+                .ok_or_else(|| format!("Invalid coordinates {:?}", next_coordinates))?;
+            let tile = cell
+                .tile()
+                .ok_or_else(|| format!("Non-contiguous path. No tile at {:?}", next_coordinates))?;
+            last_placement = eval_placement(
+                last_placement,
+                &TilePlacementEvent {
+                    tile_path_type: tile.tile_path_type,
+                    rotation: tile.rotation,
+                    coordinates: last_placement.0,
+                },
+            )?;
+            if !turn_coordinates.remove(&last_placement.0) {
+                return Err("Can't reuse a tile from another turn".to_owned());
+            }
+        }
+        self.last_placement = last_placement;
+        Ok(())
     }
 }

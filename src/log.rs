@@ -1,6 +1,8 @@
 use crate::path::{TilePath, TilePathType};
 use crate::tile::{self, Coordinates};
 
+use std::collections::HashSet;
+
 #[derive(Clone, Debug)]
 pub struct TilePlacementEvent {
     pub tile_path_type: TilePathType,
@@ -216,5 +218,30 @@ impl Log {
             Event::RotateTile(rte) if rte.new.coordinates == coordinates => true,
             _ => false,
         }
+    }
+
+    pub fn current_turn_coordinates(&self) -> HashSet<Coordinates> {
+        self.undo_events
+            .iter()
+            .fold(HashSet::new(), |mut coordinates_set, event| {
+                match event {
+                    Event::PlaceTile(tpe) => {
+                        coordinates_set.insert(tpe.coordinates);
+                    }
+                    Event::RemoveTile(tpe) => {
+                        coordinates_set.remove(&tpe.coordinates);
+                    }
+                    Event::MoveTile(me) => {
+                        coordinates_set.remove(&me.old);
+                        coordinates_set.insert(me.new);
+                    }
+                    // Rotate and update universal path must have updated a tile that was placed
+                    Event::RotateTile(_)
+                    | Event::UpdateUniversalPath(_)
+                    | Event::CantPlay
+                    | Event::EndTurn => {}
+                }
+                coordinates_set
+            })
     }
 }
