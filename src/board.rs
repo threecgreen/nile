@@ -350,21 +350,32 @@ impl Board {
             .iter()
             .filter(|c| c.tile.is_some())
             .count();
-        match end_of_game_cell_count {
-            1 if self.last_placement.1 == Offset(0, 1) => Ok(true),
-            1 => Err(format!(
-                "Tile in end-of-game column at {:?} must align with the dot",
-                self.last_placement.0,
-            )),
-            0 => Ok(false),
-            _ => Err("Can't play more than one tile in the end-of-game cells".to_owned()),
-        }
+        Self::validate_end_of_game_cells(end_of_game_cell_count, self.last_placement)
     }
 
     pub fn in_bounds(&self, coordinates: Coordinates) -> bool {
         // FIXME: update for end of game
         (0..self.width() as i8).contains(&coordinates.0)
             && (0..self.height() as i8).contains(&coordinates.1)
+    }
+
+    pub fn validate_end_of_game_cells(
+        end_of_game_cell_count: usize,
+        last_placement: (Coordinates, Offset),
+    ) -> Result<bool, String> {
+        let (Coordinates(row, column), offset) = last_placement;
+        match end_of_game_cell_count {
+            1 if offset == Offset(0, 1) && column as usize == BOARD_SIZE => Ok(true),
+            1 if column as usize == BOARD_SIZE => Err(format!(
+                "Tile in end-of-game column at {:?} must align with the dot",
+                Coordinates(row, column),
+            )),
+            1 => Err(
+                "Tile placed in end-of-game column must be the last tile of the river".to_owned(),
+            ),
+            0 => Ok(false),
+            _ => Err("Can't play more than one tile in the end-of-game cells".to_owned()),
+        }
     }
 
     /// Checks whether a placement would result in a crossover. This is invalid

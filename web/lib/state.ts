@@ -176,10 +176,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                 // Update scores
                 player.scores = [...player.scores, action.turnScore];
                 player.currentTurnScore = {add: 0, sub: 0};
-                player.tileRack = action.tiles.map((t) =>
-                    // @ts-ignore
-                    Tile[t] as Tile
-                );
+                player.tileRack = action.tiles;
                 return player;
             });
             const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);

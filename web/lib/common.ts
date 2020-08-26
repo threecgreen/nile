@@ -64,8 +64,7 @@ export const toPlayerDataArray = (players: Player[]): PlayerData[] => (
         return {
             name: p.get_name(),
             tileRack: p.get_tiles().map((t) => (
-                // @ts-ignore
-                Tile[t] as number
+                t as Tile
             )),
             scores: p.total_score() !== 0 ? [{add: p.total_score(), sub: 0}] : [],
             currentTurnScore: {add: 0, sub: 0},

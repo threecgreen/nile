@@ -1,13 +1,12 @@
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[repr(u8)]
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
+#[derive(Copy, Clone, Debug)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 pub enum Rotation {
     None,
@@ -18,7 +17,7 @@ pub enum Rotation {
 
 /// A unique location on the board
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Coordinates(pub i8, pub i8);
 
 #[wasm_bindgen]
@@ -32,7 +31,7 @@ impl Coordinates {
 /// A game piece that can be placed on the board
 #[repr(u8)]
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Tile {
     /// ```text
     ///

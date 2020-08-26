@@ -387,7 +387,7 @@ impl EndTurnUpdate {
         self.tiles
             .clone()
             .into_iter()
-            .map(|t| JsValue::from_serde(&t).unwrap())
+            .map(|t| JsValue::from_f64(t as i32 as f64))
             .collect()
     }
 }

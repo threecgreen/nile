@@ -30,6 +30,8 @@ impl CPUPlayer for Brute {
         let last_placement = board.last_placement();
         match self.best_moves(
             board,
+            score,
+            &other_scores,
             last_placement.0,
             last_placement.1,
             TurnScore::default(),
@@ -84,6 +86,8 @@ impl Brute {
     fn best_moves(
         &self,
         board: &Board,
+        score: i16,
+        other_scores: &Vec<i16>,
         last_coordinates: Coordinates,
         last_offset: Offset,
         turn_score: TurnScore,
@@ -136,21 +140,41 @@ impl Brute {
                                 } else {
                                     TurnScore::default()
                                 };
+                            let end_game_adj = match Brute::end_game_adjustment(
+                                score,
+                                other_scores,
+                                board,
+                                new_score,
+                                &new_placements,
+                                (next_coordinates, next_offset),
+                            ) {
+                                Ok(adj) => adj,
+                                Err(()) => {
+                                    continue;
+                                }
+                            };
                             let set_of_moves = PotentialSetOfMoves {
                                 placements: new_placements.clone(),
                                 score: new_score
                                     + self.next_tile_adjustment(
                                         board,
                                         next_coordinates + next_offset,
-                                    ),
+                                    )
+                                    + end_game_adj,
                             };
                             potential_placements.push(set_of_moves);
-                            if tiles.len() > 1 && !board.is_end_game_cell(next_coordinates) {
+                            if tiles.len() > 1
+                                // Don't try to play more tiles if this set of moves
+                                // will already end the game
+                                && !board.is_end_game_cell(next_coordinates)
+                            {
                                 // Recurse
                                 let mut rem_tiles = tiles.clone();
                                 rem_tiles.remove(idx).unwrap();
                                 if let Some(moves) = self.best_moves(
                                     board,
+                                    score,
+                                    other_scores,
                                     next_coordinates,
                                     next_offset,
                                     new_score,
@@ -181,7 +205,34 @@ impl Brute {
         }
     }
 
-    // fn end_game_adjustment(score: i16, player_scores: &Vec<i16>) -> TurnScore {}
+    fn end_game_adjustment(
+        score: i16,
+        other_player_scores: &Vec<i16>,
+        board: &Board,
+        turn_score: TurnScore,
+        tile_placements: &Vec<TilePlacementEvent>,
+        last_placement: (Coordinates, Offset),
+    ) -> Result<TurnScore, ()> {
+        let end_of_game_cell_count = tile_placements
+            .iter()
+            .filter(|p| board.is_end_game_cell(p.coordinates))
+            .count();
+        let ends_game = Board::validate_end_of_game_cells(end_of_game_cell_count, last_placement)
+            .map_err(|_| ())?;
+        let total_score = score + turn_score.score();
+        let rank = other_player_scores
+            .iter()
+            .filter(|score| **score >= total_score)
+            .count()
+            + 1;
+        match (ends_game, rank) {
+            // Highly incentivize ending the game when winning
+            (true, 1) => Ok(TurnScore::from(1000)),
+            // Want to penalize ending the game without winning
+            (true, _) => Ok(TurnScore::from(-100)),
+            (false, _) => Ok(TurnScore::default()),
+        }
+    }
 }
 
 #[cfg(test)]
