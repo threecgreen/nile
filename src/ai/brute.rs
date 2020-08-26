@@ -103,8 +103,15 @@ impl Brute {
                 } else {
                     TilePathType::Normal(tile_path)
                 };
-                // TODO: some tiles are symmetrical and only have two effective rotations
-                for rotation in ROTATIONS.iter() {
+                // Straight and diagonal only have two effective rotations because
+                // they're symettrical
+                let rotations =
+                    if tile_path == TilePath::Straight || tile_path == TilePath::Diagonal {
+                        &ROTATIONS[..2]
+                    } else {
+                        &ROTATIONS[..]
+                    };
+                for rotation in rotations.iter() {
                     let placement = TilePlacementEvent {
                         coordinates: next_coordinates,
                         rotation: *rotation,
@@ -114,7 +121,11 @@ impl Brute {
                         eval_placement((last_coordinates, last_offset), &placement)
                     {
                         if let Some(cell) = board.cell(next_coordinates) {
-                            if !board.in_bounds(next_coordinates + next_offset) {
+                            if !board.in_bounds(next_coordinates + next_offset)
+                                // If this is an end game cell, the next coordinates don't need
+                                // to be in bounds
+                                && !board.is_end_game_cell(next_coordinates)
+                            {
                                 continue;
                             }
                             // Can't replay in same place
@@ -135,6 +146,7 @@ impl Brute {
                                 + TurnScore::from(tile.score())
                                 + cell.score()
                                 + if tiles.len() == 1 {
+                                    // TODO: fix when fewer than 5 tiles in rack
                                     // Bonus for using all tiles
                                     TurnScore::from(20)
                                 } else {
@@ -300,6 +312,48 @@ mod test {
         assert_eq!(moves.len(), 2);
     }
 
+    #[ignore = "Not yet working"]
     #[test]
-    fn ignore_out_of_bounds_paths() {}
+    fn ignore_out_of_bounds_paths() {
+        let mut target = Brute::new(2);
+        let mut board = Board::with_last_placement(Coordinates(19, 0), Offset(1, 0));
+        let tiles = VecDeque::from(vec![
+            Tile::Straight,
+            Tile::Straight,
+            Tile::Diagonal,
+            Tile::Diagonal,
+            Tile::Straight,
+        ]);
+
+        let moves = target.take_turn(&tiles, &board, 0, vec![146]).unwrap();
+        assert!(moves.is_empty());
+    }
+
+    #[test]
+    fn cpu_should_end_game_when_winning() {
+        let mut target = Brute::new(3);
+        let board = Board::with_last_placement(Coordinates(10, 19), Offset(0, 1));
+        let tiles = VecDeque::from(vec![
+            Tile::Straight,
+            Tile::Right135,
+            Tile::Right45,
+            Tile::Right45,
+            Tile::Straight,
+        ]);
+
+        // Optimal moves should place player in lead
+        let moves = target
+            .take_turn(&tiles, &board, 400, vec![900, 885])
+            .unwrap();
+        assert_eq!(moves[0].coordinates, Coordinates(10, 20));
+        assert_eq!(
+            moves[0].tile_path_type,
+            TilePathType::Normal(TilePath::Straight)
+        );
+        assert_eq!(moves[1].coordinates, Coordinates(10, 21));
+        assert_eq!(
+            moves[1].tile_path_type,
+            TilePathType::Normal(TilePath::Straight)
+        );
+    }
 }

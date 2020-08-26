@@ -124,7 +124,7 @@ pub struct Board {
     end_of_game_cells: Vec<Cell>,
 }
 
-static BOARD_SIZE: usize = 21;
+const BOARD_SIZE: usize = 21;
 
 macro_rules! hash_map(
     { $($key:expr => $value:expr),+ } => {
@@ -354,9 +354,9 @@ impl Board {
     }
 
     pub fn in_bounds(&self, coordinates: Coordinates) -> bool {
-        // FIXME: update for end of game
-        (0..self.width() as i8).contains(&coordinates.0)
-            && (0..self.height() as i8).contains(&coordinates.1)
+        // +1 for end of game tile
+        (0..self.height() as i8).contains(&coordinates.0)
+            && (0..self.width() as i8 + 1).contains(&coordinates.1)
     }
 
     pub fn validate_end_of_game_cells(
@@ -803,5 +803,16 @@ mod test {
         assert!(target.is_end_game_cell(Coordinates(21, 21)));
         assert!(!target.is_end_game_cell(Coordinates(21, 0)));
         assert!(!target.is_end_game_cell(Coordinates(0, 0)));
+    }
+
+    #[test]
+    fn in_bounds() {
+        let target = Board::new();
+        assert!(target.in_bounds(Coordinates(0, 21)));
+        assert!(target.in_bounds(Coordinates(10, 21)));
+        assert!(!target.in_bounds(Coordinates(0, 22)));
+        assert!(!target.in_bounds(Coordinates(21, 20)));
+        assert!(target.in_bounds(Coordinates(20, 10)));
+        assert!(target.in_bounds(Coordinates(10, 10)));
     }
 }
