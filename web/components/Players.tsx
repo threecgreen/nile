@@ -16,6 +16,7 @@ export const Players: React.FC<IProps> = ({currentPlayerId, playerData, setDragg
             <div style={ {columnCount: playerData.length} }>
                 { playerData.map((player, id) => (
                     <Player player={ player }
+                        key={ player.name }
                         id={ id }
                         isCurrentTurn={ id === currentPlayerId }
                         setDraggedTile={ (idx, tile) => {

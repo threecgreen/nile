@@ -128,7 +128,7 @@ export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
             const update = state.nile.end_turn();
             dispatch({type: "endTurn", turnScore: update.get_turn_score(), tiles: update.get_tiles()});
         } catch(e) {
-            console.error(e);
+            alert(e);
         }
     }
     const onUndo = () => {

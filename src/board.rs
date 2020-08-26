@@ -8,6 +8,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 pub struct TilePlacement {
     tile_path_type: TilePathType,
     rotation: Rotation,
@@ -110,8 +111,6 @@ impl Cell {
     }
 }
 
-// TODO: figure out how to know all the placements from this turn. Probably log
-
 /// The board is 21x21 plus a special end of game column
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
@@ -122,29 +121,6 @@ pub struct Board {
 }
 
 static BOARD_SIZE: usize = 21;
-
-pub mod wasm {
-    use super::{Board, Cell, Coordinates, BOARD_SIZE};
-
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen]
-    impl Board {
-        pub fn height(&self) -> usize {
-            BOARD_SIZE
-        }
-
-        pub fn width(&self) -> usize {
-            BOARD_SIZE
-        }
-
-        pub fn get_cell(&self, row: i8, column: i8) -> Result<Cell, JsValue> {
-            self.cell(Coordinates(row, column))
-                .map(|cell| cell.clone())
-                .ok_or_else(|| JsValue::from("Invalid coordinates"))
-        }
-    }
-}
 
 macro_rules! hash_map(
     { $($key:expr => $value:expr),+ } => {
@@ -338,7 +314,7 @@ impl Board {
                 &TilePlacementEvent {
                     tile_path_type: tile.tile_path_type,
                     rotation: tile.rotation,
-                    coordinates: last_placement.0,
+                    coordinates: next_coordinates,
                 },
             )?;
             if !turn_coordinates.remove(&last_placement.0) {
@@ -347,5 +323,124 @@ impl Board {
         }
         self.last_placement = last_placement;
         Ok(())
+    }
+}
+
+pub mod wasm {
+    use super::{Board, Cell, Coordinates, BOARD_SIZE};
+
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen]
+    impl Board {
+        pub fn height(&self) -> usize {
+            BOARD_SIZE
+        }
+
+        pub fn width(&self) -> usize {
+            BOARD_SIZE
+        }
+
+        pub fn get_cell(&self, row: i8, column: i8) -> Result<Cell, JsValue> {
+            self.cell(Coordinates(row, column))
+                .map(|cell| cell.clone())
+                .ok_or_else(|| JsValue::from("Invalid coordinates"))
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn set_and_remove_are_idempotent() {
+        let mut target = Cell::with_bonus(0);
+        let original_score = target.score();
+        assert!(target.is_empty());
+        assert_eq!(original_score.score(), 0);
+        let tile_placement = TilePlacement {
+            rotation: Rotation::None,
+            tile_path_type: TilePathType::Normal(TilePath::Straight),
+        };
+        let placement_score = target.set_tile(tile_placement.clone());
+        assert!(!target.is_empty());
+        assert!(placement_score.score() > original_score.score());
+        let (removed_tile_placement, opp_score) = target.remove_tile().unwrap();
+        assert_eq!(target.score().score(), 0);
+        assert!(target.is_empty());
+        assert_eq!(opp_score, -placement_score);
+        assert_eq!(removed_tile_placement, tile_placement);
+    }
+
+    #[test]
+    fn score_includes_bonus() {
+        let target = Cell {
+            tile: Some(TilePlacement {
+                rotation: Rotation::Clockwise270,
+                tile_path_type: TilePathType::Universal(TilePath::Diagonal),
+            }),
+            bonus: 80,
+        };
+        assert_eq!(target.score().score(), 115);
+    }
+
+    #[test]
+    fn update_universal_path_on_cell_fails_for_empty() {
+        let mut target = Cell::with_bonus(0);
+        let res = target.update_universal_path(TilePath::Diagonal);
+        matches!(res, Err(e) if e.contains("empty"));
+    }
+
+    #[test]
+    fn update_universal_path_on_cell_fails_for_normal_tile() {
+        let mut target = Cell {
+            tile: Some(TilePlacement {
+                rotation: Rotation::Clockwise90,
+                tile_path_type: TilePathType::Normal(TilePath::Left45),
+            }),
+            bonus: 0,
+        };
+        let res = target.update_universal_path(TilePath::Right45);
+        matches!(res, Err(e) if e.contains("doesn't contain a universal tile"));
+    }
+
+    #[test]
+    fn update_universal_path_on_cell() {
+        let mut target = Cell {
+            tile: Some(TilePlacement {
+                rotation: Rotation::Clockwise90,
+                tile_path_type: TilePathType::Universal(TilePath::Left45),
+            }),
+            bonus: 0,
+        };
+        let res = target.update_universal_path(TilePath::Right45);
+        matches!(res, Ok(TilePath::Left45));
+    }
+
+    #[test]
+    fn board_cell_works_with_end_game() {
+        let target = Board::new();
+        let end_game_cell = target.cell(Coordinates(10, 21));
+        matches!(end_game_cell, Some(cell) if cell.bonus() == 500);
+    }
+
+    #[test]
+    fn first_turn_validation() {
+        let mut target = Board::new();
+        let coordinates = Coordinates(10, 0);
+        target
+            .place_tile(
+                coordinates,
+                TilePlacement {
+                    rotation: Rotation::None,
+                    tile_path_type: TilePathType::Normal(TilePath::Straight),
+                },
+            )
+            .unwrap();
+        let mut coordinates_set = HashSet::new();
+        coordinates_set.insert(coordinates);
+        let res = target.validate_turns_moves(coordinates_set);
+        assert!(res.is_ok());
     }
 }

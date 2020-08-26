@@ -16,7 +16,7 @@ export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, setDraggedT
         acc + score.add + score.sub
     ), 0);
     return (
-        <section key={ player.name }
+        <section
             style={ {gridColumn: id + 1} }
         >
             <h2>{ player.name }</h2>

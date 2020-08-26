@@ -130,6 +130,7 @@ pub mod wasm {
 }
 
 #[derive(Clone, Debug)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 pub enum TilePathType {
     Normal(TilePath),
     Universal(TilePath),
@@ -179,14 +180,14 @@ pub enum Direction {
 impl Direction {
     pub fn into_offset(self) -> Offset {
         match self {
-            Direction::SW => Offset(-1, -1),
-            Direction::W => Offset(-1, 0),
-            Direction::NW => Offset(-1, 1),
-            Direction::N => Offset(0, 1),
-            Direction::NE => Offset(1, 1),
-            Direction::E => Offset(1, 0),
-            Direction::SE => Offset(1, -1),
-            Direction::S => Offset(0, -1),
+            Direction::SW => Offset(1, -1),
+            Direction::W => Offset(0, -1),
+            Direction::NW => Offset(-1, -1),
+            Direction::N => Offset(-1, 0),
+            Direction::NE => Offset(-1, 1),
+            Direction::E => Offset(0, 1),
+            Direction::SE => Offset(1, 1),
+            Direction::S => Offset(1, 0),
         }
     }
 }

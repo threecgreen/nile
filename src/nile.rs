@@ -179,6 +179,8 @@ impl Nile {
     }
 
     pub fn end_turn(&mut self) -> Result<EndTurnUpdate, String> {
+        self.board
+            .validate_turns_moves(self.log.current_turn_coordinates())?;
         let player = self.players.get_mut(self.current_turn).expect("Player");
         let turn_score = player.end_turn(&mut self.tile_box);
         let tiles = player.tiles().to_owned();
