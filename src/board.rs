@@ -456,4 +456,29 @@ mod test {
         let res = target.validate_turns_moves(coordinates_set);
         assert!(res.is_ok());
     }
+
+    #[test]
+    fn validate_45() {
+        let mut target = Board::new();
+        target
+            .place_tile(
+                Coordinates(10, 0),
+                TilePlacement::new(TilePathType::Normal(TilePath::Center90), Rotation::None),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(11, 0),
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Left45),
+                    Rotation::Clockwise180,
+                ),
+            )
+            .unwrap();
+        let mut coordinates_set = HashSet::new();
+        coordinates_set.insert(Coordinates(10, 0));
+        coordinates_set.insert(Coordinates(11, 0));
+        let res = target.validate_turns_moves(coordinates_set);
+        assert!(res.is_ok());
+    }
 }

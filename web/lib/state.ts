@@ -180,9 +180,10 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
             const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
             return updateAndReset({
                 ...state,
-                // // FIXME: temporary to test AI
+                // FIXME: temporary to test AI
                 // board: toBoardArray(state.nile.board()),
                 // playerData: toPlayerDataArray(state.nile.players()),
+                // currentPlayerId: mod(state.currentPlayerId + 2, state.playerData.length),
 
                 playerData,
                 currentPlayerId,

@@ -201,7 +201,7 @@ impl Offset {
         match rotation {
             Rotation::None => Offset(x, y),
             Rotation::Clockwise90 => Offset(y, -x),
-            Rotation::Clockwise180 => Offset(-y, -x),
+            Rotation::Clockwise180 => Offset(-x, -y),
             Rotation::Clockwise270 => Offset(-y, x),
         }
     }
@@ -232,7 +232,10 @@ pub fn eval_placement(
     // Handle board boundaries elsewhere
     let new_coordinates = prev.0 + prev.1;
     if new_coordinates != placement.coordinates {
-        return Err("Coordinates dont't align with the rest of the river".to_owned());
+        return Err(format!(
+            "Tile at {:?} doesn't align with the rest of the river",
+            placement.coordinates
+        ));
     }
     let offsets: Vec<Offset> = placement
         .tile_path_type
@@ -243,12 +246,17 @@ pub fn eval_placement(
     let rev_offset = offsets
         .iter()
         .find(|o| placement.coordinates + **o == prev.0)
-        .ok_or_else(|| "Tile and rotation don't align with the rest of the river".to_owned())?;
+        .ok_or_else(|| {
+            format!(
+                "Tile and rotation at {:?} don't align with the rest of the river",
+                placement.coordinates
+            )
+        })?;
     offsets
         .iter()
         // Assumes there's only two offsets
         .find(|o| *o != rev_offset)
-        .ok_or_else(|| "No valid output offset".to_owned())
+        .ok_or_else(|| format!("No valid output offset for {:?}", placement.coordinates))
         .map(|o| (new_coordinates, *o))
 }
 
@@ -306,5 +314,28 @@ mod test {
             },
         );
         matches!(res, Ok((Coordinates(9, 1), Offset(1, 0))));
+    }
+
+    #[test]
+    fn left45_second_play() {
+        let res = eval_placement(
+            (Coordinates(10, 0), Offset(1, 0)),
+            &TilePlacementEvent {
+                tile_path_type: TilePathType::Normal(TilePath::Left45),
+                coordinates: Coordinates(11, 0),
+                rotation: Rotation::Clockwise180,
+            },
+        );
+        matches!(res, Ok((Coordinates(11, 0), Offset(1, 1))));
+    }
+
+    #[test]
+    fn left45_offset() {
+        let offsets: Vec<Offset> = TilePath::Left45
+            .directions()
+            .iter()
+            .map(|d| d.into_offset().rotate(Rotation::Clockwise180))
+            .collect();
+        assert_eq!(offsets, vec![Offset(-1, 0), Offset(1, 1)]);
     }
 }

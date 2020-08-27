@@ -26,10 +26,9 @@ export const toBoardArray = (board: Board): BoardArray => {
                 boardArray[i].push({
                     bonus: cell.bonus(),
                     tilePlacement: {
-                        tile: TilePath[tilePathType.tile_path()],
+                        tilePath: tilePathType.tile_path(),
                         isUniversal: tilePathType.is_universal(),
-                        // @ts-ignore
-                        rotation: Rotation[optTile.get_rotation()],
+                        rotation: optTile.get_rotation(),
                     },
                 });
             } else {
@@ -56,13 +55,15 @@ export type PlayerData = {
 }
 
 export const toPlayerDataArray = (players: Player[]): PlayerData[] => (
-    players.map((p) => ({
-        name: p.get_name(),
-        tileRack: p.get_tiles().map((t) => (
-            // @ts-ignore
-            Tile[t] as number
-        )),
-        scores: [],
-        currentTurnScore: {add: 0, sub: 0},
-    }))
+    players.map((p) => {
+        return {
+            name: p.get_name(),
+            tileRack: p.get_tiles().map((t) => (
+                // @ts-ignore
+                Tile[t] as number
+            )),
+            scores: p.total_score() !== 0 ? [{add: p.total_score(), sub: 0}] : [],
+            currentTurnScore: {add: 0, sub: 0},
+        };
+    })
 )

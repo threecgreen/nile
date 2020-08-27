@@ -190,13 +190,15 @@ impl Nile {
         self.advance_turn();
         self.log.end_turn();
 
-        // // FIXME: temporary to test AI
+        // FIXME: temporary to test AI
         // let next_player = self.players.get_mut(self.current_turn).expect("Player");
         // if next_player.name().starts_with("cpu") {
         //     use crate::ai::{Brute, CPUPlayer};
 
-        //     for e in Brute::default().take_turn(next_player.tiles(), &self.board) {
-        //         self.dispatch(e).expect("Valid event from AI");
+        //     for ev in Brute::default().take_turn(next_player.tiles(), &self.board) {
+        //         self.dispatch(ev.clone())
+        //             .map_err(|err| format!("{:?} when dispatching event: {:?}", err, ev))
+        //             .expect("Valid event from AI");
         //     }
         // }
 

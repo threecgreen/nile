@@ -84,12 +84,6 @@ impl Player {
         self.current_turn_score
     }
 
-    pub fn total_score(&self) -> i16 {
-        self.scores
-            .iter()
-            .fold(0, |total, score| total + score.score())
-    }
-
     pub fn discard_tiles(&mut self) -> Vec<Tile> {
         let mut tiles = Vec::with_capacity(self.tile_rack.len());
         while let Some(tile) = self.tile_rack.remove(0) {
@@ -116,6 +110,12 @@ pub mod wasm {
                 .into_iter()
                 .map(|t| JsValue::from_serde(t).unwrap())
                 .collect()
+        }
+
+        pub fn total_score(&self) -> i16 {
+            self.scores
+                .iter()
+                .fold(0, |total, score| total + score.score())
         }
     }
 }

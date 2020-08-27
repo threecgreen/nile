@@ -27,10 +27,12 @@ export const TileSvg: React.FC<ITileSvgProps> = ({tile, strokeColor}) => {
         case Tile.Left135:
             return <Tile135
                 strokeColor={ strokeColor }
-                style={ {transform: reflectToCss(true)} }
             />;
         case Tile.Right135:
-            return <Tile135 strokeColor={ strokeColor } />;
+            return <Tile135 strokeColor={ strokeColor }
+                // For 45, left is reflected, but for 135 right is
+                style={ {transform: reflectToCss(true)} }
+            />;
         case Tile.Universal:
             return <Universal strokeColor={ strokeColor } />;
         default:

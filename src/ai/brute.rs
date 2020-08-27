@@ -101,6 +101,17 @@ impl Brute {
                         eval_placement((last_coordinates, last_offset), &placement)
                     {
                         if let Some(cell) = board.cell(next_coordinates) {
+                            if !Self::in_bounds(board, next_coordinates + next_offset) {
+                                continue;
+                            }
+                            // Can't replay in same place
+                            if placements
+                                .iter()
+                                .any(|placement| placement.coordinates == next_coordinates)
+                                || !cell.is_empty()
+                            {
+                                continue;
+                            }
                             let mut new_placements = placements.clone();
                             new_placements.push(placement);
                             let new_score = turn_score
@@ -114,7 +125,11 @@ impl Brute {
                                 };
                             let set_of_moves = PotentialSetOfMoves {
                                 placements: new_placements.clone(),
-                                score: new_score,
+                                score: new_score
+                                    + Self::next_tile_adjustment(
+                                        board,
+                                        next_coordinates + next_offset,
+                                    ),
                             };
                             potential_placements.push(set_of_moves);
                             if tiles.len() > 1 {
@@ -139,6 +154,23 @@ impl Brute {
         potential_placements
             .into_iter()
             .max_by(|p1, p2| p1.score.cmp(&p2.score))
+    }
+
+    fn next_tile_adjustment(board: &Board, next_coordinates: Coordinates) -> TurnScore {
+        // this should be a function of the number of players. In a two-player game, the
+        // game is zero-sum
+        const ADJUSTMENT: i16 = 2;
+        match board.cell(next_coordinates) {
+            Some(cell) if cell.bonus() > 0 => TurnScore::new(0, cell.bonus() / ADJUSTMENT),
+            Some(cell) if cell.bonus() < 0 => TurnScore::new(-cell.bonus() / ADJUSTMENT, 0),
+            _ => TurnScore::default(),
+        }
+    }
+
+    fn in_bounds(board: &Board, coordinates: Coordinates) -> bool {
+        // FIXME: update for end of game
+        (0..board.width() as i8).contains(&coordinates.0)
+            && (0..board.height() as i8).contains(&coordinates.1)
     }
 }
 
@@ -192,4 +224,7 @@ mod test {
         let moves = target.take_turn(&tiles, &board);
         assert_eq!(moves.len(), 3);
     }
+
+    #[test]
+    fn ignore_out_of_bounds_paths() {}
 }
