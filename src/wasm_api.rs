@@ -16,7 +16,7 @@ pub struct WasmNile(Nile);
 impl WasmNile {
     /// Create a new game
     #[wasm_bindgen(constructor)]
-    pub fn new(player_names: Array) -> Result<WasmNile, JsValue> {
+    pub fn new(player_names: Array, ai_count: usize) -> Result<WasmNile, JsValue> {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
         let iterator =
             js_sys::try_iter(&player_names)?.ok_or_else(|| "Need to pass array of strings")?;
@@ -28,7 +28,7 @@ impl WasmNile {
                 player_names.push(name);
             }
         }
-        match Nile::new(player_names) {
+        match Nile::new(player_names, ai_count) {
             Ok(nile) => Ok(WasmNile(nile)),
             Err(err) => Err(err.into()),
         }

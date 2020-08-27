@@ -2,8 +2,7 @@ use std::ops::{Add, AddAssign, Neg, Sub};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug, Default)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
+#[derive(Copy, Clone, Debug, Default, Ord, PartialOrd, Eq, PartialEq)]
 pub struct TurnScore {
     add: i16,
     sub: i16,

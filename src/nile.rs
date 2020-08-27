@@ -26,15 +26,18 @@ pub struct Nile {
 }
 
 impl Nile {
-    pub fn new(player_names: Vec<String>) -> Result<Self, String> {
-        if player_names.len() < 2 || player_names.len() > 4 {
+    pub fn new(player_names: Vec<String>, ai_count: usize) -> Result<Self, String> {
+        if player_names.len() + ai_count < 2 || player_names.len() + ai_count > 4 {
             Err("Nile is a game for 2-4 players".to_owned())
         } else {
             let mut tile_box = TileBox::new();
-            let players = player_names
+            let mut players: Vec<Player> = player_names
                 .into_iter()
                 .map(|player| Player::new(player, &mut tile_box))
                 .collect();
+            for i in 0..ai_count {
+                players.push(Player::new(format!("cpu{}", i), &mut tile_box))
+            }
             Ok(Self {
                 board: Board::new(),
                 tile_box,
@@ -186,6 +189,17 @@ impl Nile {
         let tiles = player.tiles().to_owned();
         self.advance_turn();
         self.log.end_turn();
+
+        // // FIXME: temporary to test AI
+        // let next_player = self.players.get_mut(self.current_turn).expect("Player");
+        // if next_player.name().starts_with("cpu") {
+        //     use crate::ai::{Brute, CPUPlayer};
+
+        //     for e in Brute::default().take_turn(next_player.tiles(), &self.board) {
+        //         self.dispatch(e).expect("Valid event from AI");
+        //     }
+        // }
+
         Ok(EndTurnUpdate { tiles, turn_score })
     }
 
@@ -220,7 +234,14 @@ impl Nile {
                 .update_universal_path(uup.coordinates, uup.new_tile_path)
                 .map(|_| None),
             Event::MoveTile(mte) => self.move_tile(mte.old, mte.new).map(Some),
-            e => Err(format!("Invalid event: {:?}", e)),
+            Event::CantPlay => {
+                self.cant_play()?;
+                Ok(None)
+            }
+            Event::EndTurn => {
+                self.end_turn()?;
+                Ok(None)
+            }
         }
     }
 
@@ -256,7 +277,7 @@ mod test {
     use super::*;
 
     fn setup() -> Nile {
-        Nile::new(vec!["player1".to_owned(), "player2".to_owned()]).unwrap()
+        Nile::new(vec!["player1".to_owned(), "player2".to_owned()], 0).unwrap()
     }
 
     fn get_normal_tile(target: &mut Nile) -> Tile {

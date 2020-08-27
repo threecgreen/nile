@@ -39,8 +39,9 @@ type Action =
     | {type: "redo"}
     | {type: "endTurn", turnScore: TurnScore, tiles: Tile[]}
 
-export const initState = (playerNames: string[]): IState => {
-    const nile = new WasmNile(playerNames);
+export const initState = (playerNames: string[], aiPlayerCount: number): IState => {
+    // TODO: move WasmNile behind interface for easier testing
+    const nile = new WasmNile(playerNames, aiPlayerCount);
     return {
         past: [],
         now: {
@@ -179,6 +180,10 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
             const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
             return updateAndReset({
                 ...state,
+                // // FIXME: temporary to test AI
+                // board: toBoardArray(state.nile.board()),
+                // playerData: toPlayerDataArray(state.nile.players()),
+
                 playerData,
                 currentPlayerId,
                 draggedTile: null,

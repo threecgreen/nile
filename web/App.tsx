@@ -5,6 +5,7 @@ import { PlayerNameInput } from "components/PlayerNameInput";
 interface IState {
     playerNames: string[];
     hasConfirmed: boolean;
+    aiPlayerCount: number;
 }
 
 export const App: React.FC = () => {
@@ -14,10 +15,11 @@ export const App: React.FC = () => {
         // hasConfirmed: false,
         playerNames: ["player1", "player2"],
         hasConfirmed: true,
+        aiPlayerCount: 0,
     });
     if(state.hasConfirmed) {
         return (
-            <Game playerNames={ state.playerNames } />
+            <Game playerNames={ state.playerNames } aiPlayerCount={ state.aiPlayerCount } />
         );
     }
 
@@ -25,6 +27,7 @@ export const App: React.FC = () => {
         setState((prevState) => ({
             hasConfirmed: prevState.hasConfirmed,
             playerNames: prevState.playerNames.map((name, i) => i === idx ? text : name),
+            aiPlayerCount: prevState.aiPlayerCount,
         }));
     }
 

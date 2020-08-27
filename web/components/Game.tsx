@@ -7,9 +7,9 @@ import React from "react";
 import { Controls } from "./Controls";
 import { Players } from "./Players";
 
-export const Game: React.FC<{playerNames: string[]}> = ({playerNames}) => {
+export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({playerNames, aiPlayerCount}) => {
     // State
-    const [fullState, dispatch] = React.useReducer(reducer, [], () => initState(playerNames));
+    const [fullState, dispatch] = React.useReducer(reducer, [], () => initState(playerNames, aiPlayerCount));
     // Never want to mutate history
     const state = fullState.now;
 

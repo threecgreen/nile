@@ -289,6 +289,10 @@ impl Board {
         Ok(placement_score + removal_score)
     }
 
+    pub fn last_placement(&self) -> (Coordinates, Offset) {
+        self.last_placement
+    }
+
     pub fn has_tile(&self, coordinates: Coordinates) -> bool {
         self.cell(coordinates)
             .map(|cell| cell.is_empty())
@@ -346,6 +350,15 @@ pub mod wasm {
                 .map(|cell| cell.clone())
                 .ok_or_else(|| JsValue::from("Invalid coordinates"))
         }
+    }
+}
+
+#[cfg(test)]
+impl Board {
+    pub fn with_last_placement(coordinates: Coordinates, offset: Offset) -> Self {
+        let mut board = Self::new();
+        board.last_placement = (coordinates, offset);
+        board
     }
 }
 
