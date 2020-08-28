@@ -1,5 +1,6 @@
+use crate::ai::{Brute, CPUPlayer};
 use crate::board::{Board, TilePlacement};
-use crate::log::{Event, Log};
+use crate::log::{Event, Log, TilePlacementEvent};
 use crate::path::{TilePath, TilePathType};
 use crate::player::Player;
 use crate::score::TurnScore;
@@ -33,10 +34,10 @@ impl Nile {
             let mut tile_box = TileBox::new();
             let mut players: Vec<Player> = player_names
                 .into_iter()
-                .map(|player| Player::new(player, &mut tile_box))
+                .map(|player| Player::new(player, &mut tile_box, false))
                 .collect();
             for i in 0..ai_count {
-                players.push(Player::new(format!("cpu{}", i), &mut tile_box))
+                players.push(Player::new(format!("cpu{}", i), &mut tile_box, false))
             }
             Ok(Self {
                 board: Board::new(),
@@ -164,7 +165,7 @@ impl Nile {
         Ok(turn_score)
     }
 
-    pub fn cant_play(&mut self) -> Result<(), String> {
+    pub fn cant_play(&mut self) -> Result<EndTurnUpdate, String> {
         let player = self.players.get_mut(self.current_turn).expect("Player");
         if self.log.can_undo() {
             return Err("Player has made moves this turn".to_owned());
@@ -172,13 +173,16 @@ impl Nile {
         // FIXME: can pass in `self.tile_box` to `player` and have it handle most of this
         let tiles = player.discard_tiles();
         let tile_score = tiles.iter().fold(0, |acc, t| acc + t.score());
-        // Add negative score
-        player.add_score(TurnScore::new(0, tile_score));
+        let turn_score = TurnScore::new(0, tile_score);
+        player.add_score(turn_score);
         self.tile_box.discard(tiles);
+        let update = EndTurnUpdate {
+            tiles: player.tiles().clone(),
+            turn_score,
+        };
         self.advance_turn();
         self.log.cant_play();
-        // TODO: return turn score and tiles
-        Ok(())
+        Ok(update)
     }
 
     pub fn end_turn(&mut self) -> Result<EndTurnUpdate, String> {
@@ -189,18 +193,6 @@ impl Nile {
         let tiles = player.tiles().to_owned();
         self.advance_turn();
         self.log.end_turn();
-
-        // FIXME: temporary to test AI
-        // let next_player = self.players.get_mut(self.current_turn).expect("Player");
-        // if next_player.name().starts_with("cpu") {
-        //     use crate::ai::{Brute, CPUPlayer};
-
-        //     for ev in Brute::default().take_turn(next_player.tiles(), &self.board) {
-        //         self.dispatch(ev.clone())
-        //             .map_err(|err| format!("{:?} when dispatching event: {:?}", err, ev))
-        //             .expect("Valid event from AI");
-        //     }
-        // }
 
         Ok(EndTurnUpdate { tiles, turn_score })
     }
@@ -221,6 +213,60 @@ impl Nile {
             .redo()
             .ok_or_else(|| "Nothing to redo".to_owned())?;
         self.dispatch(event)
+    }
+
+    /// Process a CPU turn
+    pub fn take_cpu_turn(&mut self) -> Option<CPUTurnUpdate> {
+        let player = self.players.get(self.current_turn).expect("player");
+        if !player.is_cpu() {
+            return None;
+        }
+        let player_id = self.current_turn;
+        // Hard-code CPU implementation for now
+        Some(
+            match Brute::default().take_turn(player.tiles(), &self.board) {
+                Some(tile_placement_events) => {
+                    for tpe in tile_placement_events.iter() {
+                        if let Err(_err) = self.place_tile(
+                            tpe.tile_path_type.clone(),
+                            tpe.coordinates,
+                            tpe.rotation,
+                        ) {
+                            // TODO: log error
+                            let end_turn_update = self.cant_play().unwrap();
+                            return Some(CPUTurnUpdate {
+                                placements: Vec::new(),
+                                player_id,
+                                turn_score: end_turn_update.turn_score,
+                            });
+                        }
+                    }
+                    match self.end_turn() {
+                        Ok(end_turn_update) => CPUTurnUpdate {
+                            placements: tile_placement_events,
+                            player_id,
+                            turn_score: end_turn_update.turn_score,
+                        },
+                        Err(e) => {
+                            let end_turn_update = self.cant_play().unwrap();
+                            CPUTurnUpdate {
+                                placements: Vec::new(),
+                                player_id,
+                                turn_score: end_turn_update.turn_score,
+                            }
+                        }
+                    }
+                }
+                None => {
+                    let end_turn_update = self.cant_play().unwrap();
+                    CPUTurnUpdate {
+                        placements: Vec::new(),
+                        player_id,
+                        turn_score: end_turn_update.turn_score,
+                    }
+                }
+            },
+        )
     }
 
     fn dispatch(&mut self, event: Event) -> Result<Option<TurnScore>, String> {
@@ -272,6 +318,23 @@ impl EndTurnUpdate {
             .map(|t| JsValue::from_serde(&t).unwrap())
             .collect()
     }
+}
+
+#[wasm_bindgen]
+#[derive(Debug)]
+pub struct CPUTurnUpdate {
+    pub player_id: usize,
+    pub turn_score: TurnScore,
+    placements: Vec<TilePlacementEvent>,
+}
+
+pub mod wasm {
+    use super::*;
+
+#[wasm_bindgen]
+impl CPUTurnUpdate {
+    pub fn get_placements(&self) -> Vec<>
+}
 }
 
 #[cfg(test)]

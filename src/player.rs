@@ -13,12 +13,14 @@ pub struct Player {
     scores: Vec<TurnScore>,
     /// Scores of current turn
     current_turn_score: TurnScore,
+    /// Computer-controlled player
+    is_cpu: bool,
 }
 
 static MAX_TILES: usize = 5;
 
 impl Player {
-    pub fn new(name: String, tile_box: &mut TileBox) -> Self {
+    pub fn new(name: String, tile_box: &mut TileBox, is_cpu: bool) -> Self {
         // TODO: handle case where box is empty
         let mut tile_rack = VecDeque::with_capacity(MAX_TILES);
         Self::fill_rack(&mut tile_rack, tile_box);
@@ -27,6 +29,7 @@ impl Player {
             tile_rack,
             scores: Vec::new(),
             current_turn_score: TurnScore::default(),
+            is_cpu,
         }
     }
 
@@ -117,6 +120,10 @@ pub mod wasm {
                 .iter()
                 .fold(0, |total, score| total + score.score())
         }
+
+        pub fn is_cpu(&self) -> bool {
+            self.is_cpu
+        }
     }
 }
 
@@ -126,7 +133,7 @@ mod test {
 
     fn setup() -> (TileBox, Player) {
         let mut tile_box = TileBox::new();
-        let target = Player::new("Test".to_owned(), &mut tile_box);
+        let target = Player::new("Test".to_owned(), &mut tile_box, false);
         (tile_box, target)
     }
 

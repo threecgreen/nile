@@ -321,7 +321,7 @@ impl Board {
                     coordinates: next_coordinates,
                 },
             )?;
-            self.no_crossover(last_placement.0, last_placement.1)?;
+            // self.no_crossover(last_placement.0, last_placement.1)?;
             if !turn_coordinates.remove(&last_placement.0) {
                 return Err("Can't reuse a tile from another turn".to_owned());
             }
@@ -336,43 +336,43 @@ impl Board {
             && (0..self.height() as i8).contains(&coordinates.1)
     }
 
-    /// Checks whether a placement would result in a crossover. This is invalid
-    /// and can only happen with diagonal offsets. Orthogonal offsets would collide
-    /// with another tile and that's handled by other checks.
-    ///
-    /// A path like the drawing below is invalid.
-    /// ```text
-    ///  |\ /
-    ///  | X
-    ///  |/ \
-    /// ```
-    pub fn no_crossover(&self, coordinates: Coordinates, offset: Offset) -> Result<(), String> {
-        // FIXME: need to check offset of at least one of the cells to see if they actually cross
-        if self.cell(coordinates + Offset(offset.0, 0)).and_then(|c| {
-            c.tile().map(|t| {
-                TilePath::from(t.tile_path_type)
-                    .directions()
-                    .iter()
-                    .any(|d| d.offset().is_diagonal())
-            })
-        })
-        // if self.has_tile()
-        // && self.has_tile(coordinates + Offset(0, offset.1))
-        {
-            Err(format!(
-                "The river cannot cross over itself. Invalid tile placement at {:?}",
-                coordinates
-            ))
-        } else {
-            Ok(())
-        }
-    }
+    // / Checks whether a placement would result in a crossover. This is invalid
+    // / and can only happen with diagonal offsets. Orthogonal offsets would collide
+    // / with another tile and that's handled by other checks.
+    // //
+    // / A path like the drawing below is invalid.
+    // / ```text
+    // /  |\ /
+    // /  | X
+    // /  |/ \
+    //// ```
+    // pub fn no_crossover(&self, coordinates: Coordinates, offset: Offset) -> Result<(), String> {
+    //     // FIXME: need to check offset of at least one of the cells to see if they actually cross
+    //     if self.cell(coordinates + Offset(offset.0, 0)).and_then(|c| {
+    //         c.tile().map(|t| {
+    //             TilePath::from(t.tile_path_type)
+    //                 .directions()
+    //                 .iter()
+    //                 .any(|d| d.offset().is_diagonal())
+    //         })
+    //     })
+    //     // if self.has_tile()
+    //     // && self.has_tile(coordinates + Offset(0, offset.1))
+    //     {
+    //         Err(format!(
+    //             "The river cannot cross over itself. Invalid tile placement at {:?}",
+    //             coordinates
+    //         ))
+    //     } else {
+    //         Ok(())
+    //     }
+    // }
 
-    /// Determines if river is completely encircled and there is not 'escape'.
-    /// This incidates one or more moves are invalid
-    pub fn no_encircles(&self) -> Result<(), String> {
-        Ok(())
-    }
+    // /// Determines if river is completely encircled and there is not 'escape'.
+    // /// This incidates one or more moves are invalid
+    // pub fn no_encircles(&self) -> Result<(), String> {
+    //     Ok(())
+    // }
 }
 
 pub mod wasm {

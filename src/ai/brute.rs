@@ -11,7 +11,11 @@ use std::collections::VecDeque;
 pub struct Brute {}
 
 impl CPUPlayer for Brute {
-    fn take_turn(&mut self, tiles: &VecDeque<Tile>, board: &Board) -> Vec<Event> {
+    fn take_turn(
+        &mut self,
+        tiles: &VecDeque<Tile>,
+        board: &Board,
+    ) -> Option<Vec<TilePlacementEvent>> {
         let last_placement = board.last_placement();
         match Self::best_moves(
             board,
@@ -21,15 +25,8 @@ impl CPUPlayer for Brute {
             tiles,
             &Vec::new(),
         ) {
-            Some(moves) => {
-                let mut events: Vec<Event> =
-                    moves.placements.into_iter().map(Event::PlaceTile).collect();
-                // TODO: this may be redundant. Everything can be encompassed in
-                // place tile
-                events.push(Event::EndTurn);
-                events
-            }
-            None => vec![Event::CantPlay],
+            Some(moves) => Some(moves.placements),
+            None => None,
         }
     }
 }
@@ -185,14 +182,28 @@ mod test {
             Tile::Straight,
             Tile::Straight,
         ]);
-        let moves = target.take_turn(&tiles, &board);
-        assert_eq!(moves.len(), 6);
-        matches!(&moves[0], Event::PlaceTile(tpe) if tpe.tile_path_type == TilePathType::Normal(TilePath::Straight));
-        matches!(&moves[1], Event::PlaceTile(tpe) if tpe.tile_path_type == TilePathType::Normal(TilePath::Straight));
-        matches!(&moves[2], Event::PlaceTile(tpe) if tpe.tile_path_type == TilePathType::Normal(TilePath::Center90));
-        matches!(&moves[3], Event::PlaceTile(tpe) if tpe.tile_path_type == TilePathType::Normal(TilePath::Straight));
-        matches!(&moves[4], Event::PlaceTile(tpe) if tpe.tile_path_type == TilePathType::Normal(TilePath::Straight));
-        matches!(&moves[5], Event::EndTurn);
+        let moves = target.take_turn(&tiles, &board).unwrap();
+        assert_eq!(moves.len(), 5);
+        matches!(
+            &moves[0].tile_path_type,
+            TilePathType::Normal(TilePath::Straight)
+        );
+        matches!(
+            &moves[1].tile_path_type,
+            TilePathType::Normal(TilePath::Straight)
+        );
+        matches!(
+            &moves[2].tile_path_type,
+            TilePathType::Normal(TilePath::Center90)
+        );
+        matches!(
+            &moves[3].tile_path_type,
+            TilePathType::Normal(TilePath::Straight)
+        );
+        matches!(
+            &moves[4].tile_path_type,
+            TilePathType::Normal(TilePath::Straight)
+        );
     }
 
     #[test]
@@ -215,7 +226,7 @@ mod test {
             Tile::Diagonal,
         ]);
 
-        let moves = target.take_turn(&tiles, &board);
+        let moves = target.take_turn(&tiles, &board).unwrap();
         assert_eq!(moves.len(), 3);
     }
 
