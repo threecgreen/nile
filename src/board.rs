@@ -321,11 +321,56 @@ impl Board {
                     coordinates: next_coordinates,
                 },
             )?;
+            self.no_crossover(last_placement.0, last_placement.1)?;
             if !turn_coordinates.remove(&last_placement.0) {
                 return Err("Can't reuse a tile from another turn".to_owned());
             }
         }
         self.last_placement = last_placement;
+        Ok(())
+    }
+
+    pub fn in_bounds(&self, coordinates: Coordinates) -> bool {
+        // FIXME: update for end of game
+        (0..self.width() as i8).contains(&coordinates.0)
+            && (0..self.height() as i8).contains(&coordinates.1)
+    }
+
+    /// Checks whether a placement would result in a crossover. This is invalid
+    /// and can only happen with diagonal offsets. Orthogonal offsets would collide
+    /// with another tile and that's handled by other checks.
+    ///
+    /// A path like the drawing below is invalid.
+    /// ```text
+    ///  |\ /
+    ///  | X
+    ///  |/ \
+    /// ```
+    pub fn no_crossover(&self, coordinates: Coordinates, offset: Offset) -> Result<(), String> {
+        // FIXME: need to check offset of at least one of the cells to see if they actually cross
+        if self.cell(coordinates + Offset(offset.0, 0)).and_then(|c| {
+            c.tile().map(|t| {
+                TilePath::from(t.tile_path_type)
+                    .directions()
+                    .iter()
+                    .any(|d| d.offset().is_diagonal())
+            })
+        })
+        // if self.has_tile()
+        // && self.has_tile(coordinates + Offset(0, offset.1))
+        {
+            Err(format!(
+                "The river cannot cross over itself. Invalid tile placement at {:?}",
+                coordinates
+            ))
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Determines if river is completely encircled and there is not 'escape'.
+    /// This incidates one or more moves are invalid
+    pub fn no_encircles(&self) -> Result<(), String> {
         Ok(())
     }
 }
@@ -365,6 +410,8 @@ impl Board {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use std::iter::FromIterator;
 
     #[test]
     fn set_and_remove_are_idempotent() {
@@ -480,5 +527,35 @@ mod test {
         coordinates_set.insert(Coordinates(11, 0));
         let res = target.validate_turns_moves(coordinates_set);
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn no_crossover() {
+        let mut target = Board::new();
+        let coordinates = vec![Coordinates(5, 1), Coordinates(5, 0), Coordinates(6, 0)];
+        target
+            .place_tile(
+                coordinates[0],
+                TilePlacement::new(TilePathType::Normal(TilePath::Diagonal), Rotation::None),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[1],
+                TilePlacement::new(TilePathType::Normal(TilePath::Right135), Rotation::None),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                coordinates[2],
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Left135),
+                    Rotation::Clockwise180,
+                ),
+            )
+            .unwrap();
+        let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
+        let res = target.validate_turns_moves(coordinates_set);
+        matches!(res, Err(msg) if msg.contains("cross over"));
     }
 }

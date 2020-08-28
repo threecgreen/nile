@@ -205,6 +205,10 @@ impl Offset {
             Rotation::Clockwise270 => Offset(-y, x),
         }
     }
+
+    pub fn is_diagonal(self) -> bool {
+        self.0 != 0 && self.1 != 0
+    }
 }
 
 impl Neg for Offset {

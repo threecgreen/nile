@@ -101,7 +101,7 @@ impl Brute {
                         eval_placement((last_coordinates, last_offset), &placement)
                     {
                         if let Some(cell) = board.cell(next_coordinates) {
-                            if !Self::in_bounds(board, next_coordinates + next_offset) {
+                            if !board.in_bounds(next_coordinates + next_offset) {
                                 continue;
                             }
                             // Can't replay in same place
@@ -165,12 +165,6 @@ impl Brute {
             Some(cell) if cell.bonus() < 0 => TurnScore::new(-cell.bonus() / ADJUSTMENT, 0),
             _ => TurnScore::default(),
         }
-    }
-
-    fn in_bounds(board: &Board, coordinates: Coordinates) -> bool {
-        // FIXME: update for end of game
-        (0..board.width() as i8).contains(&coordinates.0)
-            && (0..board.height() as i8).contains(&coordinates.1)
     }
 }
 
