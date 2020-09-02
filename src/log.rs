@@ -3,6 +3,9 @@ use crate::tile::{self, Coordinates};
 
 use std::collections::HashSet;
 
+/// Represents the action of placing a single tile on the board. Several other
+/// event types could be compacted into a single `TilePlacementEvent` because
+/// they simply modify or undo a `TilePlacementEvent`.
 #[derive(Clone, Debug)]
 pub struct TilePlacementEvent {
     pub tile_path_type: TilePathType,
@@ -16,6 +19,8 @@ pub mod wasm {
 
     use wasm_bindgen::prelude::*;
 
+    /// Wasm wrapper type around `super::TilePlacementEvent` because
+    /// `TilePathType` is not directly representable in JS.
     #[wasm_bindgen]
     pub struct TilePlacementEvent(super::TilePlacementEvent);
 
@@ -275,4 +280,9 @@ impl Log {
                 coordinates_set
             })
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
 }

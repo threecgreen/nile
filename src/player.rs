@@ -17,7 +17,7 @@ pub struct Player {
     is_cpu: bool,
 }
 
-static MAX_TILES: usize = 5;
+const MAX_TILES: usize = 5;
 
 impl Player {
     pub fn new(name: String, tile_box: &mut TileBox, is_cpu: bool) -> Self {

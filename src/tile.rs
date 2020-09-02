@@ -148,3 +148,36 @@ impl TileBox {
         tiles.into_iter().for_each(|t| self.insert_at_random(t));
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn draw_removes_tile_from_box() {
+        let mut target = TileBox::new();
+        let original_size = target.tiles.len();
+        target.draw();
+        assert!(target.tiles.len() == original_size - 1);
+    }
+
+    #[test]
+    fn draw_empty() {
+        let mut target = TileBox::new();
+        target.tiles = VecDeque::new();
+        matches!(target.draw(), None);
+    }
+
+    #[test]
+    fn discard_inserts() {
+        let mut target = TileBox::new();
+        target.tiles = VecDeque::from(vec![Tile::Corner90, Tile::Straight]);
+        let original_size = target.tiles.len();
+        let discarded_tiles = vec![Tile::Universal, Tile::Left135];
+        let discarded_size = discarded_tiles.len();
+        target.discard(discarded_tiles);
+        assert_eq!(target.tiles.len(), original_size + discarded_size);
+        assert!(target.tiles.contains(&Tile::Universal));
+        assert!(target.tiles.contains(&Tile::Left135));
+    }
+}

@@ -312,11 +312,10 @@ mod test {
         assert_eq!(moves.len(), 2);
     }
 
-    #[ignore = "Not yet working"]
     #[test]
     fn ignore_out_of_bounds_paths() {
         let mut target = Brute::new(2);
-        let mut board = Board::with_last_placement(Coordinates(19, 0), Offset(1, 0));
+        let board = Board::with_last_placement(Coordinates(19, 0), Offset(1, 0));
         let tiles = VecDeque::from(vec![
             Tile::Straight,
             Tile::Straight,
@@ -325,8 +324,8 @@ mod test {
             Tile::Straight,
         ]);
 
-        let moves = target.take_turn(&tiles, &board, 0, vec![146]).unwrap();
-        assert!(moves.is_empty());
+        let moves = target.take_turn(&tiles, &board, 0, vec![146]);
+        matches!(moves, None);
     }
 
     #[test]
