@@ -1,5 +1,5 @@
 import React from "react";
-import { PlayerData } from "lib/common";
+import { PlayerData, sumTurnScores } from "lib/common";
 
 interface IProps {
     currentPlayerId: number;
@@ -23,9 +23,7 @@ export const Scoreboard: React.FC<IProps> = ({currentPlayerId, playerData}) => {
             <tbody>
                 { playerData.map((player) => {
                     // TODO: color current player differently
-                    const scoreFwd = player.scores.reduce((acc, score) => (
-                        acc + score.add - score.sub
-                    ), 0);
+                    const scoreFwd = sumTurnScores(player.scores);
                     return (
                         <tr>
                             <td>{ player.name }</td>

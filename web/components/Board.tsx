@@ -2,7 +2,7 @@ import { BoardArray, CoordinateTuple } from "lib/common";
 import React from "react";
 import styles from "./Board.module.css";
 import { GridCell } from "./Grid";
-import { EmptyTile, Tile } from "./Tile";
+import { EmptyTile, Tile, TileType } from "./Tile";
 
 interface IProps {
     board: BoardArray;
@@ -27,27 +27,36 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
                             {/* Start arrow  */}
                             { i == 10 ? <p className={ styles.arrow}>→</p> : null }
                         </td>
-                        { row.map((cell, j) => (
-                            <GridCell key={ j }>
-                                { cell.tilePlacement
-                                ? <div draggable={ currentTurnTiles.some(([ci, cj]) => ci === i && cj === j) }
-                                    onDrag={ onDrag }
-                                    onDragStart={ (_) => onDragStart([i, j]) }
-                                >
-                                    <Tile tilePath={ cell.tilePlacement.tilePath }
-                                        isUniversal={ cell.tilePlacement.isUniversal }
-                                        onSelect={ () => onSelect([i, j]) }
-                                        isSelected={ selectedTile !== null
-                                            && i === selectedTile[0] && j === selectedTile[1] }
-                                        rotation={ cell.tilePlacement.rotation }
-                                    />
-                                </div>
-                                : <EmptyTile bonus={ cell.bonus }
-                                    isEndGame={ j === (board[0].length - 1) }
-                                    onDrop={ () => onDropFromRack(i, j) }
-                                /> }
-                            </GridCell>
-                        )) }
+                        { row.map((cell, j) => {
+                            const isEndGame = j === (board[0].length - 1);
+                            const type = isEndGame
+                                ? TileType.EndGame
+                                : cell.bonus > 0 ? TileType.Bonus
+                                : cell.bonus < 0 ? TileType.Penalty
+                                : TileType.Normal;
+                            return (
+                                <GridCell key={ j }>
+                                    { cell.tilePlacement
+                                    ? <div draggable={ currentTurnTiles.some(([ci, cj]) => ci === i && cj === j) }
+                                        onDrag={ onDrag }
+                                        onDragStart={ (_) => onDragStart([i, j]) }
+                                    >
+                                        <Tile tilePath={ cell.tilePlacement.tilePath }
+                                            isUniversal={ cell.tilePlacement.isUniversal }
+                                            isSelected={ selectedTile !== null
+                                                && i === selectedTile[0] && j === selectedTile[1] }
+                                            rotation={ cell.tilePlacement.rotation }
+                                            type={ type }
+                                            onSelect={ () => onSelect([i, j]) }
+                                        />
+                                    </div>
+                                    : <EmptyTile bonus={ cell.bonus }
+                                        isEndGame={ isEndGame }
+                                        onDrop={ () => onDropFromRack(i, j) }
+                                    /> }
+                                </GridCell>
+                            );
+                        }) }
                     </tr>
                 )) }
             </tbody>

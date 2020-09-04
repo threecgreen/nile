@@ -24,16 +24,33 @@ export const RackTile: React.FC<{tile: TileEnum}> = ({tile}) => (
 )
 RackTile.displayName = "RackTile";
 
+export enum TileType {
+    Normal,
+    Bonus,
+    Penalty,
+    EndGame,
+}
+
+const tileTypeToClass = {
+    [TileType.Normal]: undefined,
+    [TileType.Bonus]: styles.bonus,
+    [TileType.Penalty]: styles.penalty,
+    [TileType.EndGame]: styles.endGame,
+};
 
 interface IProps {
     tilePath: TilePath;
     isUniversal: boolean;
     rotation: Rotation;
     isSelected: boolean;
+    type: TileType,
     onSelect: () => void;
 };
 
-export const Tile: React.FC<IProps> = ({tilePath, isUniversal, rotation, isSelected, ...props}) => {
+export const Tile: React.FC<IProps> = ({
+    tilePath, isUniversal, rotation, isSelected, type,
+    ...props
+}) => {
     const onSelect = (e: React.MouseEvent) => {
         e.preventDefault();
         props.onSelect();
@@ -45,6 +62,8 @@ export const Tile: React.FC<IProps> = ({tilePath, isUniversal, rotation, isSelec
                 styles.tile,
                 isSelected ? styles.selected : undefined,
                 isUniversal ? styles.universal : undefined,
+                tileTypeToClass[type],
+                styles.hasTile
             ]) }
             style={ {transform: rotationToCSs(rotation)} }
             onClick={ onSelect }
