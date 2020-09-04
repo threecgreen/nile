@@ -14,6 +14,10 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
     // Never want to mutate history
     const state = fullState.now;
 
+    const logError = (e: Error) => {
+        console.warn(`Error: ${e.message}; FullState: ${JSON.stringify(fullState)}`);
+    }
+
     React.useEffect(() => {
         if (state.playerData[state.currentPlayerId].isCpu) {
             const cpuUpdate = state.nile.take_cpu_turn();
@@ -25,6 +29,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
 
     // Event handlers
     useEventListener("keydown", (e: KeyboardEvent) => {
+        // TODO: create help text for these
         if (e.key === "q") {
             if (state.selectedTile) {
                 onRotate(false);
@@ -49,6 +54,10 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
             if (state.currentTurnTiles.length > 0) {
                 onEndTurn();
             }
+        } else if (e.key === "C") {
+            if (state.currentTurnTiles.length === 0) {
+                onCantPlay();
+            }
         }
     });
     const onDrop = (row: number, column: number) => {
@@ -66,7 +75,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
                     rotation, score,
                 });
             } catch (e) {
-                console.error(e);
+                logError(e);
             }
         // TODO: possibly separate this logic
         } else if (state.selectedTile !== null) {
@@ -86,7 +95,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
                         score,
                     });
                 } catch (e) {
-                    console.error(e);
+                    logError(e);
                 }
             } else {
                 console.warn("Tried to move tile from cell with no tile");
@@ -103,7 +112,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
                     state.nile.rotate_tile(new Coordinates(row, column), newRotation);
                     dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
                 } catch (e) {
-                    console.error(e);
+                    logError(e);
                 }
             }
         }
@@ -117,7 +126,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
                     const score = state.nile.remove_tile(new Coordinates(row, column));
                     dispatch({type: "removeTile", coordinates: state.selectedTile, score});
                 } catch (e) {
-                    console.error(e);
+                    logError(e);
                 }
             }
         }
@@ -132,7 +141,7 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
                     const tilePlacement = {...cell.tilePlacement, tilePath};
                     dispatch({type: "updateUniversalPath", coordinates: [row, column], tilePlacement});
                 } catch (e) {
-                    console.error(e);
+                    logError(e);
                 }
             }
         }
@@ -156,18 +165,18 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
     }
     const onUndo = () => {
         try {
-            const _score = state.nile.undo();
+            state.nile.undo();
             dispatch({type: "undo"});
         } catch (e) {
-            console.error(e);
+            logError(e);
         }
     }
     const onRedo = () => {
         try {
-            const score = state.nile.redo();
+            state.nile.redo();
             dispatch({type: "redo"});
         } catch (e) {
-            console.error(e);
+            logError(e);
         }
     }
 
