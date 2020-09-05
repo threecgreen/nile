@@ -42,7 +42,7 @@ module.exports = (_env, argv) => {
             path: path.resolve(__dirname, "dist"),
             filename: "bootstrap.js",
         },
-        mode: "development",
+        mode: isProd ? "production" : "development",
         plugins: [
             new CopyWebpackPlugin({
                 patterns: ["index.html", "index.css", "favicon.svg", "manifest.json"]
