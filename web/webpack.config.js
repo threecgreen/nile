@@ -1,6 +1,6 @@
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const TsConfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
-const path = require('path');
+const path = require("path");
 
 module.exports = (_env, argv) => {
     const isProd = argv.mode == "production" || argv.mode == "p";
@@ -22,9 +22,9 @@ module.exports = (_env, argv) => {
                 {
                     test: /\.css$/i,
                     use: [
-                        'style-loader',
+                        "style-loader",
                         {
-                            loader: 'css-loader',
+                            loader: "css-loader",
                             options: {
                                 // Run `postcss-loader` on each CSS `@import`, do not forget that `sass-loader` compile non CSS `@import`'s into a single file
                                 // If you need run `sass-loader` and `postcss-loader` on each CSS `@import` please set it to `2`
@@ -45,7 +45,7 @@ module.exports = (_env, argv) => {
         mode: "development",
         plugins: [
             new CopyWebpackPlugin({
-                patterns: ['index.html', 'index.css']
+                patterns: ["index.html", "index.css", "favicon.svg", "manifest.json"]
             })
         ],
         resolve: {
