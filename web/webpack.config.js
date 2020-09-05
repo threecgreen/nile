@@ -5,6 +5,8 @@ const path = require("path");
 module.exports = (_env, argv) => {
     const isProd = argv.mode == "production" || argv.mode == "p";
 
+    console.log(isProd);
+
     return {
         devtool: isProd ? false : "inline-source-map",
         entry: "./bootstrap.ts",
