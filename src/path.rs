@@ -1,6 +1,7 @@
 use crate::log::TilePlacementEvent;
 use crate::tile::{Coordinates, Rotation, Tile};
 
+use std::convert::TryFrom;
 use std::ops::{Add, Neg};
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -52,9 +53,28 @@ impl From<TilePath> for Tile {
     }
 }
 
+impl TryFrom<Tile> for TilePath {
+    type Error = String;
+
+    fn try_from(tile: Tile) -> Result<Self, Self::Error> {
+        match tile {
+            Tile::Straight => Ok(super::TilePath::Straight),
+            Tile::Diagonal => Ok(super::TilePath::Diagonal),
+            Tile::Center90 => Ok(super::TilePath::Center90),
+            Tile::Corner90 => Ok(super::TilePath::Corner90),
+            Tile::Left45 => Ok(super::TilePath::Left45),
+            Tile::Right45 => Ok(super::TilePath::Right45),
+            Tile::Left135 => Ok(super::TilePath::Left135),
+            Tile::Right135 => Ok(super::TilePath::Right135),
+            Tile::Universal => Err("Can't convert universal tile to tile path".to_owned()),
+        }
+    }
+}
+
 pub mod wasm {
     use crate::tile::Tile;
 
+    use std::convert::TryFrom;
     use wasm_bindgen::prelude::*;
 
     #[wasm_bindgen]
@@ -78,26 +98,12 @@ pub mod wasm {
             TilePathType(super::TilePathType::Normal(tp))
         }
 
-        fn tile_path_from_tile(t: Tile) -> Result<super::TilePath, String> {
-            match t {
-                Tile::Straight => Ok(super::TilePath::Straight),
-                Tile::Diagonal => Ok(super::TilePath::Diagonal),
-                Tile::Center90 => Ok(super::TilePath::Center90),
-                Tile::Corner90 => Ok(super::TilePath::Corner90),
-                Tile::Left45 => Ok(super::TilePath::Left45),
-                Tile::Right45 => Ok(super::TilePath::Right45),
-                Tile::Left135 => Ok(super::TilePath::Left135),
-                Tile::Right135 => Ok(super::TilePath::Right135),
-                Tile::Universal => Err("Can't convert universal tile to tile path".to_owned()),
-            }
-        }
-
         pub fn tile_into_normal(t: Tile) -> Result<TilePathType, JsValue> {
-            Ok(Self::normal(Self::tile_path_from_tile(t)?))
+            Ok(Self::normal(super::TilePath::try_from(t)?))
         }
 
         pub fn tile_into_universal(t: Tile) -> Result<TilePathType, JsValue> {
-            Ok(Self::universal(Self::tile_path_from_tile(t)?))
+            Ok(Self::universal(super::TilePath::try_from(t)?))
         }
 
         pub fn tile_path(&self) -> super::TilePath {
