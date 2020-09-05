@@ -19,6 +19,7 @@ export const Players: React.FC<IProps> = ({currentPlayerId, playerData, setDragg
                         key={ player.name }
                         id={ id }
                         isCurrentTurn={ id === currentPlayerId }
+                        isCpu={ player.isCpu }
                         setDraggedTile={ (idx, tile) => {
                             if (tile === Tile.Universal) {
                                 // Default TilePath for now

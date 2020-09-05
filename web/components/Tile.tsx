@@ -47,7 +47,7 @@ interface IProps {
     onSelect: () => void;
 };
 
-export const Tile: React.FC<IProps> = ({
+export const TileCell: React.FC<IProps> = ({
     tilePath, isUniversal, rotation, isSelected, type,
     ...props
 }) => {
@@ -80,7 +80,7 @@ export const Tile: React.FC<IProps> = ({
         </div>
     );
 }
-Tile.displayName = "Tile";
+TileCell.displayName = "TileCell";
 
 interface IEmptyTileProps {
     bonus: number;
@@ -88,7 +88,7 @@ interface IEmptyTileProps {
     onDrop: () => void;
 }
 
-export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, isEndGame, ...props}) => {
+export const EmptyCell: React.FC<IEmptyTileProps> = ({bonus, isEndGame, ...props}) => {
     const onDrop = (e: React.DragEvent) => {
         e.preventDefault();
         props.onDrop();
@@ -109,7 +109,7 @@ export const EmptyTile: React.FC<IEmptyTileProps> = ({bonus, isEndGame, ...props
         </div>
     );
 }
-EmptyTile.displayName = "EmptyTile";
+EmptyCell.displayName = "EmptyCell";
 
 const bonusToClassName = (bonus: number): string | undefined => {
     if (bonus > 0) {
@@ -120,3 +120,8 @@ const bonusToClassName = (bonus: number): string | undefined => {
     }
     return undefined;
 }
+
+export const HiddenTile: React.FC<{}> = ({}) => (
+    <div className={ c([styles.tile, styles.hiddenTile]) }></div>
+)
+HiddenTile.displayName = "HiddenTile";

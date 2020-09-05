@@ -8,10 +8,11 @@ interface IProps {
     player: PlayerData;
     id: number;
     isCurrentTurn: boolean;
+    isCpu: boolean;
     setDraggedTile: (idx: number, tile: Tile) => void;
 }
 
-export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, setDraggedTile}) => {
+export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, isCpu, setDraggedTile}) => {
     const scoreFwd = player.scores.reduce((acc, score) => (
         acc + score.add - score.sub
     ), 0);
@@ -20,10 +21,10 @@ export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, setDraggedT
             style={ {gridColumn: id + 1} }
         >
             <h2>{ player.name }</h2>
-            { isCurrentTurn && <TileRack tiles={ player.tileRack }
-                isCurrentTurn={ isCurrentTurn }
+            <TileRack tiles={ player.tileRack }
+                showTiles={ isCurrentTurn && !isCpu }
                 setDraggedTile={ setDraggedTile }
-            /> }
+            />
             <table className={ styles.scores }>
                 <thead>
                     <tr>

@@ -1,15 +1,15 @@
 import { Tile as TileEnum } from "nile";
 import React from "react";
 import { GridCell } from "./Grid";
-import { RackTile } from "./Tile";
+import { HiddenTile, RackTile } from "./Tile";
 
 interface IProps {
     tiles: TileEnum[];
-    isCurrentTurn: boolean;
+    showTiles: boolean;
     setDraggedTile: (idx: number, tile: TileEnum) => void;
 }
 
-export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, setDraggedTile}) => {
+export const TileRack: React.FC<IProps> = ({tiles, showTiles, setDraggedTile}) => {
     const onDrag = (e: React.DragEvent) => {
         e.preventDefault();
     }
@@ -25,14 +25,16 @@ export const TileRack: React.FC<IProps> = ({tiles, isCurrentTurn, setDraggedTile
                 <tr>
                     { tiles.map((tile, i) => (
                         <GridCell key={ `${tile} - ${i}` }>
-                            <div draggable={ isCurrentTurn }
+                            <div draggable={ showTiles }
                                 onDrag={ onDrag }
                                 onDragStart={ (_) => setDraggedTile(i, tile) }
                                 onTouchStart={ (_) => setDraggedTile(i, tile) }
                                 // TODO: how to show visually
                                 onClick={ (e) => onClick(e, i, tile) }
                             >
-                                <RackTile tile={ tile } />
+                                { showTiles
+                                    ? <RackTile tile={ tile } />
+                                    : <HiddenTile /> }
                             </div>
                         </GridCell>
                     )) }

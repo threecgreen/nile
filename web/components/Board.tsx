@@ -2,7 +2,7 @@ import { BoardArray, CoordinateTuple } from "lib/common";
 import React from "react";
 import styles from "./Board.module.css";
 import { GridCell } from "./Grid";
-import { EmptyTile, Tile, TileType } from "./Tile";
+import { EmptyCell, TileCell, TileType } from "./Tile";
 
 interface IProps {
     board: BoardArray;
@@ -41,7 +41,7 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
                                             onDrag={ onDrag }
                                             onDragStart={ (_) => onDragStart([i, j]) }
                                         >
-                                            <Tile tilePath={ cell.tilePlacement.tilePath }
+                                            <TileCell tilePath={ cell.tilePlacement.tilePath }
                                                 isUniversal={ cell.tilePlacement.isUniversal }
                                                 isSelected={ selectedTile !== null
                                                     && i === selectedTile[0] && j === selectedTile[1] }
@@ -50,7 +50,7 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
                                                 onSelect={ () => onSelect([i, j]) }
                                             />
                                         </div>
-                                        : <EmptyTile bonus={ cell.bonus }
+                                        : <EmptyCell bonus={ cell.bonus }
                                             isEndGame={ isEndGame }
                                             onDrop={ () => onDropFromRack(i, j) }
                                         /> }

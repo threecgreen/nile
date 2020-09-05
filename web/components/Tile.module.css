@@ -49,3 +49,9 @@
 .hasTile.endGame {
     background-color: rgba(113, 139, 219, 0.4);
 }
+
+.hiddenTile {
+    background: repeating-linear-gradient(135deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem),
+                repeating-linear-gradient(45deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem);
+    /* background-size: calc(0.5rem * 1.414); */
+}
