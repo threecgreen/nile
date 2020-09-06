@@ -8,3 +8,8 @@
     display: grid;
     gap: 2rem;
 }
+
+button.expandCollapse {
+    margin-left: auto;
+    margin-right: auto;
+}

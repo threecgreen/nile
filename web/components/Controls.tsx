@@ -1,4 +1,4 @@
-import { DownToBottom20, Redo24, RotateClockwise24, RotateCounterclockwise24, Undo24 } from "@carbon/icons-react";
+import { DownToBottom24, Redo24, RotateClockwise24, RotateCounterclockwise24, Undo24, Checkmark24, Close24, TrashCan24 } from "@carbon/icons-react";
 import { c } from "lib/utils";
 import { TilePath, tile_path_to_tile } from "nile";
 import React from "react";
@@ -41,8 +41,9 @@ export const Controls: React.FC<IProps> = ({
             </Button>
             <Button enabled={ hasPlacedTile }
                 onClick={ onRemoveTile }
+                title="Remove tile"
             >
-                {/* <FilterRemove24 aria-label="Remove tile" /> */}
+                <TrashCan24 aria-label="Remove tile" />
                 Remove tile
             </Button>
             <div className={ c([styles.dropdown, selectedIsUniversal ? "" : "disabled"]) }>
@@ -50,7 +51,7 @@ export const Controls: React.FC<IProps> = ({
                     className={ styles.dropdown }
                     onClick={ () => undefined }
                 >
-                    Tile Path <DownToBottom20 />
+                    Tile Path <DownToBottom24 />
                 </Button>
                 <div className={ styles.dropdownContent }>
                     <TilePathSelection tilePath={ TilePath.Straight }
@@ -96,12 +97,14 @@ export const Controls: React.FC<IProps> = ({
                 enabled={ hasPlacedTile }
                 onClick={ onEndTurn }
             >
+                <Checkmark24 aria-label="End turn" />
                 End Turn
             </Button>
             <Button
                 enabled={ !hasPlacedTile }
                 onClick={ onCantPlay }
             >
+                <Close24 aria-label="Can't play" />
                 Can't play
             </Button>
         </div>

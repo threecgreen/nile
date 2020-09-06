@@ -1,6 +1,8 @@
+import { RowCollapse24, RowExpand24 } from "@carbon/icons-react";
 import { PlayerData } from "lib/common";
 import { Tile, TilePath, TilePathType } from "nile";
 import React from "react";
+import { Button } from "./Button";
 import { Player } from "./Player";
 import styles from "./Players.module.css";
 
@@ -11,6 +13,7 @@ interface IProps {
 }
 
 export const Players: React.FC<IProps> = ({currentPlayerId, playerData, setDraggedTile}) => {
+    const [isExpanded, setIsExpanded] = React.useState(false);
     return (
         <div className={ styles.players }>
             <div style={ {columnCount: playerData.length} }>
@@ -20,6 +23,7 @@ export const Players: React.FC<IProps> = ({currentPlayerId, playerData, setDragg
                         id={ id }
                         isCurrentTurn={ id === currentPlayerId }
                         isCpu={ player.isCpu }
+                        isExpanded={ isExpanded }
                         setDraggedTile={ (idx, tile) => {
                             if (tile === Tile.Universal) {
                                 // Default TilePath for now
@@ -32,6 +36,15 @@ export const Players: React.FC<IProps> = ({currentPlayerId, playerData, setDragg
                     />
                 )) }
             </div>
+            <Button className={ styles.expandCollapse }
+                enabled={ playerData[0].scores.length > 0 }
+                title={ `${isExpanded ? "Collapse" : "Expand"} scores`}
+                onClick={ () => setIsExpanded(!isExpanded) }
+            >
+                { isExpanded
+                    ? <><RowCollapse24 aria-label="Collapse scores" /> Collapse </>
+                    : <><RowExpand24 aria-label="Expand scores" /> Expand</> }
+            </Button>
         </div>
     );
 }

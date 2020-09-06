@@ -1,12 +1,12 @@
 import { Board } from "components/Board";
+import { sumTurnScores } from "lib/common";
 import { useEventListener } from "lib/hooks";
 import { initState, reducer } from "lib/state";
-import { mod, maxBy } from "lib/utils";
+import { maxBy, mod } from "lib/utils";
 import { Coordinates, Rotation, TilePath, TilePathType } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
 import { Players } from "./Players";
-import { sumTurnScores } from "lib/common";
 
 export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({playerNames, aiPlayerCount}) => {
     // State
@@ -29,6 +29,9 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
 
     // Event handlers
     useEventListener("keydown", (e: KeyboardEvent) => {
+        if (e.ctrlKey || e.altKey || e.metaKey) {
+            return;
+        }
         // TODO: create help text for these
         if (e.key === "q") {
             if (state.selectedTile) {
