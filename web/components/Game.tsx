@@ -63,51 +63,59 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
             }
         }
     });
-    const onDrop = (row: number, column: number) => {
-        if (state.draggedTile !== null) {
-            // Move this to another file
-            try {
-                const rotation = Rotation.None;
-                const tilePathType = state.draggedTile.isUniversal
-                    ? TilePathType.universal(state.draggedTile.tilePath)
-                    : TilePathType.normal(state.draggedTile.tilePath);
-                const score = state.nile.place_tile(tilePathType, new Coordinates(row, column), rotation);
-                dispatch({
-                    type: "placeTile",
-                    draggedTile: state.draggedTile, coordinates: [row, column],
-                    rotation, score,
-                });
-            } catch (e) {
-                logError(e);
-            }
-        // TODO: possibly separate this logic
-        } else if (state.selectedTile !== null) {
-            const oldCell = state.board[state.selectedTile[0]][state.selectedTile[1]];
-            if (oldCell.tilePlacement) {
-                try {
-                    const tilePlacement = oldCell.tilePlacement;
-                    const score = state.nile.move_tile(
-                        new Coordinates(state.selectedTile[0], state.selectedTile[1]),
-                        new Coordinates(row, column)
-                    );
-                    dispatch({
-                        type: "moveTile",
-                        oldCoordinates: state.selectedTile,
-                        newCoordinates: [row, column],
-                        tilePlacement,
-                        score,
-                    });
-                } catch (e) {
-                    logError(e);
+    const onPlaceOnBoard = (row: number, column: number) => {
+        if (state.selectedTile) {
+            switch (state.selectedTile.type) {
+                case "rack": {
+                    // Move this to another file
+                    try {
+                        const rotation = Rotation.None;
+                        const tile = {...state.selectedTile.tile};
+                        const tilePathType = tile.isUniversal
+                            ? TilePathType.universal(tile.tilePath)
+                            : TilePathType.normal(tile.tilePath);
+                        const score = state.nile.place_tile(tilePathType, new Coordinates(row, column), rotation);
+                        dispatch({
+                            type: "placeTile",
+                            draggedTile: tile, coordinates: [row, column],
+                            rotation, score,
+                        });
+                    } catch (e) {
+                        logError(e);
+                    }
+                    return;
                 }
-            } else {
-                console.warn("Tried to move tile from cell with no tile");
+                case "board": {
+                    const [prevRow, prevColumn] = state.selectedTile.coordinates;
+                    const oldCell = state.board[prevRow][prevColumn];
+                    if (oldCell.tilePlacement) {
+                        try {
+                            const tilePlacement = oldCell.tilePlacement;
+                            const score = state.nile.move_tile(
+                                new Coordinates(prevRow, prevColumn),
+                                new Coordinates(row, column)
+                            );
+                            dispatch({
+                                type: "moveTile",
+                                oldCoordinates: [prevRow, prevColumn],
+                                newCoordinates: [row, column],
+                                tilePlacement,
+                                score,
+                            });
+                        } catch (e) {
+                            logError(e);
+                        }
+                    } else {
+                        console.warn("Tried to move tile from cell with no tile");
+                    }
+                    return;
+                }
             }
         }
     }
     const onRotate = (isClockwise: boolean) => {
-        if(state.selectedTile) {
-            const [row, column] = state.selectedTile;
+        if(state.selectedTile?.type === "board") {
+            const [row, column] = state.selectedTile.coordinates;
             const cell = state.board[row][column];
             if(cell.tilePlacement) {
                 try {
@@ -121,13 +129,13 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
         }
     }
     const onRemoveTile = () => {
-        if(state.selectedTile) {
-            const [row, column] = state.selectedTile;
+        if(state.selectedTile?.type === "board") {
+            const [row, column] = state.selectedTile.coordinates;
             const cell = state.board[row][column];
             if(cell.tilePlacement) {
                 try {
                     const score = state.nile.remove_tile(new Coordinates(row, column));
-                    dispatch({type: "removeTile", coordinates: state.selectedTile, score});
+                    dispatch({type: "removeTile", coordinates: [row, column], score});
                 } catch (e) {
                     logError(e);
                 }
@@ -135,8 +143,8 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
         }
     }
     const onUpdateUniversalPath = (tilePath: TilePath) => {
-        if(state.selectedTile) {
-            const [row, column] = state.selectedTile;
+        if(state.selectedTile?.type === "board") {
+            const [row, column] = state.selectedTile.coordinates;
             const cell = state.board[row][column];
             if(cell.tilePlacement && cell.tilePlacement.isUniversal) {
                 try {
@@ -183,7 +191,8 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
         }
     }
 
-    const selectedIsUniversal = state.selectedTile !== null && (state.board[state.selectedTile[0]][state.selectedTile[1]].tilePlacement?.isUniversal ?? false);
+    const selectedIsUniversal = state.selectedTile?.type === "board"
+        && (state.board[state.selectedTile.coordinates[0]][state.selectedTile.coordinates[1]].tilePlacement?.isUniversal ?? false);
     // Render
     return (
         <>
@@ -206,19 +215,20 @@ export const Game: React.FC<{playerNames: string[], aiPlayerCount: number}> = ({
                     onCantPlay={ onCantPlay }
                 />
                 <Board board={ state.board }
-                    selectedTile={ state.selectedTile }
+                    selectedTile={ state.selectedTile?.type === "board" ? state.selectedTile.coordinates : null }
                     currentTurnTiles={ state.currentTurnTiles }
-                    onDropFromRack={ onDrop }
-                    onSelect={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
+                    onDropFromRack={ onPlaceOnBoard }
+                    onSelect={ (coordinates) => dispatch({type: "selectBoardTile", coordinates}) }
                     // TODO: may want separate logic for this in the future
-                    onDragStart={ (coordinates) => dispatch({type: "selectTile", coordinates}) }
+                    onDragStart={ (coordinates) => dispatch({type: "selectBoardTile", coordinates}) }
                 />
             </main>
             <footer>
                 {/* TODO: sticky footer */}
                 <Players currentPlayerId={ state.currentPlayerId }
+                    selectedTileIdx={ state.selectedTile?.type === "rack" ? state.selectedTile.tile.idx : null }
                     playerData={ state.playerData }
-                    setDraggedTile={ (isUniversal, tilePath, idx) => dispatch({type: "setDraggedTile", isUniversal, tilePath, idx}) }
+                    onSelect={ (isUniversal, tilePath, idx) => dispatch({type: "selectRackTile", isUniversal, tilePath, idx}) }
                 />
             </footer>
         </>

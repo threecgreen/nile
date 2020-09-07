@@ -6,17 +6,18 @@ import { HiddenTile, RackTile } from "./Tile";
 interface IProps {
     tiles: TileEnum[];
     showTiles: boolean;
-    setDraggedTile: (idx: number, tile: TileEnum) => void;
+    selectedTileIdx: number | null;
+    onSelect: (idx: number, tile: TileEnum) => void;
 }
 
-export const TileRack: React.FC<IProps> = ({tiles, showTiles, setDraggedTile}) => {
+export const TileRack: React.FC<IProps> = ({tiles, showTiles, selectedTileIdx, onSelect}) => {
     const onDrag = (e: React.DragEvent) => {
         e.preventDefault();
     }
 
     const onClick = (e: React.MouseEvent, i: number, tile: TileEnum) => {
         e.preventDefault();
-        setDraggedTile(i, tile);
+        onSelect(i, tile);
     }
 
     return (
@@ -27,13 +28,15 @@ export const TileRack: React.FC<IProps> = ({tiles, showTiles, setDraggedTile}) =
                         <GridCell key={ `${tile} - ${i}` }>
                             <div draggable={ showTiles }
                                 onDrag={ onDrag }
-                                onDragStart={ (_) => setDraggedTile(i, tile) }
-                                onTouchStart={ (_) => setDraggedTile(i, tile) }
+                                onDragStart={ (_) => onSelect(i, tile) }
+                                onTouchStart={ (_) => onSelect(i, tile) }
                                 // TODO: how to show visually
                                 onClick={ (e) => onClick(e, i, tile) }
                             >
                                 { showTiles
-                                    ? <RackTile tile={ tile } />
+                                    ? <RackTile tile={ tile }
+                                        isSelected={ i === selectedTileIdx }
+                                    />
                                     : <HiddenTile /> }
                             </div>
                         </GridCell>

@@ -120,7 +120,7 @@ const TilePathSelection: React.FC<{tilePath: TilePath, onUpdateUniversalPath: (t
 
     return (
         <a onClick={ onClick }>
-            <RackTile tile={ tile_path_to_tile(tilePath) } />
+            <RackTile tile={ tile_path_to_tile(tilePath) } isSelected={ false } />
         </a>
     );
 }

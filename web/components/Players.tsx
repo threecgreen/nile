@@ -9,10 +9,12 @@ import styles from "./Players.module.css";
 interface IProps {
     currentPlayerId: number;
     playerData: PlayerData[];
-    setDraggedTile: (isUniversal: boolean, tilePath: TilePath, idx: number) => void;
+    selectedTileIdx: number | null;
+    /** Called when a rack tile is selected: either a drag event starts or it's clicked */
+    onSelect: (isUniversal: boolean, tilePath: TilePath, idx: number) => void;
 }
 
-export const Players: React.FC<IProps> = ({currentPlayerId, playerData, setDraggedTile}) => {
+export const Players: React.FC<IProps> = ({currentPlayerId, playerData, selectedTileIdx, onSelect}) => {
     const [isExpanded, setIsExpanded] = React.useState(false);
     return (
         <div className={ styles.players }>
@@ -21,16 +23,17 @@ export const Players: React.FC<IProps> = ({currentPlayerId, playerData, setDragg
                     <Player player={ player }
                         key={ player.name }
                         id={ id }
+                        selectedTileIdx={ selectedTileIdx }
                         isCurrentTurn={ id === currentPlayerId }
                         isCpu={ player.isCpu }
                         isExpanded={ isExpanded }
-                        setDraggedTile={ (idx, tile) => {
+                        onSelect={ (idx, tile) => {
                             if (tile === Tile.Universal) {
                                 // Default TilePath for now
-                                setDraggedTile(true, TilePath.Straight, idx);
+                                onSelect(true, TilePath.Straight, idx);
                             } else {
                                 const tpt = TilePathType.tile_into_normal(tile);
-                                setDraggedTile(false, tpt.tile_path(), idx);
+                                onSelect(false, tpt.tile_path(), idx);
                             }
                         } }
                     />

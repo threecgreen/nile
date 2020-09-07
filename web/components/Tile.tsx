@@ -17,8 +17,8 @@ const rotationToCSs = (rotation: Rotation): string => {
     }
 }
 
-export const RackTile: React.FC<{tile: TileEnum}> = ({tile}) => (
-    <div className={ styles.tile }>
+export const RackTile: React.FC<{tile: TileEnum, isSelected: boolean}> = ({tile, isSelected}) => (
+    <div className={ c([styles.tile, isSelected ? styles.selected : undefined]) }>
         <TileSvg tile={ tile } />
     </div>
 )
@@ -93,7 +93,7 @@ export const EmptyCell: React.FC<IEmptyTileProps> = ({bonus, isEndGame, ...props
         e.preventDefault();
         props.onDrop();
     }
-    const onTouchEnd = (e: React.TouchEvent) => {
+    const onClick = (e: React.MouseEvent) => {
         e.preventDefault();
         props.onDrop();
     }
@@ -102,8 +102,8 @@ export const EmptyCell: React.FC<IEmptyTileProps> = ({bonus, isEndGame, ...props
         <div className={ c([styles.tile, bonusToClassName(bonus), isEndGame ? styles.endGame : undefined]) }
             // Allow tiles to be dropped here
             onDragOver={ (e) => e.preventDefault() }
-            onTouchEnd={ onTouchEnd }
             onDrop={ onDrop }
+            onClick={ onClick }
         >
             { bonus ? <p>{ Math.abs(bonus) }</p> : null }
         </div>

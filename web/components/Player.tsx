@@ -7,13 +7,14 @@ import styles from "./Player.module.css";
 interface IProps {
     player: PlayerData;
     id: number;
+    selectedTileIdx: number | null;
     isCurrentTurn: boolean;
     isCpu: boolean;
     isExpanded: boolean;
-    setDraggedTile: (idx: number, tile: Tile) => void;
+    onSelect: (idx: number, tile: Tile) => void;
 }
 
-export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, isCpu, isExpanded, setDraggedTile}) => {
+export const Player: React.FC<IProps> = ({player, id, selectedTileIdx, isCurrentTurn, isCpu, isExpanded, onSelect}) => {
     const currentTurnScoreFwd = sumTurnScores(player.scores);
     let scoreFwd = 0;
     return (
@@ -25,7 +26,8 @@ export const Player: React.FC<IProps> = ({player, id, isCurrentTurn, isCpu, isEx
             </h2>
             <TileRack tiles={ player.tileRack }
                 showTiles={ isCurrentTurn && !isCpu }
-                setDraggedTile={ setDraggedTile }
+                selectedTileIdx={ selectedTileIdx }
+                onSelect={ onSelect }
             />
             <table className={ styles.scores }>
                 <thead>

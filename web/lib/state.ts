@@ -8,6 +8,10 @@ interface IRackDraggedTile {
     isUniversal: boolean;
 }
 
+type SelectedTile =
+    | {type: "rack", tile: IRackDraggedTile}
+    | {type: "board", coordinates: CoordinateTuple};
+
 interface IInnerState {
     nile: WasmNile;
     board: BoardArray;
@@ -15,12 +19,9 @@ interface IInnerState {
     /** Whether the game has finished */
     gameHasEnded: boolean;
     playerData: PlayerData[];
-    /** A tile in the process of being dragged */
-    draggedTile: IRackDraggedTile | null;
     /** Used for determining if placed tile is movable, rotatable, etc. */
     currentTurnTiles: CoordinateTuple[];
-    /** Coordinates the selected tile on the board */
-    selectedTile: CoordinateTuple | null;
+    selectedTile: SelectedTile | null;
 }
 
 interface IState {
@@ -30,8 +31,8 @@ interface IState {
 }
 
 type Action =
-    | {type: "setDraggedTile", tilePath: TilePath, isUniversal: boolean, idx: number}
-    | {type: "selectTile", coordinates: CoordinateTuple}
+    | {type: "selectRackTile", tilePath: TilePath, isUniversal: boolean, idx: number}
+    | {type: "selectBoardTile", coordinates: CoordinateTuple}
     | {type: "placeTile", draggedTile: IRackDraggedTile, coordinates: CoordinateTuple, rotation: Rotation, score: TurnScore}
     | {type: "rotateTile", coordinates: CoordinateTuple, rotation: Rotation}
     | {type: "removeTile", coordinates: CoordinateTuple, score: TurnScore}
@@ -52,11 +53,10 @@ export const initState = (playerNames: string[], aiPlayerCount: number): IState 
             nile,
             board: toBoardArray(nile.board()),
             currentPlayerId: 0,
+            gameHasEnded: false,
             playerData: toPlayerDataArray(nile.players()),
-            draggedTile: null,
             currentTurnTiles: [],
             selectedTile: null,
-            gameHasEnded: false,
         },
         future: [],
     };
@@ -65,10 +65,10 @@ export const initState = (playerNames: string[], aiPlayerCount: number): IState 
 export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
     const state = prevState.now;
     switch (action.type) {
-        case "setDraggedTile":
-            return update(prevState, {...state, draggedTile: {...action}});
-        case "selectTile":
-            return update(prevState, {...state, selectedTile: action.coordinates});
+        case "selectRackTile":
+            return update(prevState, {...state, selectedTile: {type: "rack", tile: action}});
+        case "selectBoardTile":
+            return update(prevState, {...state, selectedTile: {type: "board", coordinates: action.coordinates}});
         case "placeTile": {
             // Place tile on board
             const board = updateCell(state.board, action.coordinates, (cell) => {
@@ -92,10 +92,10 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
             // Add to currentTurnTiles
             const currentTurnTiles = [...state.currentTurnTiles, action.coordinates];
             // Update selectedTile
-            const selectedTile = action.coordinates;
+            const selectedTile: SelectedTile = {type: "board", coordinates: action.coordinates};
             return undoableUpdate(
                 prevState,
-                {...state, board, playerData, currentTurnTiles, selectedTile, draggedTile: null}
+                {...state, board, playerData, currentTurnTiles, selectedTile}
             );
         }
         case "rotateTile": {
@@ -169,7 +169,13 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                 ([ci, cj]) => ci !== action.oldCoordinates[0] && cj !== action.oldCoordinates[1]);
             currentTurnTiles.push(action.newCoordinates);
 
-            return undoableUpdate(prevState, {...state, board, playerData, selectedTile: action.newCoordinates, currentTurnTiles});
+            return undoableUpdate(prevState, {
+                ...state,
+                board,
+                playerData,
+                selectedTile: {type: "board", coordinates: action.newCoordinates},
+                currentTurnTiles
+            });
         }
         case "endTurn": {
             const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
@@ -185,7 +191,6 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                 playerData,
                 currentPlayerId,
                 gameHasEnded: action.hasEnded,
-                draggedTile: null,
                 selectedTile: null,
                 currentTurnTiles: [],
             });
