@@ -35,6 +35,8 @@ impl Player {
 
     pub fn end_turn(&mut self, tile_box: &mut TileBox) -> TurnScore {
         if self.tile_rack.is_empty() {
+            // TODO: this should possibly only apply if the player began
+            // their turn with 5 tiles
             // Bonus for using all tiles
             self.add_score(TurnScore::from(20));
         }

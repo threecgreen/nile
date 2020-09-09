@@ -13,6 +13,7 @@ export const PlayerNameInput: React.FC<IProps> = ({i, name, onChange}) => {
                 value={ name }
                 onChange={ (e) => onChange(e.target.value) }
                 required={ true }
+                placeholder="Name"
             />
             <label htmlFor={ i.toString() }>
                 Player { i + 1 }

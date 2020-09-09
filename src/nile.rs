@@ -188,6 +188,7 @@ impl Nile {
         if self.log.can_undo() {
             return Err("Player has made moves this turn".to_owned());
         }
+        // TODO: Check if any playable moves
         // FIXME: can pass in `self.tile_box` to `player` and have it handle most of this
         let tiles = player.discard_tiles();
         let tile_score = tiles.iter().fold(0, |acc, t| acc + t.score());
@@ -226,6 +227,7 @@ impl Nile {
         Ok(EndTurnUpdate {
             tiles,
             turn_score,
+            // Also end game if there are no more tiles
             game_has_ended: self.has_ended,
         })
     }
@@ -286,6 +288,7 @@ impl Nile {
                                 player_id,
                                 turn_score: end_turn_update.turn_score,
                                 game_has_ended: end_turn_update.game_has_ended,
+                                tile_count: self.tile_count(),
                             });
                         }
                     }
@@ -295,6 +298,7 @@ impl Nile {
                             player_id,
                             turn_score: end_turn_update.turn_score,
                             game_has_ended: end_turn_update.game_has_ended,
+                            tile_count: self.tile_count(),
                         },
                         Err(e) => {
                             log(&format!("Failed to end CPU player turn: {:?}", e));
@@ -305,6 +309,7 @@ impl Nile {
                                 player_id,
                                 turn_score: end_turn_update.turn_score,
                                 game_has_ended: end_turn_update.game_has_ended,
+                                tile_count: self.tile_count(),
                             }
                         }
                     }
@@ -316,6 +321,7 @@ impl Nile {
                         player_id,
                         turn_score: end_turn_update.turn_score,
                         game_has_ended: end_turn_update.game_has_ended,
+                        tile_count: self.tile_count(),
                     }
                 }
             },
@@ -345,8 +351,13 @@ impl Nile {
         }
     }
 
+    fn tile_count(&self) -> usize {
+        self.players[self.current_turn].tiles().len()
+    }
+
     fn advance_turn(&mut self) {
         self.current_turn = (self.current_turn + 1) % self.players.len();
+        self.has_ended = self.has_ended && self.players[self.current_turn].rack_is_empty();
     }
 
     fn if_not_ended(&self) -> Result<(), String> {
@@ -400,6 +411,8 @@ pub struct CPUTurnUpdate {
     pub turn_score: TurnScore,
     placements: Vec<TilePlacementEvent>,
     pub game_has_ended: bool,
+    /// we don't need to display or expose what tiles the cpu actually has
+    pub tile_count: usize,
 }
 
 pub mod wasm {

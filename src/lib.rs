@@ -15,7 +15,7 @@ pub use crate::path::{
     TilePath,
 };
 pub use crate::player::Player;
-pub use crate::tile::{Coordinates, Rotation, Tile};
+pub use crate::tile::{wasm::tile_score, Coordinates, Rotation, Tile};
 pub use crate::wasm_api::WasmNile;
 
 use wasm_bindgen::prelude::*;
