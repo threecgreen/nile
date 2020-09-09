@@ -17,6 +17,7 @@ rand = { version = "0.7.3", features = ["wasm-bindgen"] }
 js-sys = "0.3.45"
 # Debuggable panics
 console_error_panic_hook = "0.1.6"
+smallvec = "1.4.2"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.18"

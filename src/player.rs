@@ -1,14 +1,18 @@
 use crate::score::TurnScore;
 use crate::tile::{Tile, TileBox};
 
-use std::collections::VecDeque;
+use smallvec::SmallVec;
 use wasm_bindgen::prelude::*;
+
+const MAX_TILES: usize = 5;
+
+pub type TileArray = SmallVec<[Tile; MAX_TILES]>;
 
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Player {
     name: String,
-    tile_rack: VecDeque<Tile>,
+    tile_rack: TileArray,
     /// Scores of completed turns
     scores: Vec<TurnScore>,
     /// Scores of current turn
@@ -17,12 +21,10 @@ pub struct Player {
     is_cpu: bool,
 }
 
-const MAX_TILES: usize = 5;
-
 impl Player {
     pub fn new(name: String, tile_box: &mut TileBox, is_cpu: bool) -> Self {
         // TODO: handle case where box is empty
-        let mut tile_rack = VecDeque::with_capacity(MAX_TILES);
+        let mut tile_rack = TileArray::new();
         Self::fill_rack(&mut tile_rack, tile_box);
         Self {
             name,
@@ -51,17 +53,17 @@ impl Player {
         self.tile_rack.is_empty()
     }
 
-    fn fill_rack(tile_rack: &mut VecDeque<Tile>, tile_box: &mut TileBox) {
+    fn fill_rack(tile_rack: &mut TileArray, tile_box: &mut TileBox) {
         while tile_rack.len() < MAX_TILES {
             if let Some(tile) = tile_box.draw() {
-                tile_rack.push_back(tile);
+                tile_rack.push(tile);
             } else {
                 break;
             }
         }
     }
 
-    pub fn tiles(&self) -> &VecDeque<Tile> {
+    pub fn tiles(&self) -> &TileArray {
         &self.tile_rack
     }
 
@@ -71,12 +73,18 @@ impl Player {
         self.tile_rack
             .iter()
             .position(|t| *t == tile)
-            .and_then(|idx| self.tile_rack.remove(idx))
+            .and_then(|idx| {
+                if idx < self.tile_rack.len() {
+                    Some(self.tile_rack.remove(idx))
+                } else {
+                    None
+                }
+            })
     }
 
     /// The player removed a tile from the board is returning it to their rack
     pub fn return_tile(&mut self, tile: Tile) {
-        self.tile_rack.push_back(tile);
+        self.tile_rack.push(tile);
     }
 
     pub fn name(&self) -> &str {
@@ -91,7 +99,7 @@ impl Player {
 
     pub fn discard_tiles(&mut self) -> Vec<Tile> {
         let mut tiles = Vec::with_capacity(self.tile_rack.len());
-        while let Some(tile) = self.tile_rack.remove(0) {
+        while let Some(tile) = self.tile_rack.pop() {
             tiles.push(tile);
         }
         tiles

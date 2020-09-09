@@ -3,12 +3,11 @@ use crate::board::{Board, TilePlacement};
 use crate::log;
 use crate::log::{Event, Log, TilePlacementEvent};
 use crate::path::{TilePath, TilePathType};
-use crate::player::Player;
+use crate::player::{Player, TileArray};
 use crate::score::TurnScore;
 use crate::tile::{self, Coordinates, Rotation, Tile, TileBox};
 
 use js_sys::Array;
-use std::collections::VecDeque;
 use wasm_bindgen::prelude::*;
 
 /// Holds all state for one game
@@ -388,7 +387,7 @@ impl Nile {
 #[derive(Debug)]
 pub struct EndTurnUpdate {
     pub turn_score: TurnScore,
-    tiles: VecDeque<Tile>,
+    tiles: TileArray,
     pub game_has_ended: bool,
 }
 

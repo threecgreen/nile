@@ -2,10 +2,9 @@ use super::CPUPlayer;
 use crate::board::Board;
 use crate::log::TilePlacementEvent;
 use crate::path::{eval_placement, Offset, TilePath, TilePathType};
+use crate::player::TileArray;
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation, Tile};
-
-use std::collections::VecDeque;
 
 #[derive(Debug)]
 pub struct Brute {
@@ -22,7 +21,7 @@ impl CPUPlayer for Brute {
     /// TODO: Return expected score and log error if actual doesn't match
     fn take_turn(
         &mut self,
-        tiles: &VecDeque<Tile>,
+        tiles: &TileArray,
         board: &Board,
         score: i16,
         other_scores: Vec<i16>,
@@ -91,7 +90,7 @@ impl Brute {
         last_coordinates: Coordinates,
         last_offset: Offset,
         turn_score: TurnScore,
-        tiles: &VecDeque<Tile>,
+        tiles: &TileArray,
         placements: &Vec<TilePlacementEvent>,
     ) -> Option<PotentialSetOfMoves> {
         let next_coordinates = last_coordinates + last_offset;
@@ -182,7 +181,7 @@ impl Brute {
                             {
                                 // Recurse
                                 let mut rem_tiles = tiles.clone();
-                                rem_tiles.remove(idx).unwrap();
+                                rem_tiles.remove(idx);
                                 if let Some(moves) = self.best_moves(
                                     board,
                                     score,
@@ -252,18 +251,20 @@ mod test {
     use super::*;
     use crate::board::TilePlacement;
 
+    use smallvec::smallvec;
+
     #[test]
     fn maximizes_score() {
         let mut target = Brute::new(2);
         let board = Board::new();
         // Tiles to get to 60 bonus on first turn using all tiles
-        let tiles = VecDeque::from(vec![
+        let tiles = smallvec![
             Tile::Center90,
             Tile::Straight,
             Tile::Straight,
             Tile::Straight,
             Tile::Straight,
-        ]);
+        ];
         let moves = target.take_turn(&tiles, &board, 0, vec![0]).unwrap();
         assert_eq!(moves.len(), 5);
         matches!(
@@ -299,14 +300,14 @@ mod test {
             )
             .unwrap();
         // Tiles to get to 60 bonus on first turn using all tiles
-        let tiles = VecDeque::from(vec![
+        let tiles = smallvec![
             Tile::Center90,
             Tile::Center90,
             // Can't use these
             Tile::Diagonal,
             Tile::Diagonal,
             Tile::Diagonal,
-        ]);
+        ];
 
         let moves = target.take_turn(&tiles, &board, 30, vec![50]).unwrap();
         assert_eq!(moves.len(), 2);
@@ -316,13 +317,13 @@ mod test {
     fn ignore_out_of_bounds_paths() {
         let mut target = Brute::new(2);
         let board = Board::with_last_placement(Coordinates(19, 0), Offset(1, 0));
-        let tiles = VecDeque::from(vec![
+        let tiles = smallvec![
             Tile::Straight,
             Tile::Straight,
             Tile::Diagonal,
             Tile::Diagonal,
             Tile::Straight,
-        ]);
+        ];
 
         let moves = target.take_turn(&tiles, &board, 0, vec![146]);
         matches!(moves, None);
@@ -332,13 +333,13 @@ mod test {
     fn cpu_should_end_game_when_winning() {
         let mut target = Brute::new(3);
         let board = Board::with_last_placement(Coordinates(10, 19), Offset(0, 1));
-        let tiles = VecDeque::from(vec![
+        let tiles = smallvec![
             Tile::Straight,
             Tile::Right135,
             Tile::Right45,
             Tile::Right45,
             Tile::Straight,
-        ]);
+        ];
 
         // Optimal moves should place player in lead
         let moves = target

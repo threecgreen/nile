@@ -2,15 +2,13 @@ mod brute;
 
 use crate::board::Board;
 use crate::log::TilePlacementEvent;
-use crate::tile::Tile;
-
-use std::collections::VecDeque;
+use crate::player::TileArray;
 
 /// An automated player to compete with human players or other `CPUPlayer`s
 pub trait CPUPlayer: std::fmt::Debug {
     fn take_turn(
         &mut self,
-        tiles: &VecDeque<Tile>,
+        tiles: &TileArray,
         board: &Board,
         score: i16,
         other_scores: Vec<i16>,
