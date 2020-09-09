@@ -9,7 +9,8 @@
   "scripts": {
     "build": "webpack --config webpack.config.js --mode production",
     "start": "webpack-dev-server",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint '*/**/*.{js,ts,tsx}'"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,10 @@
   "homepage": "https://github.com/threecgreen/nile#README.md",
   "dependencies": {
     "@carbon/icons-react": "^10.16.0",
+    "@typescript-eslint/eslint-plugin": "^4.1.0",
+    "@typescript-eslint/parser": "^4.1.0",
+    "eslint": "^7.9.0",
+    "eslint-plugin-react": "^7.20.6",
     "nile": "file:../pkg",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
@@ -39,6 +44,7 @@
     "@types/react-dom": "^16.9.8",
     "copy-webpack-plugin": "^6.0.3",
     "css-loader": "^4.2.1",
+    "eslint-plugin-react-hooks": "^4.1.2",
     "jest": "^26.4.1",
     "react-test-renderer": "^16.13.1",
     "style-loader": "^1.2.1",
