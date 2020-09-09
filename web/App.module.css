@@ -1,0 +1,10 @@
+.centerText {
+    text-align: center;
+}
+
+label {
+    margin: 1rem;
+}
+form button {
+    margin: 0.25rem;
+}

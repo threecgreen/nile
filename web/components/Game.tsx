@@ -3,7 +3,7 @@ import { sumTurnScores } from "lib/common";
 import { useEventListener } from "lib/hooks";
 import { initState, reducer } from "lib/state";
 import { maxBy, mod } from "lib/utils";
-import { Coordinates, Rotation, TilePath, TilePathType } from "nile";
+import { Coordinates, Rotation, TilePath, TilePathType, Tile, tile_path_to_tile } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
 import { Players } from "./Players";
@@ -33,33 +33,65 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
             return;
         }
         // TODO: create help text for these
-        if (e.key === "q") {
-            if (state.selectedTile) {
-                onRotate(false);
+        switch (e.key) {
+            case "q": {
+                if (state.selectedTile) {
+                    onRotate(false);
+                }
+                break;
             }
-        } else if (e.key === "e") {
-            if (state.selectedTile) {
-                onRotate(true);
+            case "x": {
+                if (state.selectedTile) {
+                    onRemoveTile();
+                }
+                break;
             }
-        } else if (e.key === "x") {
-            if (state.selectedTile) {
-                onRemoveTile();
+            case "e": {
+                if (state.selectedTile) {
+                    onRotate(true);
+                }
+                break;
             }
-        } else if (e.key === "u") {
-            if (fullState.past.length > 0) {
-                onUndo();
+            case "u": {
+                if (fullState.past.length > 0) {
+                    onUndo();
+                }
+                break;
             }
-        } else if (e.key === "r") {
-            if (fullState.future.length > 0) {
-                onRedo();
+            case "r": {
+                if (fullState.future.length > 0) {
+                    onRedo();
+                }
+                break;
             }
-        } else if (e.key === "E") {
-            if (state.currentTurnTiles.length > 0) {
-                onEndTurn();
+            case "E": {
+                if (state.currentTurnTiles.length > 0) {
+                    onEndTurn();
+                }
+                break;
             }
-        } else if (e.key === "C") {
-            if (state.currentTurnTiles.length === 0) {
-                onCantPlay();
+            case "C": {
+                if (state.currentTurnTiles.length === 0) {
+                    onCantPlay();
+                }
+                break;
+            }
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+            case "5": {
+                const num = parseInt(e.key, 10);
+                // Zero-indexed
+                const idx = num - 1;
+                const rack = state.playerData[state.currentPlayerId].tileRack;
+                if (idx < rack.length) {
+                    const tile = rack[idx];
+                    const isUniversal = tile === Tile.Universal;
+                    const tilePath = isUniversal ? TilePath.Straight : TilePathType.tile_into_normal(tile).tile_path();
+                    dispatch({type: "selectRackTile", idx, isUniversal, tilePath});
+                }
+                break;
             }
         }
     });
