@@ -277,8 +277,8 @@ impl Nile {
                             tpe.rotation,
                         ) {
                             log(&format!(
-                                "Failed to place a tile from CPU player: {:?}",
-                                err
+                                "Failed to place a tile from CPU player: {:?}; TilePlacement: {:?}",
+                                err, &tpe
                             ));
                             self.undo_all();
                             let end_turn_update = self.cant_play().unwrap();
@@ -300,7 +300,10 @@ impl Nile {
                             tile_count: self.tile_count(),
                         },
                         Err(e) => {
-                            log(&format!("Failed to end CPU player turn: {:?}", e));
+                            log(&format!(
+                                "Failed to end CPU player turn: {:?}; Board: {:?}",
+                                e, &self.board
+                            ));
                             self.undo_all();
                             let end_turn_update = self.cant_play().unwrap();
                             CPUTurnUpdate {
