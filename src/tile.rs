@@ -140,7 +140,9 @@ impl TileBox {
     fn insert_at_random(&mut self, tile: Tile) {
         // Insert at random location
         self.tiles
-            .insert(self.rng.gen_range(0, self.tiles.len()), tile);
+            // range is exclusive at high end. If there are t tiles, then there
+            // are t + 1 insert locations
+            .insert(self.rng.gen_range(0, self.tiles.len() + 1), tile);
     }
 
     /// If a player cannot play, there tiles are returned to the box
@@ -179,5 +181,13 @@ mod test {
         assert_eq!(target.tiles.len(), original_size + discarded_size);
         assert!(target.tiles.contains(&Tile::Universal));
         assert!(target.tiles.contains(&Tile::Left135));
+    }
+
+    #[test]
+    fn insert_at_random_when_empty() {
+        let mut target = TileBox::new();
+        target.tiles = VecDeque::default();
+        target.insert_at_random(Tile::Corner90);
+        assert_eq!(target.tiles[0], Tile::Corner90)
     }
 }
