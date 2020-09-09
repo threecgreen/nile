@@ -86,12 +86,12 @@ impl Brute {
         &self,
         board: &Board,
         score: i16,
-        other_scores: &Vec<i16>,
+        other_scores: &[i16],
         last_coordinates: Coordinates,
         last_offset: Offset,
         turn_score: TurnScore,
         tiles: &TileArray,
-        placements: &Vec<TilePlacementEvent>,
+        placements: &[TilePlacementEvent],
     ) -> Option<PotentialSetOfMoves> {
         let next_coordinates = last_coordinates + last_offset;
         let mut potential_placements = Vec::new();
@@ -128,18 +128,19 @@ impl Brute {
                                 continue;
                             }
                             // Can't replay in same place
-                            if placements.iter().any(|placement| {
+                            let has_replayed_in_cell = placements.iter().any(|placement| {
                                 placement.coordinates == next_coordinates
                                     || placement.coordinates == next_coordinates + next_offset
                             }) || !cell.is_empty()
-                                || board.has_tile(next_coordinates + next_offset)
-                            {
+                                || board.has_tile(next_coordinates + next_offset);
+                            if has_replayed_in_cell {
                                 continue;
                             }
-                            if let Err(_) = board.no_crossover(next_coordinates, next_offset) {
+                            if board.no_crossover(next_coordinates, next_offset).is_err() {
                                 continue;
                             }
-                            let mut new_placements = placements.clone();
+                            // clone
+                            let mut new_placements = placements.to_owned();
                             new_placements.push(placement);
                             let new_score = turn_score
                                 + TurnScore::from(tile.score())
@@ -218,10 +219,10 @@ impl Brute {
 
     fn end_game_adjustment(
         score: i16,
-        other_player_scores: &Vec<i16>,
+        other_player_scores: &[i16],
         board: &Board,
         turn_score: TurnScore,
-        tile_placements: &Vec<TilePlacementEvent>,
+        tile_placements: &[TilePlacementEvent],
         last_placement: (Coordinates, Offset),
     ) -> Result<TurnScore, ()> {
         let end_of_game_cell_count = tile_placements
