@@ -1,0 +1,4 @@
+.alignRight > td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}

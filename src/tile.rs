@@ -96,6 +96,15 @@ impl Tile {
     }
 }
 
+pub mod wasm {
+    use super::*;
+
+    #[wasm_bindgen]
+    pub fn tile_score(tile: Tile) -> i16 {
+        tile.score()
+    }
+}
+
 /// Holds tiles that can still be drawn by a player
 #[derive(Debug)]
 pub struct TileBox {

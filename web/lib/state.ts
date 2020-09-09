@@ -219,6 +219,7 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
         case "cpuTurn": {
             const playerData = updatePlayer(state.playerData, action.cpuUpdate.player_id, (player) => {
                 player.scores = [...player.scores, action.cpuUpdate.turn_score];
+                player.tileRack = new Array(action.cpuUpdate.tile_count).fill(Tile.Straight);
                 return player;
             });
             const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);

@@ -1,7 +1,9 @@
+import { score } from "lib/common";
 import { Tile as TileEnum } from "nile";
 import React from "react";
 import { GridCell } from "./Grid";
 import { HiddenTile, RackTile } from "./Tile";
+import styles from "./TileRack.module.css";
 
 interface IProps {
     tiles: TileEnum[];
@@ -41,6 +43,13 @@ export const TileRack: React.FC<IProps> = ({tiles, showTiles, selectedTileIdx, o
                             </div>
                         </GridCell>
                     )) }
+                </tr>
+                <tr className={ styles.alignRight }>
+                    { tiles.map((tile, i) => (
+                        <td key={ `${tile} - ${i}`}>
+                            { showTiles && score(tile) }
+                        </td>
+                    ))}
                 </tr>
             </tbody>
         </table>

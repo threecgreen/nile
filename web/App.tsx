@@ -63,7 +63,7 @@ export const App: React.FC = () => {
                     <Subtract16 aria-label="Remove player" />
                 </Button>
                 <br/>
-                CPU players: { state.cpuPlayerCount }
+                <span className={ styles.cpuCount }>CPU players: { state.cpuPlayerCount }</span>
                 <Button title="Add CPU player"
                     onClick={ () => setState((prevState) => ({...prevState, cpuPlayerCount: prevState.cpuPlayerCount + 1})) }
                     enabled={ playerCount < 4 }

@@ -1,4 +1,4 @@
-import { Board, Player, Rotation, Tile, TilePathType, TilePath } from "nile";
+import { Board, Player, Rotation, Tile, TilePath, TilePathType, tile_score } from "nile";
 import { range } from "./utils";
 
 export type CoordinateTuple = [number, number];
@@ -61,14 +61,30 @@ export type PlayerData = {
 
 export const toPlayerDataArray = (players: Player[]): PlayerData[] => (
     players.map((p) => {
+        const isCpu = p.is_cpu();
         return {
             name: p.get_name(),
-            tileRack: p.get_tiles().map((t) => (
-                t as Tile
-            )),
+            tileRack: isCpu
+                ? new Array(p.get_tiles().length).fill(Tile.Straight)
+                : p.get_tiles().map((t) => (
+                    t as Tile
+                )),
             scores: p.total_score() !== 0 ? [{add: p.total_score(), sub: 0}] : [],
             currentTurnScore: {add: 0, sub: 0},
-            isCpu: p.is_cpu(),
+            isCpu,
         };
     })
 )
+
+/** Memoized cache of tile scores */
+export const score = (() => {
+    const cache = new Map();
+    return (tile: Tile) => {
+        if (cache.has(tile)) {
+            return cache.get(tile);
+        }
+        const res = tile_score(tile);
+        cache.set(tile, res);
+        return res;
+    };
+})();
