@@ -3,7 +3,7 @@ import { sumTurnScores } from "lib/common";
 import { useEventListener } from "lib/hooks";
 import { initState, reducer } from "lib/state";
 import { maxBy, mod } from "lib/utils";
-import { Coordinates, Rotation, TilePath, TilePathType, Tile, tile_path_to_tile } from "nile";
+import { Coordinates, Rotation, Tile, TilePath, TilePathType } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
 import { Players } from "./Players";
@@ -99,7 +99,6 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
         if (state.selectedTile) {
             switch (state.selectedTile.type) {
                 case "rack": {
-                    // Move this to another file
                     try {
                         const rotation = Rotation.None;
                         const tile = {...state.selectedTile.tile};
@@ -113,7 +112,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                             rotation, score,
                         });
                     } catch (e) {
-                        logError(e);
+                        dispatch({type: "setError", msg: e.message});
                     }
                     return;
                 }
@@ -135,10 +134,10 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                                 score,
                             });
                         } catch (e) {
-                            logError(e);
+                            dispatch({type: "setError", msg: e.message});
                         }
                     } else {
-                        console.warn("Tried to move tile from cell with no tile");
+                        dispatch({type: "setError", msg: "Tried to move tile from cell with no tile"});
                     }
                     return;
                 }
@@ -155,7 +154,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                     state.nile.rotate_tile(new Coordinates(row, column), newRotation);
                     dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
                 } catch (e) {
-                    logError(e);
+                    dispatch({type: "setError", msg: e.message});
                 }
             }
         }
@@ -169,7 +168,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                     const score = state.nile.remove_tile(new Coordinates(row, column));
                     dispatch({type: "removeTile", coordinates: [row, column], score});
                 } catch (e) {
-                    logError(e);
+                    dispatch({type: "setError", msg: e.message});
                 }
             }
         }
@@ -184,7 +183,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                     const tilePlacement = {...cell.tilePlacement, tilePath};
                     dispatch({type: "updateUniversalPath", coordinates: [row, column], tilePlacement});
                 } catch (e) {
-                    logError(e);
+                    dispatch({type: "setError", msg: e.message});
                 }
             }
         }
@@ -194,7 +193,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
             const update = state.nile.end_turn();
             dispatch({type: "endTurn", turnScore: update.turn_score, tiles: update.get_tiles(), hasEnded: update.game_has_ended});
         } catch(e) {
-            alert(e);
+            dispatch({type: "setError", msg: e.message});
         }
     }
     const onCantPlay = () => {
@@ -203,7 +202,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
             /// Save event as endTurn
             dispatch({type: "endTurn", turnScore: update.turn_score, tiles: update.get_tiles(), hasEnded: update.game_has_ended});
         } catch(e) {
-            alert(e);
+            dispatch({type: "setError", msg: e.message});
         }
     }
     const onUndo = () => {

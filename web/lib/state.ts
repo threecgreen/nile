@@ -1,6 +1,7 @@
-import { Rotation, Tile, TilePath, tile_path_to_tile, TurnScore, WasmNile, CPUTurnUpdate, TilePlacementEvent } from "nile";
+import { CPUTurnUpdate, Rotation, Tile, TilePath, TilePlacementEvent, tile_path_to_tile, TurnScore, WasmNile } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
 import { mod } from "./utils";
+import { act } from "react-test-renderer";
 
 interface IRackDraggedTile {
     idx: number;
@@ -12,6 +13,10 @@ type SelectedTile =
     | {type: "rack", tile: IRackDraggedTile}
     | {type: "board", coordinates: CoordinateTuple};
 
+type Modal =
+    | {type: "error", msg: string}
+    | {type: "endOfGame", msg: string};
+
 interface IInnerState {
     nile: WasmNile;
     board: BoardArray;
@@ -22,6 +27,7 @@ interface IInnerState {
     /** Used for determining if placed tile is movable, rotatable, etc. */
     currentTurnTiles: CoordinateTuple[];
     selectedTile: SelectedTile | null;
+    modal: Modal | null;
 }
 
 interface IState {
@@ -43,6 +49,9 @@ type Action =
     /** Same event for cantPlay */
     | {type: "endTurn", turnScore: TurnScore, tiles: Tile[], hasEnded: boolean}
     | {type: "cpuTurn", cpuUpdate: CPUTurnUpdate}
+    | {type: "setError", msg: string}
+    | {type: "setEndOfGame", msg: string}
+    | {type: "dismiss"}
 
 export const initState = (playerNames: string[], aiPlayerCount: number): IState => {
     // TODO: move WasmNile behind interface for easier testing
@@ -57,6 +66,7 @@ export const initState = (playerNames: string[], aiPlayerCount: number): IState 
             playerData: toPlayerDataArray(nile.players()),
             currentTurnTiles: [],
             selectedTile: null,
+            modal: null,
         },
         future: [],
     };
@@ -244,6 +254,12 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
                 gameHasEnded: action.cpuUpdate.game_has_ended,
              });
         }
+        case "setError":
+            return update(prevState, {...state, modal: {type: "error", msg: action.msg}});
+        case "setEndOfGame":
+            return update(prevState, {...state, modal: {type: "endOfGame", msg: action.msg}});
+        case "dismiss":
+            return update(prevState, {...state, modal: null});
         default:
             return prevState;
     }
