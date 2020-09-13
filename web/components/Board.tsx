@@ -13,7 +13,7 @@ interface IProps {
     onDragStart: (coordinates: CoordinateTuple) => void;
 }
 
-export const Board: React.FC<IProps> = React.memo(({board, selectedTile, currentTurnTiles, onDropFromRack, onSelect, onDragStart}) => {
+const BoardInner: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, onDropFromRack, onSelect, onDragStart}) => {
     const onDrag = (e: React.DragEvent) => {
         e.preventDefault();
     }
@@ -63,5 +63,6 @@ export const Board: React.FC<IProps> = React.memo(({board, selectedTile, current
             </table>
         </div>
     );
-});
-Board.displayName = "Board";
+};
+BoardInner.displayName = "Board";
+export const Board = React.memo(BoardInner);
