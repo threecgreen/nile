@@ -30,8 +30,8 @@ export const TileRack: React.FC<IProps> = ({tiles, showTiles, selectedTileIdx, o
                         <GridCell key={ `${tile} - ${i}` }>
                             <div draggable={ showTiles }
                                 onDrag={ onDrag }
-                                onDragStart={ (_) => onSelect(i, tile) }
-                                onTouchStart={ (_) => onSelect(i, tile) }
+                                onDragStart={ () => onSelect(i, tile) }
+                                onTouchStart={ () => onSelect(i, tile) }
                                 // TODO: how to show visually
                                 onClick={ (e) => onClick(e, i, tile) }
                             >
@@ -54,5 +54,5 @@ export const TileRack: React.FC<IProps> = ({tiles, showTiles, selectedTileIdx, o
             </tbody>
         </table>
     );
-}
+};
 TileRack.displayName = "TileRack";

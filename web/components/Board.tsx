@@ -13,7 +13,7 @@ interface IProps {
     onDragStart: (coordinates: CoordinateTuple) => void;
 }
 
-export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, onDropFromRack, onSelect, onDragStart}) => {
+export const Board: React.FC<IProps> = React.memo(({board, selectedTile, currentTurnTiles, onDropFromRack, onSelect, onDragStart}) => {
     const onDrag = (e: React.DragEvent) => {
         e.preventDefault();
     }
@@ -39,7 +39,7 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
                                         { cell.tilePlacement
                                         ? <div draggable={ currentTurnTiles.some(([ci, cj]) => ci === i && cj === j) }
                                             onDrag={ onDrag }
-                                            onDragStart={ (_) => onDragStart([i, j]) }
+                                            onDragStart={ () => onDragStart([i, j]) }
                                         >
                                             <TileCell tilePath={ cell.tilePlacement.tilePath }
                                                 isUniversal={ cell.tilePlacement.isUniversal }
@@ -63,5 +63,5 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
             </table>
         </div>
     );
-};
+});
 Board.displayName = "Board";

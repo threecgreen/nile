@@ -7,16 +7,13 @@ import { Coordinates, Rotation, Tile, TilePath, TilePathType } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
 import { Players } from "./Players";
+import { Modal } from "./Modal";
 
 export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = ({playerNames, cpuPlayerCount: aiPlayerCount}) => {
     // State
     const [fullState, dispatch] = React.useReducer(reducer, [], () => initState(playerNames, aiPlayerCount));
     // Never want to mutate history
     const state = fullState.now;
-
-    const logError = (e: Error) => {
-        console.warn(`Error: ${e.message}; FullState: ${JSON.stringify(fullState)}`);
-    }
 
     React.useEffect(() => {
         if (state.playerData[state.currentPlayerId].isCpu) {
@@ -25,7 +22,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                 dispatch({type: "cpuTurn", cpuUpdate});
             }
         }
-    }, [state.currentPlayerId]);
+    }, [state.currentPlayerId, state.nile, state.playerData]);
 
     // Event handlers
     useEventListener("keydown", (e: KeyboardEvent) => {
@@ -95,7 +92,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
             }
         }
     });
-    const onPlaceOnBoard = (row: number, column: number) => {
+    const onPlaceOnBoard = React.useCallback((row: number, column: number) => {
         if (state.selectedTile) {
             switch (state.selectedTile.type) {
                 case "rack": {
@@ -143,8 +140,8 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                 }
             }
         }
-    }
-    const onRotate = (isClockwise: boolean) => {
+    }, [state.board, state.nile, state.selectedTile]);
+    const onRotate = React.useCallback((isClockwise: boolean) => {
         if(state.selectedTile?.type === "board") {
             const [row, column] = state.selectedTile.coordinates;
             const cell = state.board[row][column];
@@ -158,8 +155,8 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                 }
             }
         }
-    }
-    const onRemoveTile = () => {
+    }, [state.board, state.nile, state.selectedTile]);
+    const onRemoveTile = React.useCallback(() => {
         if(state.selectedTile?.type === "board") {
             const [row, column] = state.selectedTile.coordinates;
             const cell = state.board[row][column];
@@ -172,7 +169,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                 }
             }
         }
-    }
+    }, [state.board, state.nile, state.selectedTile]);
     const onUpdateUniversalPath = (tilePath: TilePath) => {
         if(state.selectedTile?.type === "board") {
             const [row, column] = state.selectedTile.coordinates;
@@ -188,15 +185,15 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
             }
         }
     }
-    const onEndTurn = () => {
+    const onEndTurn = React.useCallback(() => {
         try {
             const update = state.nile.end_turn();
             dispatch({type: "endTurn", turnScore: update.turn_score, tiles: update.get_tiles(), hasEnded: update.game_has_ended});
         } catch(e) {
             dispatch({type: "setError", msg: e.message});
         }
-    }
-    const onCantPlay = () => {
+    }, [state.nile]);
+    const onCantPlay = React.useCallback(() => {
         try {
             const update = state.nile.cant_play();
             /// Save event as endTurn
@@ -204,23 +201,23 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
         } catch(e) {
             dispatch({type: "setError", msg: e.message});
         }
-    }
-    const onUndo = () => {
+    }, [state.nile]);
+    const onUndo = React.useCallback(() => {
         try {
             state.nile.undo();
             dispatch({type: "undo"});
         } catch (e) {
-            logError(e);
+            console.warn(`Error: ${e.message};`);
         }
-    }
-    const onRedo = () => {
+    }, [state.nile]);
+    const onRedo = React.useCallback(() => {
         try {
             state.nile.redo();
             dispatch({type: "redo"});
         } catch (e) {
-            logError(e);
+            console.warn(`Error: ${e.message};`);
         }
-    }
+    }, [state.nile]);
 
     const selectedIsUniversal = state.selectedTile?.type === "board"
         && (state.board[state.selectedTile.coordinates[0]][state.selectedTile.coordinates[1]].tilePlacement?.isUniversal ?? false);
@@ -253,6 +250,7 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                     // TODO: may want separate logic for this in the future
                     onDragStart={ (coordinates) => dispatch({type: "selectBoardTile", coordinates}) }
                 />
+                { state.modal && <Modal>{ state.modal.msg }</Modal> }
             </main>
             <footer>
                 {/* TODO: sticky footer */}

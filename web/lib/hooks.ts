@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 
 export const useEventListener = (
     eventName: string,
     handler: (event: any) => void,
     element = window
-) => {
+): void => {
     // Create a ref that stores handler
     const savedHandler = React.useRef<(event: any) => void>();
 

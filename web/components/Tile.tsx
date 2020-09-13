@@ -45,7 +45,7 @@ interface IProps {
     isSelected: boolean;
     type: TileType,
     onSelect: () => void;
-};
+}
 
 export const TileCell: React.FC<IProps> = ({
     tilePath, isUniversal, rotation, isSelected, type,
@@ -63,7 +63,7 @@ export const TileCell: React.FC<IProps> = ({
                 isSelected ? styles.selected : undefined,
                 isUniversal ? styles.universal : undefined,
                 tileTypeToClass[type],
-                styles.hasTile
+                styles.hasTile,
             ]) }
             style={ {transform: rotationToCSs(rotation)} }
             onClick={ onSelect }
@@ -121,7 +121,7 @@ const bonusToClassName = (bonus: number): string | undefined => {
     return undefined;
 }
 
-export const HiddenTile: React.FC<{}> = ({}) => (
+export const HiddenTile: React.FC = ({}) => (
     <div className={ c([styles.tile, styles.hiddenTile]) }></div>
 )
 HiddenTile.displayName = "HiddenTile";

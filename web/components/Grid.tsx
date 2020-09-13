@@ -1,10 +1,7 @@
 import React from "react";
 import styles from "./Grid.module.css"
 
-interface IProps {
-}
-
-export const GridCell: React.FC<IProps> = ({...props}) => (
+export const GridCell: React.FC = ({...props}) => (
     <td>
         { props.children }
     </td>

@@ -105,7 +105,7 @@ export const Controls: React.FC<IProps> = ({
                 onClick={ onCantPlay }
             >
                 <Close24 aria-label="Can't play" />
-                Can't play
+                Can&apos;t play
             </Button>
         </div>
     );

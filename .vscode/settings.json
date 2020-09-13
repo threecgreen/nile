@@ -8,5 +8,6 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "web/node_modules": true,
-    }
+    },
+    "linter"
 }

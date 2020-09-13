@@ -1,7 +1,6 @@
 import { CPUTurnUpdate, Rotation, Tile, TilePath, TilePlacementEvent, tile_path_to_tile, TurnScore, WasmNile } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
 import { mod } from "./utils";
-import { act } from "react-test-renderer";
 
 interface IRackDraggedTile {
     idx: number;
