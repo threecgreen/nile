@@ -1,4 +1,5 @@
-import { CPUTurnUpdate, Rotation, Tile, TilePath, TilePlacementEvent, tile_path_to_tile, TurnScore, WasmNile } from "nile";
+import React from "react";
+import { CPUTurnUpdate, Rotation, Tile, TilePath, TilePlacementEvent, tile_path_to_tile, TurnScore, WasmNile, EndTurnUpdate, TilePathType, Coordinates } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
 import { mod } from "./utils";
 
@@ -17,7 +18,6 @@ type Modal =
     | {type: "endOfGame", msg: string};
 
 interface IInnerState {
-    nile: WasmNile;
     board: BoardArray;
     currentPlayerId: number;
     /** Whether the game has finished */
@@ -46,19 +46,16 @@ type Action =
     | {type: "undo"}
     | {type: "redo"}
     /** Same event for cantPlay */
-    | {type: "endTurn", turnScore: TurnScore, tiles: Tile[], hasEnded: boolean}
+    | {type: "endTurn", endTurnUpdate: EndTurnUpdate}
     | {type: "cpuTurn", cpuUpdate: CPUTurnUpdate}
     | {type: "setError", msg: string}
     | {type: "setEndOfGame", msg: string}
     | {type: "dismiss"}
 
-export const initState = (playerNames: string[], aiPlayerCount: number): IState => {
-    // TODO: move WasmNile behind interface for easier testing
-    const nile = new WasmNile(playerNames, aiPlayerCount);
+export const initState = (nile: WasmNile): IState => {
     return {
         past: [],
         now: {
-            nile,
             board: toBoardArray(nile.board()),
             currentPlayerId: 0,
             gameHasEnded: false,
@@ -71,196 +68,425 @@ export const initState = (playerNames: string[], aiPlayerCount: number): IState 
     };
 }
 
-export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
-    const state = prevState.now;
-    switch (action.type) {
-        case "selectRackTile":
-            return update(prevState, {...state, selectedTile: {type: "rack", tile: action}});
-        case "selectBoardTile":
-            return update(prevState, {...state, selectedTile: {type: "board", coordinates: action.coordinates}});
-        case "placeTile": {
-            // Place tile on board
-            const board = updateCell(state.board, action.coordinates, (cell) => {
-                cell.tilePlacement = {
-                    tilePath: action.draggedTile.tilePath,
-                    isUniversal: action.draggedTile.isUniversal,
-                    rotation: action.rotation,
-                };
-                return cell;
-            });
+export class StateManager {
+    private nile: WasmNile;
+    private fullState: IState;
+    private dispatch: React.Dispatch<Action>;
 
-            const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
-                // Update scores
-                player.currentTurnScore = action.score;
-                // Remove tile from tile rack
-                const tileRack = [...player.tileRack];
-                tileRack.splice(action.draggedTile.idx, 1);
-                player.tileRack = tileRack;
-                return player;
-            });
-            // Add to currentTurnTiles
-            const currentTurnTiles = [...state.currentTurnTiles, action.coordinates];
-            // Update selectedTile
-            const selectedTile: SelectedTile = {type: "board", coordinates: action.coordinates};
-            return undoableUpdate(
-                prevState,
-                {...state, board, playerData, currentTurnTiles, selectedTile}
-            );
+    public constructor(nile: WasmNile, useReducer: typeof React.useReducer) {
+        this.nile = nile;
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        [this.fullState, this.dispatch] = useReducer(this.reducer, [], () => initState(this.nile));
+    }
+
+    public get state(): IInnerState {
+        return this.fullState.now
+    }
+
+    public get canUndo(): boolean {
+        return this.fullState.past.length > 0;
+    }
+
+    public get canRedo(): boolean {
+        return this.fullState.future.length > 0;
+    }
+
+    public selectRackTile(idx: number): void {
+        const rack = this.state.playerData[this.state.currentPlayerId].tileRack;
+        if (idx < rack.length) {
+            const tile = rack[idx];
+            const isUniversal = tile === Tile.Universal;
+            const tilePath = isUniversal ? TilePath.Straight : TilePathType.tile_into_normal(tile).tile_path();
+            this.dispatch({type: "selectRackTile", idx, isUniversal, tilePath});
         }
-        case "rotateTile": {
-            let board;
-            try {
-                board = updateCell(state.board, action.coordinates, (cell) => {
-                    if(cell.tilePlacement === null) {
-                        console.warn("Tried to rotate empty tile");
-                        throw new Error("Tried to rotate empty tile");
+    }
+
+    public selectBoardTile(coordinates: CoordinateTuple): void {
+        this.dispatch({type: "selectBoardTile", coordinates});
+    }
+
+    public placeOnBoard(row: number, column: number): void {
+        if (this.state.selectedTile) {
+            switch (this.state.selectedTile.type) {
+                case "rack": {
+                    try {
+                        const rotation = Rotation.None;
+                        const tile = {...this.state.selectedTile.tile};
+                        const tilePathType = tile.isUniversal
+                            ? TilePathType.universal(tile.tilePath)
+                            : TilePathType.normal(tile.tilePath);
+                        const score = this.nile.place_tile(tilePathType, new Coordinates(row, column), rotation);
+                        this.dispatch({
+                            type: "placeTile",
+                            draggedTile: tile, coordinates: [row, column],
+                            rotation, score,
+                        });
+                    } catch (e) {
+                        this.dispatch({type: "setError", msg: e.message});
                     }
-                    cell.tilePlacement = {...cell.tilePlacement, rotation: action.rotation};
+                    return;
+                }
+                case "board": {
+                    const [prevRow, prevColumn] = this.state.selectedTile.coordinates;
+                    const oldCell = this.state.board[prevRow][prevColumn];
+                    if (oldCell.tilePlacement) {
+                        try {
+                            const tilePlacement = oldCell.tilePlacement;
+                            const score = this.nile.move_tile(
+                                new Coordinates(prevRow, prevColumn),
+                                new Coordinates(row, column)
+                            );
+                            this.dispatch({
+                                type: "moveTile",
+                                oldCoordinates: [prevRow, prevColumn],
+                                newCoordinates: [row, column],
+                                tilePlacement,
+                                score,
+                            });
+                        } catch (e) {
+                            this.dispatch({type: "setError", msg: e.message});
+                        }
+                    } else {
+                        this.dispatch({type: "setError", msg: "Tried to move tile from cell with no tile"});
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    public rotate(isClockwise: boolean): void {
+        if(this.state.selectedTile?.type === "board") {
+            const [row, column] = this.state.selectedTile.coordinates;
+            const cell = this.state.board[row][column];
+            if(cell.tilePlacement) {
+                try {
+                    const newRotation = mod(cell.tilePlacement.rotation + (isClockwise ? 1 : -1), 4)    // 4 different rotations
+                    this.nile.rotate_tile(new Coordinates(row, column), newRotation);
+                    this.dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
+                } catch (e) {
+                    this.dispatch({type: "setError", msg: e.message});
+                }
+            }
+        }
+    }
+
+    public removeSelectedTile(): void {
+        if(this.state.selectedTile?.type === "board") {
+            const [row, column] = this.state.selectedTile.coordinates;
+            const cell = this.state.board[row][column];
+            if(cell.tilePlacement) {
+                try {
+                    const score = this.nile.remove_tile(new Coordinates(row, column));
+                    this.dispatch({type: "removeTile", coordinates: [row, column], score});
+                } catch (e) {
+                    this.dispatch({type: "setError", msg: e.message});
+                }
+            }
+        }
+    }
+
+    public updateUniversalPath(tilePath: TilePath): void {
+        if(this.state.selectedTile?.type === "board") {
+            const [row, column] = this.state.selectedTile.coordinates;
+            const cell = this.state.board[row][column];
+            if(cell.tilePlacement && cell.tilePlacement.isUniversal) {
+                try {
+                    this.nile.update_universal_path(new Coordinates(row, column), tilePath);
+                    const tilePlacement = {...cell.tilePlacement, tilePath};
+                    this.dispatch({type: "updateUniversalPath", coordinates: [row, column], tilePlacement});
+                } catch (e) {
+                    this.dispatch({type: "setError", msg: e.message});
+                }
+            }
+        }
+    }
+
+    public endTurn(): void {
+        try {
+            const endTurnUpdate = this.nile.end_turn();
+            this.dispatch({type: "endTurn", endTurnUpdate});
+        } catch(e) {
+            this.dispatch({type: "setError", msg: e.message});
+        }
+    }
+
+    public cantPlay(): void {
+        try {
+            const endTurnUpdate = this.nile.cant_play();
+            /// Save event as endTurn
+            this.dispatch({type: "endTurn", endTurnUpdate});
+        } catch(e) {
+            this.dispatch({type: "setError", msg: e.message});
+        }
+    }
+
+    public undo(): void {
+        try {
+            this.nile.undo();
+            this.dispatch({type: "undo"});
+        } catch (e) {
+            console.warn(`Error: ${e.message};`);
+        }
+    }
+
+    public redo(): void {
+        try {
+            this.nile.redo();
+            this.dispatch({type: "redo"});
+        } catch (e) {
+            console.warn(`Error: ${e.message};`);
+        }
+    }
+
+    public takeCpuTurn(): void {
+        if (this.state.playerData[this.state.currentPlayerId].isCpu) {
+            const cpuUpdate = this.nile.take_cpu_turn();
+            if (cpuUpdate) {
+                this.dispatch({type: "cpuTurn", cpuUpdate});
+            }
+        }
+    }
+
+    private reducer(prevState: IState, action: Action): IState {
+        const state = prevState.now;
+        switch (action.type) {
+            case "selectRackTile":
+                return update(prevState, {...state, selectedTile: {type: "rack", tile: action}});
+            case "selectBoardTile":
+                return update(prevState, {...state, selectedTile: {type: "board", coordinates: action.coordinates}});
+            case "placeTile":
+                return StateManager.reducePlaceTile(
+                    prevState, action.draggedTile, action.coordinates, action.rotation, action.score
+                );
+            case "rotateTile":
+                return StateManager.reduceRotateTile(prevState, action.coordinates, action.rotation);
+            case "removeTile":
+                return StateManager.reduceRemoveTile(prevState, action.coordinates, action.score);
+            case "updateUniversalPath": {
+                const board = updateCell(state.board, action.coordinates, (cell) => {
+                    cell.tilePlacement = action.tilePlacement;
                     return cell;
                 });
-            } catch {
+                return undoableUpdate(prevState, {...state, board});
+            }
+            case "moveTile":
+                return StateManager.reduceMoveTile(
+                    prevState, action.oldCoordinates, action.newCoordinates, action.tilePlacement,
+                    action.score,
+                );
+            case "endTurn":
+                return StateManager.reduceEndTurn(prevState, action.endTurnUpdate)
+            case "undo": {
+                if (prevState.past.length > 0) {
+                    const [now, ...past] = prevState.past;
+                    return {
+                        past,
+                        now,
+                        future: [prevState.now, ...prevState.future],
+                    };
+                }
                 return prevState;
             }
-
-            return undoableUpdate(prevState, {...state, board});
+            case "redo":
+                if (prevState.future.length > 0) {
+                    const [now, ...future] = prevState.future;
+                    return {
+                        past: [prevState.now, ...prevState.past],
+                        now,
+                        future,
+                    };
+                }
+                return prevState;
+            case "cpuTurn":
+                return StateManager.reduceCpuTurn(prevState, action.cpuUpdate);
+            case "setError":
+                return update(prevState, {...state, modal: {type: "error", msg: action.msg}});
+            case "setEndOfGame":
+                return update(prevState, {...state, modal: {type: "endOfGame", msg: action.msg}});
+            case "dismiss":
+                return update(prevState, {...state, modal: null});
+            default:
+                return prevState;
         }
-        case "removeTile": {
-            // Remove tile from board
-            const [i, j] = action.coordinates;
-            const tilePlacement = state.board[i][j].tilePlacement;
-            if (tilePlacement !== null) {
-                const tilePath = tilePlacement.tilePath;
-                const board = updateCell(state.board, action.coordinates, (cell) => {
-                    cell.tilePlacement = null;
-                    return cell;
-                });
+    }
 
-                const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
-                    // Update scores
-                    player.currentTurnScore = action.score;
-                    // Return tile from tile rack
-                    player.tileRack = [...player.tileRack, tile_path_to_tile(tilePath)];
-                    return player;
-                });
-                // Remove from currentTurnTiles
-                const currentTurnTiles = state.currentTurnTiles.filter(([ci, cj]) => ci !== i && cj !== j);
-                // Update selectedTile
-                const selectedTile = null;
-                return undoableUpdate(
-                    prevState, {
-                        ...state, board, playerData, currentTurnTiles, selectedTile
-                    }
-                );
-            }
-            return prevState;
-        }
-        case "updateUniversalPath": {
-            const board = updateCell(state.board, action.coordinates, (cell) => {
-                cell.tilePlacement = action.tilePlacement;
+    private static reducePlaceTile(
+        prevState: IState,
+        tile: IRackDraggedTile,
+        coordinates: CoordinateTuple,
+        rotation: Rotation,
+        score: TurnScore,
+    ): IState {
+        const state = prevState.now;
+        // Place tile on board
+        const board = updateCell(state.board, coordinates, (cell) => {
+            cell.tilePlacement = {
+                ...tile,
+                rotation,
+            };
+            return cell;
+        });
+
+        const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
+            // Update scores
+            player.currentTurnScore = score;
+            // Remove tile from tile rack
+            const tileRack = [...player.tileRack];
+            tileRack.splice(tile.idx, 1);
+            player.tileRack = tileRack;
+            return player;
+        });
+        // Add to currentTurnTiles
+        const currentTurnTiles = [...state.currentTurnTiles, coordinates];
+        // Update selectedTile
+        const selectedTile: SelectedTile = {type: "board", coordinates: coordinates};
+        return undoableUpdate(
+            prevState,
+            {...state, board, playerData, currentTurnTiles, selectedTile}
+        );
+    }
+
+    private static reduceRotateTile(
+        prevState: IState,
+        coordinates: CoordinateTuple,
+        rotation: Rotation,
+    ): IState {
+        const state = prevState.now;
+        let board;
+        try {
+            board = updateCell(state.board, coordinates, (cell) => {
+                if(cell.tilePlacement === null) {
+                    console.warn("Tried to rotate empty tile");
+                    throw new Error("Tried to rotate empty tile");
+                }
+                cell.tilePlacement = {...cell.tilePlacement, rotation};
                 return cell;
             });
-            return undoableUpdate(prevState, {...state, board});
+        } catch {
+            return prevState;
         }
-        case "moveTile": {
-            let board = updateCell(state.board, action.oldCoordinates, (cell) => {
+
+        return undoableUpdate(prevState, {...state, board});
+    }
+
+    private static reduceRemoveTile(
+        prevState: IState,
+        coordinates: CoordinateTuple,
+        score: TurnScore,
+    ): IState {
+        const state = prevState.now;
+        // Remove tile from board
+        const [i, j] = coordinates;
+        const tilePlacement = state.board[i][j].tilePlacement;
+        if (tilePlacement !== null) {
+            const tilePath = tilePlacement.tilePath;
+            const board = updateCell(state.board, coordinates, (cell) => {
                 cell.tilePlacement = null;
                 return cell;
             });
-            board = updateCell(board, action.newCoordinates, (cell) => {
-                cell.tilePlacement = action.tilePlacement;
-                return cell;
-            });
-            const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
-                player.currentTurnScore = action.score;
-                return player;
-            })
-            const currentTurnTiles = state.currentTurnTiles.filter(
-                ([ci, cj]) => ci !== action.oldCoordinates[0] && cj !== action.oldCoordinates[1]);
-            currentTurnTiles.push(action.newCoordinates);
 
-            return undoableUpdate(prevState, {
-                ...state,
-                board,
-                playerData,
-                selectedTile: {type: "board", coordinates: action.newCoordinates},
-                currentTurnTiles
-            });
-        }
-        case "endTurn": {
             const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
                 // Update scores
-                player.scores = [...player.scores, action.turnScore];
-                player.currentTurnScore = {add: 0, sub: 0};
-                player.tileRack = action.tiles;
+                player.currentTurnScore = score;
+                // Return tile from tile rack
+                player.tileRack = [...player.tileRack, tile_path_to_tile(tilePath)];
                 return player;
             });
-            const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
-            return updateAndReset({
-                ...state,
-                playerData,
-                currentPlayerId,
-                gameHasEnded: action.hasEnded,
-                selectedTile: null,
-                currentTurnTiles: [],
-            });
+            // Remove from currentTurnTiles
+            const currentTurnTiles = state.currentTurnTiles.filter(([ci, cj]) => ci !== i && cj !== j);
+            // Update selectedTile
+            const selectedTile = null;
+            return undoableUpdate(
+                prevState, {
+                    ...state, board, playerData, currentTurnTiles, selectedTile
+                }
+            );
         }
-        case "undo": {
-            if (prevState.past.length > 0) {
-                const [now, ...past] = prevState.past;
-                return {
-                    past,
-                    now,
-                    future: [prevState.now, ...prevState.future],
+        return prevState;
+    }
+
+    private static reduceMoveTile(
+        prevState: IState,
+        oldCoordinates: CoordinateTuple,
+        newCoordinates: CoordinateTuple,
+        tilePlacement: TilePlacement,
+        score: TurnScore
+    ): IState {
+        const state = prevState.now;
+        let board = updateCell(state.board, oldCoordinates, (cell) => {
+            cell.tilePlacement = null;
+            return cell;
+        });
+        board = updateCell(board, newCoordinates, (cell) => {
+            cell.tilePlacement = tilePlacement;
+            return cell;
+        });
+        const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
+            player.currentTurnScore = score;
+            return player;
+        })
+        const currentTurnTiles = state.currentTurnTiles.filter(
+            ([ci, cj]) => ci !== oldCoordinates[0] && cj !== oldCoordinates[1]);
+        currentTurnTiles.push(newCoordinates);
+
+        return undoableUpdate(prevState, {
+            ...state,
+            board,
+            playerData,
+            selectedTile: {type: "board", coordinates: newCoordinates},
+            currentTurnTiles,
+        });
+    }
+
+    private static reduceEndTurn(prevState: IState, update: EndTurnUpdate): IState {
+        const state = prevState.now;
+        const playerData = updatePlayer(state.playerData, state.currentPlayerId, (player) => {
+            // Update scores
+            player.scores = [...player.scores, update.turn_score];
+            player.currentTurnScore = {add: 0, sub: 0};
+            player.tileRack = update.get_tiles();
+            return player;
+        });
+        const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
+        return updateAndReset({
+            ...state,
+            playerData,
+            currentPlayerId,
+            gameHasEnded: update.game_has_ended,
+            selectedTile: null,
+            currentTurnTiles: [],
+        });
+    }
+
+    private static reduceCpuTurn(prevState: IState, cpuUpdate: CPUTurnUpdate): IState {
+        const state = prevState.now;
+        const playerData = updatePlayer(state.playerData, cpuUpdate.player_id, (player) => {
+            player.scores = [...player.scores, cpuUpdate.turn_score];
+            player.tileRack = new Array(cpuUpdate.tile_count).fill(Tile.Straight);
+            return player;
+        });
+        const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
+        let board = state.board;
+        cpuUpdate.get_placements().forEach((placement: TilePlacementEvent) => {
+            const coordinates = placement.get_coordinates();
+            const tilePathType = placement.get_tile_path_type();
+            board = updateCell(board, [coordinates[0], coordinates[1]], (cell) => {
+                cell.tilePlacement = {
+                    isUniversal: tilePathType.is_universal(),
+                    rotation: placement.get_rotation(),
+                    tilePath: tilePathType.tile_path()
                 };
-            }
-            return prevState;
-        }
-        case "redo":
-            if (prevState.future.length > 0) {
-                const [now, ...future] = prevState.future;
-                return {
-                    past: [prevState.now, ...prevState.past],
-                    now,
-                    future,
-                };
-            }
-            return prevState;
-        case "cpuTurn": {
-            const playerData = updatePlayer(state.playerData, action.cpuUpdate.player_id, (player) => {
-                player.scores = [...player.scores, action.cpuUpdate.turn_score];
-                player.tileRack = new Array(action.cpuUpdate.tile_count).fill(Tile.Straight);
-                return player;
+                return cell;
             });
-            const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
-            let board = state.board;
-            action.cpuUpdate.get_placements().forEach((placement: TilePlacementEvent) => {
-                const coordinates = placement.get_coordinates();
-                const tilePathType = placement.get_tile_path_type();
-                board = updateCell(board, [coordinates[0], coordinates[1]], (cell) => {
-                    cell.tilePlacement = {
-                        isUniversal: tilePathType.is_universal(),
-                        rotation: placement.get_rotation(),
-                        tilePath: tilePathType.tile_path()
-                    };
-                    return cell;
-                });
-            });
-            return updateAndReset({
-                ...state,
-                playerData,
-                currentPlayerId,
-                board,
-                gameHasEnded: action.cpuUpdate.game_has_ended,
-             });
-        }
-        case "setError":
-            return update(prevState, {...state, modal: {type: "error", msg: action.msg}});
-        case "setEndOfGame":
-            return update(prevState, {...state, modal: {type: "endOfGame", msg: action.msg}});
-        case "dismiss":
-            return update(prevState, {...state, modal: null});
-        default:
-            return prevState;
+        });
+        return updateAndReset({
+            ...state,
+            playerData,
+            currentPlayerId,
+            board,
+            gameHasEnded: cpuUpdate.game_has_ended,
+        });
     }
 }
 

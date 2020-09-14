@@ -1,6 +1,5 @@
 import { RowCollapse24, RowExpand24 } from "@carbon/icons-react";
 import { PlayerData } from "lib/common";
-import { Tile, TilePath, TilePathType } from "nile";
 import React from "react";
 import { Button } from "./Button";
 import { Player } from "./Player";
@@ -11,7 +10,7 @@ interface IProps {
     playerData: PlayerData[];
     selectedTileIdx: number | null;
     /** Called when a rack tile is selected: either a drag event starts or it's clicked */
-    onSelect: (isUniversal: boolean, tilePath: TilePath, idx: number) => void;
+    onSelect: (idx: number) => void;
 }
 
 export const Players: React.FC<IProps> = ({currentPlayerId, playerData, selectedTileIdx, onSelect}) => {
@@ -27,15 +26,7 @@ export const Players: React.FC<IProps> = ({currentPlayerId, playerData, selected
                         isCurrentTurn={ id === currentPlayerId }
                         isCpu={ player.isCpu }
                         isExpanded={ isExpanded }
-                        onSelect={ (idx, tile) => {
-                            if (tile === Tile.Universal) {
-                                // Default TilePath for now
-                                onSelect(true, TilePath.Straight, idx);
-                            } else {
-                                const tpt = TilePathType.tile_into_normal(tile);
-                                onSelect(false, tpt.tile_path(), idx);
-                            }
-                        } }
+                        onSelect={ onSelect }
                     />
                 )) }
             </div>

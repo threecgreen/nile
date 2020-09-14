@@ -1,6 +1,6 @@
-import React from "react";
-import { initState, reducer } from "../state";
-import { act, renderHook } from '@testing-library/react-hooks';
+// import React from "react";
+// import { initState } from "../state";
+// import { act, renderHook } from '@testing-library/react-hooks';
 
 // // jest.mock("nile", () => ({
 // // //   __esModule: true, // this property makes it work

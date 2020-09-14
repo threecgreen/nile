@@ -43,3 +43,13 @@ export const useEventListener = (
         [eventName, element] // Re-run if eventName or element changes
     );
 };
+
+/** Like @c React.useRef , but supports an initializer function. This is useful for objects that
+ * are expensive to initialize, e.g. a Wasm object */
+export const useRefFun = <T>(init: () => T): React.MutableRefObject<T> => {
+    const ref = React.useRef<T | null>(null);
+    if (ref.current === null) {
+        ref.current = init();
+    }
+    return ref as React.MutableRefObject<T>;
+}
