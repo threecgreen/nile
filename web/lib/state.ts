@@ -1,5 +1,5 @@
+import { Coordinates, CPUTurnUpdate, EndTurnUpdate, Rotation, Tile, TilePath, TilePathType, TilePlacementEvent, tile_path_to_tile, TurnScore, WasmNile } from "nile";
 import React from "react";
-import { CPUTurnUpdate, Rotation, Tile, TilePath, TilePlacementEvent, tile_path_to_tile, TurnScore, WasmNile, EndTurnUpdate, TilePathType, Coordinates } from "nile";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
 import { mod } from "./utils";
 
@@ -48,7 +48,7 @@ type Action =
     /** Same event for cantPlay */
     | {type: "endTurn", endTurnUpdate: EndTurnUpdate}
     | {type: "cpuTurn", cpuUpdate: CPUTurnUpdate}
-    | {type: "setError", msg: string}
+    | {type: "setError", err: unknown}
     | {type: "setEndOfGame", msg: string}
     | {type: "dismiss"}
 
@@ -73,10 +73,16 @@ export class StateManager {
     private fullState: IState;
     private dispatch: React.Dispatch<Action>;
 
-    public constructor(nile: WasmNile, useReducer: typeof React.useReducer) {
+    public constructor(nile: WasmNile, fullState: IState, dispatch: React.Dispatch<Action>) {
         this.nile = nile;
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        [this.fullState, this.dispatch] = useReducer(this.reducer, [], () => initState(this.nile));
+        this.fullState = fullState;
+        this.dispatch = dispatch;
+    }
+
+    public static useStateManager(nile: WasmNile): [IInnerState, StateManager] {
+        const [fullState, dispatch] = React.useReducer(StateManager.reducer, nile, initState);
+        const sm = new StateManager(nile, fullState, dispatch);
+        return [sm.state, sm];
     }
 
     public get state(): IInnerState {
@@ -89,6 +95,14 @@ export class StateManager {
 
     public get canRedo(): boolean {
         return this.fullState.future.length > 0;
+    }
+
+    public get selectedIsUniversal(): boolean {
+        if (this.state.selectedTile?.type === "board") {
+            const [row, column] = this.state.selectedTile.coordinates;
+            return this.state.board[row][column].tilePlacement?.isUniversal ?? false;
+        }
+        return false;
     }
 
     public selectRackTile(idx: number): void {
@@ -121,8 +135,8 @@ export class StateManager {
                             draggedTile: tile, coordinates: [row, column],
                             rotation, score,
                         });
-                    } catch (e) {
-                        this.dispatch({type: "setError", msg: e.message});
+                    } catch (err) {
+                        this.dispatch({type: "setError", err});
                     }
                     return;
                 }
@@ -143,11 +157,11 @@ export class StateManager {
                                 tilePlacement,
                                 score,
                             });
-                        } catch (e) {
-                            this.dispatch({type: "setError", msg: e.message});
+                        } catch (err) {
+                            this.dispatch({type: "setError", err});
                         }
                     } else {
-                        this.dispatch({type: "setError", msg: "Tried to move tile from cell with no tile"});
+                        this.dispatch({type: "setError", err: "Tried to move tile from cell with no tile"});
                     }
                     return;
                 }
@@ -164,8 +178,8 @@ export class StateManager {
                     const newRotation = mod(cell.tilePlacement.rotation + (isClockwise ? 1 : -1), 4)    // 4 different rotations
                     this.nile.rotate_tile(new Coordinates(row, column), newRotation);
                     this.dispatch({type: "rotateTile", coordinates: [row, column], rotation: newRotation});
-                } catch (e) {
-                    this.dispatch({type: "setError", msg: e.message});
+                } catch (err) {
+                    this.dispatch({type: "setError", err});
                 }
             }
         }
@@ -179,8 +193,8 @@ export class StateManager {
                 try {
                     const score = this.nile.remove_tile(new Coordinates(row, column));
                     this.dispatch({type: "removeTile", coordinates: [row, column], score});
-                } catch (e) {
-                    this.dispatch({type: "setError", msg: e.message});
+                } catch (err) {
+                    this.dispatch({type: "setError", err});
                 }
             }
         }
@@ -195,8 +209,8 @@ export class StateManager {
                     this.nile.update_universal_path(new Coordinates(row, column), tilePath);
                     const tilePlacement = {...cell.tilePlacement, tilePath};
                     this.dispatch({type: "updateUniversalPath", coordinates: [row, column], tilePlacement});
-                } catch (e) {
-                    this.dispatch({type: "setError", msg: e.message});
+                } catch (err) {
+                    this.dispatch({type: "setError", err});
                 }
             }
         }
@@ -206,8 +220,8 @@ export class StateManager {
         try {
             const endTurnUpdate = this.nile.end_turn();
             this.dispatch({type: "endTurn", endTurnUpdate});
-        } catch(e) {
-            this.dispatch({type: "setError", msg: e.message});
+        } catch(err) {
+            this.dispatch({type: "setError", err});
         }
     }
 
@@ -216,8 +230,8 @@ export class StateManager {
             const endTurnUpdate = this.nile.cant_play();
             /// Save event as endTurn
             this.dispatch({type: "endTurn", endTurnUpdate});
-        } catch(e) {
-            this.dispatch({type: "setError", msg: e.message});
+        } catch(err) {
+            this.dispatch({type: "setError", err});
         }
     }
 
@@ -248,7 +262,11 @@ export class StateManager {
         }
     }
 
-    private reducer(prevState: IState, action: Action): IState {
+    public dismiss(): void {
+        this.dispatch({type: "dismiss"});
+    }
+
+    private static reducer(prevState: IState, action: Action): IState {
         const state = prevState.now;
         switch (action.type) {
             case "selectRackTile":
@@ -301,7 +319,7 @@ export class StateManager {
             case "cpuTurn":
                 return StateManager.reduceCpuTurn(prevState, action.cpuUpdate);
             case "setError":
-                return update(prevState, {...state, modal: {type: "error", msg: action.msg}});
+                return StateManager.reduceSetError(prevState, action.err);
             case "setEndOfGame":
                 return update(prevState, {...state, modal: {type: "endOfGame", msg: action.msg}});
             case "dismiss":
@@ -487,6 +505,17 @@ export class StateManager {
             board,
             gameHasEnded: cpuUpdate.game_has_ended,
         });
+    }
+
+    private static reduceSetError(prevState: IState, err: unknown): IState {
+        const state = prevState.now;
+        if (typeof err === "string") {
+            return update(prevState, {...state, modal: {type: "error", msg: err}});
+        }
+        if (err instanceof Error) {
+            return update(prevState, {...state, modal: {type: "error", msg: err.message}});
+        }
+        return update(prevState, {...state, modal: {type: "error", msg: `${err}`}});
     }
 }
 

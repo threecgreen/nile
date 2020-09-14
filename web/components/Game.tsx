@@ -6,15 +6,13 @@ import { maxBy } from "lib/utils";
 import { WasmNile } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
-import { Modal } from "./Modal";
+import { Modal, ErrorModal } from "./Modal";
 import { Players } from "./Players";
 
 export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = ({playerNames, cpuPlayerCount: aiPlayerCount}) => {
     // State
     const nileRef = useRefFun(() => new WasmNile(playerNames, aiPlayerCount));
-    const stateManagerRef = useRefFun(() => new StateManager(nileRef.current, React.useReducer));
-    const stateManager = stateManagerRef.current;
-    const state = stateManager.state;
+    const [state, stateManager] = StateManager.useStateManager(nileRef.current);
 
     /// Even though `stateManager.takeCpuTurn` takes no arguments, we need to define a closure
     /// to maintain up to date references and not break eslint's exhaustive dependency check
@@ -83,11 +81,6 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
         }
     });
 
-    const placeOnBoard = React.useCallback((row, col) => stateManager.placeOnBoard(row, col), [stateManager]);
-    const selectBoardTile = React.useCallback((coordinates) => stateManager.selectBoardTile(coordinates), [stateManager]);
-
-    const selectedIsUniversal = state.selectedTile?.type === "board"
-        && (state.board[state.selectedTile.coordinates[0]][state.selectedTile.coordinates[1]].tilePlacement?.isUniversal ?? false);
     // Render
     return (
         <>
@@ -98,25 +91,27 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
                 <Controls
                     hasPlacedTile={ state.currentTurnTiles.length > 0 }
                     hasSelectedTile={ state.selectedTile !== null }
-                    selectedIsUniversal={ selectedIsUniversal }
+                    selectedIsUniversal={ stateManager.selectedIsUniversal }
                     canUndo={ stateManager.canUndo }
                     canRedo={ stateManager.canRedo }
-                    onRotate={ stateManager.rotate }
-                    onRemoveTile={ stateManager.removeSelectedTile }
-                    onUpdateUniversalPath={ stateManager.updateUniversalPath }
+                    onRotate={ (isClockwise) => stateManager.rotate(isClockwise) }
+                    onRemoveTile={ () => stateManager.removeSelectedTile() }
+                    onUpdateUniversalPath={ (tp) => stateManager.updateUniversalPath(tp) }
                     onUndo={ () => stateManager.undo() }
                     onRedo={ () => stateManager.redo() }
-                    onEndTurn={ stateManager.endTurn }
-                    onCantPlay={ stateManager.cantPlay }
+                    onEndTurn={ () => stateManager.endTurn() }
+                    onCantPlay={ () => stateManager.cantPlay() }
                 />
                 <Board board={ state.board }
                     selectedTile={ state.selectedTile?.type === "board" ? state.selectedTile.coordinates : null }
                     currentTurnTiles={ state.currentTurnTiles }
-                    onDropFromRack={ placeOnBoard }
-                    onSelect={ selectBoardTile }
-                    onDragStart={ selectBoardTile }
+                    onDropFromRack={ (r, c) => stateManager.placeOnBoard(r, c) }
+                    onSelect={ (c) => stateManager.selectBoardTile(c) }
+                    onDragStart={ (c) => stateManager.selectBoardTile(c) }
                 />
-                { state.modal && <Modal>{ state.modal.msg }</Modal> }
+                <ErrorModal msg={ state.modal?.msg ?? null }
+                    dismiss={ () => stateManager.dismiss() }
+                />
             </main>
             <footer>
                 {/* TODO: sticky footer */}
