@@ -6,12 +6,17 @@ import { maxBy } from "lib/utils";
 import { WasmNile } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
-import { Modal, ErrorModal } from "./Modal";
+import { ErrorModal } from "./Modal";
 import { Players } from "./Players";
 
-export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = ({playerNames, cpuPlayerCount: aiPlayerCount}) => {
+interface IProps {
+    playerNames: string[];
+    cpuPlayerCount: number;
+}
+
+export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
     // State
-    const nileRef = useRefFun(() => new WasmNile(playerNames, aiPlayerCount));
+    const nileRef = useRefFun(() => new WasmNile(playerNames, cpuPlayerCount));
     const [state, stateManager] = StateManager.useStateManager(nileRef.current);
 
     /// Even though `stateManager.takeCpuTurn` takes no arguments, we need to define a closure
@@ -85,7 +90,6 @@ export const Game: React.FC<{playerNames: string[], cpuPlayerCount: number}> = (
     return (
         <>
             <main>
-                <h1>Nile</h1>
                 { state.gameHasEnded && <h2>{ maxBy(state.playerData, (p) => sumTurnScores(p.scores))?.name } has won</h2>}
                 {/* TODO: sticky header */}
                 <Controls

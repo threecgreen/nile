@@ -1,13 +1,9 @@
-.centerText {
-    text-align: center;
-}
-
 .cpuCount {
     margin: 1rem;
 }
 
 label {
-    margin: 1rem;
+    margin: 0.75rem;
 }
 form button {
     margin: 0.25rem;
