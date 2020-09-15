@@ -126,3 +126,27 @@ impl WasmNile {
         self.0.take_cpu_turn()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use wasm_bindgen_test::*;
+
+    // #[wasm_bindgen_test]
+    fn test_end_of_game() {
+        let player_names: Array = vec![JsValue::from("Carter")].iter().collect();
+        let mut target = WasmNile::new(player_names, 1).unwrap();
+        let placement_res = target
+            .place_tile(
+                path::wasm::TilePathType::normal(TilePath::Straight),
+                Coordinates(14, 21),
+                Rotation::None,
+            )
+            .unwrap();
+        assert_eq!(placement_res.score(), 10 + 100 /* bonus */);
+        let res = target.end_turn().unwrap();
+        assert!(res.game_has_ended);
+        assert!(target.take_cpu_turn().is_none())
+    }
+}

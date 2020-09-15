@@ -220,10 +220,12 @@ impl Board {
         let width = self.width();
         if coordinates.1 as usize == self.width() {
             self.end_of_game_cells.get_mut(coordinates.0 as usize)
-        } else {
+        } else if self.in_bounds(coordinates) {
             let row = coordinates.0 as usize;
             let column = coordinates.1 as usize;
             self.cells.get_mut(row * width + column)
+        } else {
+            None
         }
     }
 
@@ -835,5 +837,21 @@ mod test {
     fn cell_out_of_bounds_cell_is_none() {
         let target = Board::new();
         matches!(target.cell(Coordinates(14, 22)), None);
+    }
+
+    #[test]
+    fn validate_turns_moves_ends_game() {
+        let mut target = Board::new();
+        target
+            .place_tile(
+                Coordinates(14, BOARD_SIZE as i8),
+                TilePlacement {
+                    rotation: Rotation::None,
+                    tile_path_type: TilePathType::Normal(TilePath::Straight),
+                },
+            )
+            .unwrap();
+        let res = target.validate_turns_moves(HashSet::new());
+        matches!(res, Ok(true));
     }
 }
