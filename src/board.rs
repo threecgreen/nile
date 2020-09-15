@@ -205,12 +205,14 @@ impl Board {
 
     pub fn cell(&self, coordinates: Coordinates) -> Option<&Cell> {
         let width = self.width();
-        if coordinates.1 as usize == self.width() {
+        if self.is_end_game_cell(coordinates) {
             self.end_of_game_cells.get(coordinates.0 as usize)
-        } else {
+        } else if self.in_bounds(coordinates) {
             let row = coordinates.0 as usize;
             let column = coordinates.1 as usize;
             self.cells.get(row * width + column)
+        } else {
+            None
         }
     }
 
@@ -444,6 +446,19 @@ pub mod wasm {
             self.cell(Coordinates(row, column))
                 .cloned()
                 .ok_or_else(|| JsValue::from("Invalid coordinates"))
+        }
+    }
+
+    #[cfg(test)]
+    mod test {
+        use super::*;
+
+        use wasm_bindgen_test::*;
+
+        #[wasm_bindgen_test]
+        fn get_cell_out_of_bounds_cell_is_none() {
+            let target = Board::new();
+            assert!(target.get_cell(14, 22).is_err());
         }
     }
 }
@@ -814,5 +829,11 @@ mod test {
         assert!(!target.in_bounds(Coordinates(21, 20)));
         assert!(target.in_bounds(Coordinates(20, 10)));
         assert!(target.in_bounds(Coordinates(10, 10)));
+    }
+
+    #[test]
+    fn cell_out_of_bounds_cell_is_none() {
+        let target = Board::new();
+        matches!(target.cell(Coordinates(14, 22)), None);
     }
 }
