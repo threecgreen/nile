@@ -90,7 +90,6 @@ export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
     return (
         <>
             <main>
-                { state.gameHasEnded && <h2>{ maxBy(state.playerData, (p) => sumTurnScores(p.scores))?.name } has won</h2>}
                 {/* TODO: sticky header */}
                 <Controls
                     hasPlacedTile={ state.currentTurnTiles.length > 0 }

@@ -1,7 +1,7 @@
 import { Coordinates, CPUTurnUpdate, EndTurnUpdate, Rotation, Tile, TilePath, TilePathType, TilePlacementEvent, tile_path_to_tile, TurnScore, WasmNile } from "nile";
 import React from "react";
-import { BoardArray, Cell, CoordinateTuple, PlayerData, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
-import { mod } from "./utils";
+import { BoardArray, Cell, CoordinateTuple, PlayerData, sumTurnScores, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
+import { maxBy, mod } from "./utils";
 
 interface IRackDraggedTile {
     idx: number;
@@ -471,6 +471,9 @@ export class StateManager {
             return player;
         });
         const currentPlayerId = mod(state.currentPlayerId + 1, state.playerData.length);
+        const modal: Modal | null = update.game_has_ended
+            ? {type: "endOfGame", msg: `${maxBy(state.playerData, (p) => sumTurnScores(p.scores))?.name} has won`}
+            : state.modal;
         return updateAndReset({
             ...state,
             playerData,
@@ -478,6 +481,7 @@ export class StateManager {
             gameHasEnded: update.game_has_ended,
             selectedTile: null,
             currentTurnTiles: [],
+            modal,
         });
     }
 
@@ -502,12 +506,16 @@ export class StateManager {
                 return cell;
             });
         });
+        const modal: Modal | null = cpuUpdate.game_has_ended
+            ? {type: "endOfGame", msg: `${maxBy(state.playerData, (p) => sumTurnScores(p.scores))?.name} has won`}
+            : state.modal;
         return updateAndReset({
             ...state,
             playerData,
             currentPlayerId,
             board,
             gameHasEnded: cpuUpdate.game_has_ended,
+            modal,
         });
     }
 

@@ -281,8 +281,3 @@ impl Log {
             })
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-}

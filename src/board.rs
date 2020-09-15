@@ -350,7 +350,7 @@ impl Board {
         let end_of_game_cell_count = self
             .end_of_game_cells
             .iter()
-            .filter(|c| c.tile.is_some())
+            .filter(|c| !c.is_empty())
             .count();
         Self::validate_end_of_game_cells(end_of_game_cell_count, self.last_placement)
     }
