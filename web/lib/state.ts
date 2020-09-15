@@ -398,7 +398,6 @@ export class StateManager {
         const [i, j] = coordinates;
         const tilePlacement = state.board[i][j].tilePlacement;
         if (tilePlacement !== null) {
-            const tilePath = tilePlacement.tilePath;
             const board = updateCell(state.board, coordinates, (cell) => {
                 cell.tilePlacement = null;
                 return cell;
@@ -408,11 +407,16 @@ export class StateManager {
                 // Update scores
                 player.currentTurnScore = score;
                 // Return tile from tile rack
-                player.tileRack = [...player.tileRack, tile_path_to_tile(tilePath)];
+                player.tileRack = [
+                    ...player.tileRack,
+                    tilePlacement.isUniversal
+                    ? Tile.Universal
+                    : tile_path_to_tile(tilePlacement.tilePath)
+                ];
                 return player;
             });
             // Remove from currentTurnTiles
-            const currentTurnTiles = state.currentTurnTiles.filter(([ci, cj]) => ci !== i && cj !== j);
+            const currentTurnTiles = state.currentTurnTiles.filter(([ci, cj]) => !(ci === i && cj === j));
             // Update selectedTile
             const selectedTile = null;
             return undoableUpdate(
@@ -445,7 +449,7 @@ export class StateManager {
             return player;
         })
         const currentTurnTiles = state.currentTurnTiles.filter(
-            ([ci, cj]) => ci !== oldCoordinates[0] && cj !== oldCoordinates[1]);
+            ([ci, cj]) => !(ci === oldCoordinates[0] && cj === oldCoordinates[1]));
         currentTurnTiles.push(newCoordinates);
 
         return undoableUpdate(prevState, {

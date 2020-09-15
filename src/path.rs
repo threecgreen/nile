@@ -53,6 +53,15 @@ impl From<TilePath> for Tile {
     }
 }
 
+impl From<TilePathType> for Tile {
+    fn from(tpt: TilePathType) -> Self {
+        match tpt {
+            TilePathType::Normal(tp) => Tile::from(tp),
+            TilePathType::Universal(_) => Tile::Universal,
+        }
+    }
+}
+
 impl TryFrom<Tile> for TilePath {
     type Error = String;
 
