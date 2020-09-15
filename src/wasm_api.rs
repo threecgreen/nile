@@ -61,6 +61,10 @@ impl WasmNile {
         self.0.can_redo()
     }
 
+    pub fn has_ended(&self) -> bool {
+        self.0.has_ended()
+    }
+
     pub fn place_tile(
         &mut self,
         tile_placement_type: path::wasm::TilePathType,

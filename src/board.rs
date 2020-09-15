@@ -347,14 +347,16 @@ impl Board {
                 last_placement.0,
             ));
         }
-        self.last_placement = last_placement;
         // Check if mult
         let end_of_game_cell_count = self
             .end_of_game_cells
             .iter()
             .filter(|c| !c.is_empty())
             .count();
-        Self::validate_end_of_game_cells(end_of_game_cell_count, self.last_placement)
+        let has_ended =
+            Self::validate_end_of_game_cells(end_of_game_cell_count, self.last_placement)?;
+        self.last_placement = last_placement;
+        Ok(has_ended)
     }
 
     pub fn in_bounds(&self, coordinates: Coordinates) -> bool {
