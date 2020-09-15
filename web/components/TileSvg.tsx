@@ -6,7 +6,7 @@ interface ITileSvgProps {
     strokeColor?: string;
 }
 
-export const TileSvg: React.FC<ITileSvgProps> = ({tile, strokeColor}) => {
+const TileSvgInner: React.FC<ITileSvgProps> = ({tile, strokeColor}) => {
     strokeColor = strokeColor ?? "#000000";
     switch (tile) {
         case Tile.Straight:
@@ -39,7 +39,8 @@ export const TileSvg: React.FC<ITileSvgProps> = ({tile, strokeColor}) => {
             throw new Error(`Unknown tile type: ${tile}`);
     }
 }
-TileSvg.displayName = "TileSvg";
+TileSvgInner.displayName = "TileSvg";
+export const TileSvg = React.memo(TileSvgInner);
 
 const reflectToCss = (reflect: boolean): string => {
     return reflect ? "scaleX(-1)" : "";

@@ -1,4 +1,4 @@
-import { BoardArray, CoordinateTuple } from "lib/common";
+import { BoardArray, CoordinateTuple, Cell } from "lib/common";
 import React from "react";
 import styles from "./Board.module.css";
 import { GridCell } from "./Grid";
@@ -10,13 +10,11 @@ interface IProps {
     currentTurnTiles: CoordinateTuple[];
     onDropFromRack: (row: number, column: number) => void;
     onSelect: (coordinates: CoordinateTuple) => void;
-    onDragStart: (coordinates: CoordinateTuple) => void;
 }
 
-export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, onDropFromRack, onSelect, onDragStart}) => {
-    const onDrag = (e: React.DragEvent) => {
-        e.preventDefault();
-    }
+export const Board: React.FC<IProps> = ({
+    board, selectedTile, currentTurnTiles, onDropFromRack, onSelect,
+}) => {
 
     return (
         <div className={ styles.outer }>
@@ -27,36 +25,15 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
                 <tbody>
                     { board.map((row, i) => (
                         <tr key={ i }>
-                            { row.map((cell, j) => {
-                                const isEndGame = j === (board[0].length - 1);
-                                const type = isEndGame
-                                    ? TileType.EndGame
-                                    : cell.bonus > 0 ? TileType.Bonus
-                                    : cell.bonus < 0 ? TileType.Penalty
-                                    : TileType.Normal;
-                                return (
-                                    <GridCell key={ j }>
-                                        { cell.tilePlacement
-                                        ? <div draggable={ currentTurnTiles.some(([ci, cj]) => ci === i && cj === j) }
-                                            onDrag={ onDrag }
-                                            onDragStart={ () => onDragStart([i, j]) }
-                                        >
-                                            <TileCell tilePath={ cell.tilePlacement.tilePath }
-                                                isUniversal={ cell.tilePlacement.isUniversal }
-                                                isSelected={ selectedTile !== null
-                                                    && i === selectedTile[0] && j === selectedTile[1] }
-                                                rotation={ cell.tilePlacement.rotation }
-                                                type={ type }
-                                                onSelect={ () => onSelect([i, j]) }
-                                            />
-                                        </div>
-                                        : <EmptyCell bonus={ cell.bonus }
-                                            isEndGame={ isEndGame }
-                                            onDrop={ () => onDropFromRack(i, j) }
-                                        /> }
-                                    </GridCell>
-                                );
-                            }) }
+                            { row.map((cell, j) => <BoardCell key={ `${i}-${j}` }
+                                cell={ cell }
+                                coordinates={ [i, j] }
+                                boardWidth={ board[0].length - 1 }
+                                selectedTile={ selectedTile }
+                                currentTurnTiles={ currentTurnTiles }
+                                onDropFromRack={ onDropFromRack }
+                                onSelect={ onSelect }
+                            />) }
                         </tr>
                     )) }
                 </tbody>
@@ -65,3 +42,47 @@ export const Board: React.FC<IProps> = ({board, selectedTile, currentTurnTiles, 
     );
 };
 Board.displayName = "Board";
+
+interface IBoardCellProps {
+    cell: Cell;
+    coordinates: CoordinateTuple;
+    boardWidth: number;
+    selectedTile: CoordinateTuple | null;
+    currentTurnTiles: CoordinateTuple[];
+    onDropFromRack: (row: number, column: number) => void;
+    onSelect: (coordinates: CoordinateTuple) => void;
+}
+
+const BoardCell: React.FC<IBoardCellProps> = ({
+    cell, coordinates, boardWidth, selectedTile, currentTurnTiles,
+    onDropFromRack, onSelect,
+}) => {
+    const [i, j] = coordinates;
+    const isEndGame = j === boardWidth;
+    const type = isEndGame
+        ? TileType.EndGame
+        : cell.bonus > 0 ? TileType.Bonus
+        : cell.bonus < 0 ? TileType.Penalty
+        : TileType.Normal;
+    const isFromCurrentTurn =  currentTurnTiles.some(([ci, cj]) => ci === i && cj === j);
+    const isSelected =  selectedTile !== null
+        && i === selectedTile[0] && j === selectedTile[1];
+    return (
+        <GridCell key={ j }>
+            { cell.tilePlacement
+            ? <TileCell tilePath={ cell.tilePlacement.tilePath }
+                isUniversal={ cell.tilePlacement.isUniversal }
+                isSelected={ isSelected }
+                rotation={ cell.tilePlacement.rotation }
+                type={ type }
+                isFromCurrentTile={ isFromCurrentTurn }
+                onSelect={ () => onSelect(coordinates) }
+            />
+            : <EmptyCell bonus={ cell.bonus }
+                isEndGame={ isEndGame }
+                onDrop={ () => onDropFromRack(i, j) }
+            /> }
+        </GridCell>
+    );
+};
+BoardCell.displayName = "BoardCell";

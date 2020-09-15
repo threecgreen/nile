@@ -1,8 +1,6 @@
 import { Board } from "components/Board";
-import { sumTurnScores } from "lib/common";
 import { useEventListener, useRefFun } from "lib/hooks";
 import { StateManager } from "lib/state";
-import { maxBy } from "lib/utils";
 import { WasmNile } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
@@ -110,7 +108,6 @@ export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
                     currentTurnTiles={ state.currentTurnTiles }
                     onDropFromRack={ (r, c) => stateManager.placeOnBoard(r, c) }
                     onSelect={ (c) => stateManager.selectBoardTile(c) }
-                    onDragStart={ (c) => stateManager.selectBoardTile(c) }
                 />
                 <ErrorModal msg={ state.modal?.msg ?? null }
                     dismiss={ () => stateManager.dismiss() }

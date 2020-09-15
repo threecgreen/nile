@@ -44,16 +44,20 @@ interface IProps {
     rotation: Rotation;
     isSelected: boolean;
     type: TileType,
+    isFromCurrentTile: boolean;
     onSelect: () => void;
 }
 
 export const TileCell: React.FC<IProps> = ({
-    tilePath, isUniversal, rotation, isSelected, type,
+    tilePath, isUniversal, rotation, isSelected, type, isFromCurrentTile,
     ...props
 }) => {
     const onSelect = (e: React.MouseEvent) => {
         e.preventDefault();
         props.onSelect();
+    }
+    const onDrag = (e: React.DragEvent) => {
+        e.preventDefault();
     }
 
     return (
@@ -66,7 +70,10 @@ export const TileCell: React.FC<IProps> = ({
                 styles.hasTile,
             ]) }
             style={ {transform: rotationToCSs(rotation)} }
-            onClick={ onSelect }
+            onClick={ isFromCurrentTile ? onSelect : undefined }
+            draggable={ isFromCurrentTile }
+            onDrag={ onDrag }
+            onDragStart={ props.onSelect }
         >
             {
                 isUniversal
