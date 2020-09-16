@@ -3,11 +3,12 @@ import React from "react";
 import styles from "./Board.module.css";
 import { GridCell } from "./Grid";
 import { EmptyCell, TileCell, TileType } from "./Tile";
+import { CoordinateSet } from "lib/CoordinateSet";
 
 interface IProps {
     board: BoardArray;
     selectedTile: CoordinateTuple | null;
-    currentTurnTiles: CoordinateTuple[];
+    currentTurnTiles: CoordinateSet;
     onDropFromRack: (row: number, column: number) => void;
     onSelect: (coordinates: CoordinateTuple) => void;
 }
@@ -48,7 +49,7 @@ interface IBoardCellProps {
     coordinates: CoordinateTuple;
     boardWidth: number;
     selectedTile: CoordinateTuple | null;
-    currentTurnTiles: CoordinateTuple[];
+    currentTurnTiles: CoordinateSet;
     onDropFromRack: (row: number, column: number) => void;
     onSelect: (coordinates: CoordinateTuple) => void;
 }
@@ -64,7 +65,7 @@ const BoardCell: React.FC<IBoardCellProps> = ({
         : cell.bonus > 0 ? TileType.Bonus
         : cell.bonus < 0 ? TileType.Penalty
         : TileType.Normal;
-    const isFromCurrentTurn =  currentTurnTiles.some(([ci, cj]) => ci === i && cj === j);
+    const isFromCurrentTurn= currentTurnTiles.has(coordinates);
     const isSelected =  selectedTile !== null
         && i === selectedTile[0] && j === selectedTile[1];
     return (

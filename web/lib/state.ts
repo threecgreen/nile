@@ -2,6 +2,7 @@ import { Coordinates, CPUTurnUpdate, EndTurnUpdate, Rotation, Tile, TilePath, Ti
 import React from "react";
 import { BoardArray, Cell, CoordinateTuple, PlayerData, sumTurnScores, TilePlacement, toBoardArray, toPlayerDataArray } from "./common";
 import { maxBy, mod } from "./utils";
+import { CoordinateSet } from "./CoordinateSet";
 
 interface IRackDraggedTile {
     idx: number;
@@ -24,7 +25,7 @@ interface IInnerState {
     gameHasEnded: boolean;
     playerData: PlayerData[];
     /** Used for determining if placed tile is movable, rotatable, etc. */
-    currentTurnTiles: CoordinateTuple[];
+    currentTurnTiles: CoordinateSet;
     selectedTile: SelectedTile | null;
     modal: Modal | null;
 }
@@ -53,14 +54,15 @@ type Action =
     | {type: "dismiss"}
 
 export const initState = (nile: WasmNile): IState => {
+    const board = nile.board();
     return {
         past: [],
         now: {
-            board: toBoardArray(nile.board()),
+            board: toBoardArray(board),
             currentPlayerId: 0,
             gameHasEnded: false,
             playerData: toPlayerDataArray(nile.players()),
-            currentTurnTiles: [],
+            currentTurnTiles: new CoordinateSet(board.width()),
             selectedTile: null,
             modal: null,
         },
@@ -80,6 +82,8 @@ export class StateManager {
     }
 
     public static useStateManager(nile: WasmNile): [IInnerState, StateManager] {
+        // this isn't a react component
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         const [fullState, dispatch] = React.useReducer(StateManager.reducer, nile, initState);
         const sm = new StateManager(nile, fullState, dispatch);
         return [sm.state, sm];
@@ -356,7 +360,7 @@ export class StateManager {
             return player;
         });
         // Add to currentTurnTiles
-        const currentTurnTiles = [...state.currentTurnTiles, coordinates];
+        const currentTurnTiles = state.currentTurnTiles.add(coordinates);
         // Update selectedTile
         const selectedTile: SelectedTile = {type: "board", coordinates: coordinates};
         return undoableUpdate(
@@ -416,7 +420,7 @@ export class StateManager {
                 return player;
             });
             // Remove from currentTurnTiles
-            const currentTurnTiles = state.currentTurnTiles.filter(([ci, cj]) => !(ci === i && cj === j));
+            const currentTurnTiles = state.currentTurnTiles.delete(coordinates);
             // Update selectedTile
             const selectedTile = null;
             return undoableUpdate(
@@ -448,9 +452,9 @@ export class StateManager {
             player.currentTurnScore = score;
             return player;
         })
-        const currentTurnTiles = state.currentTurnTiles.filter(
-            ([ci, cj]) => !(ci === oldCoordinates[0] && cj === oldCoordinates[1]));
-        currentTurnTiles.push(newCoordinates);
+        const currentTurnTiles = state.currentTurnTiles
+            .delete(oldCoordinates)
+            .add(newCoordinates);
 
         return undoableUpdate(prevState, {
             ...state,
@@ -480,7 +484,7 @@ export class StateManager {
             currentPlayerId,
             gameHasEnded: update.game_has_ended,
             selectedTile: null,
-            currentTurnTiles: [],
+            currentTurnTiles: state.currentTurnTiles.clear(),
             modal,
         });
     }

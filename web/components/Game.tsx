@@ -59,13 +59,13 @@ export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
                 break;
             }
             case "E": {
-                if (state.currentTurnTiles.length > 0) {
+                if (state.currentTurnTiles.size > 0) {
                     stateManager.endTurn();
                 }
                 break;
             }
             case "C": {
-                if (state.currentTurnTiles.length === 0) {
+                if (state.currentTurnTiles.size === 0) {
                     stateManager.cantPlay();
                 }
                 break;
@@ -90,7 +90,7 @@ export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
             <main>
                 {/* TODO: sticky header */}
                 <Controls
-                    hasPlacedTile={ state.currentTurnTiles.length > 0 }
+                    hasPlacedTile={ state.currentTurnTiles.size > 0 }
                     hasSelectedTile={ state.selectedTile !== null }
                     selectedIsUniversal={ stateManager.selectedIsUniversal }
                     canUndo={ stateManager.canUndo }
