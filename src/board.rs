@@ -3,7 +3,7 @@ use crate::path::{self, eval_placement, Offset, TilePath, TilePathType};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -135,7 +135,19 @@ macro_rules! hash_map(
             )+
             m
         }
-     };
+    };
+);
+
+macro_rules! hash_set(
+    { $($key:expr),+ } => {
+        {
+            let mut s = ::std::collections::HashSet::new();
+            $(
+                s.insert($key);
+            )+
+            s
+        }
+    }
 );
 
 impl Board {
@@ -424,11 +436,49 @@ impl Board {
         Ok(())
     }
 
-    // /// Determines if river is completely encircled and there is not 'escape'.
-    // /// This incidates one or more moves are invalid
-    // pub fn no_encircles(&self) -> Result<(), String> {
-    //     Ok(())
-    // }
+    /// Determines if river is completely encircled and there is not 'escape'.
+    /// This incidates one or more moves are invalid
+    ///
+    /// Parameterizing `turn_coordinates` and `last_placement` allows this
+    /// function to be more easily used by the AI in determining which potential
+    /// moves are valid. This method is _almost_ static and can easily be tested
+    /// with an empty board and all state passed in via the arguments.
+    pub fn no_encircles(
+        &self,
+        turn_coordinates: HashSet<Coordinates>,
+        last_placement: (Coordinates, Offset),
+    ) -> Result<(), String> {
+        let mut visited_coordinates = HashSet::new();
+        // Allows potential moves to be tested
+        for coordinates in turn_coordinates.iter() {
+            visited_coordinates.insert(coordinates.to_owned());
+        }
+        // Queue of coordinates to visit on the rectalinear graph known as the board
+        let mut coordinates_queue = VecDeque::new();
+        let (last_coordinates, last_offset) = last_placement;
+        coordinates_queue.push_back(last_coordinates + last_offset);
+        while let Some(coordinates) = coordinates_queue.pop_front() {
+            visited_coordinates.insert(coordinates);
+            for offset in path::OFFSETS.iter() {
+                let next_coordinates = coordinates + *offset;
+                match self.cell(next_coordinates) {
+                    Some(_) if self.is_end_game_cell(next_coordinates) => {
+                        // Reached end of board, therefore not encircled
+                        return Ok(());
+                    }
+                    // FIXME: still need to prevent diagonal crossover
+                    Some(next_cell) => {
+                        if !visited_coordinates.contains(&next_coordinates) && next_cell.is_empty()
+                        {
+                            coordinates_queue.push_back(next_coordinates);
+                        }
+                    }
+                    _ => {}
+                };
+            }
+        }
+        Err("Encircled path".to_owned())
+    }
 }
 
 pub mod wasm {
@@ -855,5 +905,38 @@ mod test {
             .unwrap();
         let res = target.validate_turns_moves(HashSet::new());
         matches!(res, Ok(true));
+    }
+
+    /// Subset of board for testing
+    /// ```text
+    ///   0 1 2 3
+    /// 0 +-+-+ .
+    ///   |    \
+    /// 1 + . . +
+    ///   | . . |
+    /// 2 + + . +
+    ///   |  \  |
+    /// 3 + . +-+
+    ///   ^
+    ///   |
+    /// start
+    /// ```
+    #[test]
+    fn no_encircles_depends_on_offset() {
+        // Test same board set up with different last offsets
+        let board = Board::new();
+        let turn_coordinates = hash_set!(
+            Coordinates(3, 0),
+            Coordinates(2, 0),
+            Coordinates(1, 0),
+            Coordinates(0, 0),
+            Coordinates(0, 1),
+            Coordinates(0, 2),
+            Coordinates(1, 3),
+            Coordinates(2, 3),
+            Coordinates(3, 3),
+            Coordinates(3, 2),
+            Coordinates(2, 1)
+        );
     }
 }

@@ -242,6 +242,17 @@ impl Add<Offset> for Coordinates {
     }
 }
 
+pub static OFFSETS: [Offset; 8] = [
+    Offset(-1, 1),
+    Offset(0, 1),
+    Offset(1, 1),
+    Offset(1, 0),
+    Offset(1, -1),
+    Offset(0, -1),
+    Offset(-1, -1),
+    Offset(-1, 0),
+];
+
 /// Given the previous placement, evaluates and validates a single tile
 /// placement. The return value of this function can be fed to its next call.
 pub fn eval_placement(
