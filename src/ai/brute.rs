@@ -1,10 +1,10 @@
 use super::CPUPlayer;
 use crate::board::Board;
 use crate::log::TilePlacementEvent;
-use crate::path::{eval_placement, Offset, TilePath, TilePathType};
+use crate::path::{eval_placement, Offset, TilePath, TilePathType, TILE_PATHS};
 use crate::player::TileArray;
 use crate::score::TurnScore;
-use crate::tile::{Coordinates, Rotation, Tile};
+use crate::tile::{Coordinates, Tile, ROTATIONS};
 
 #[derive(Debug)]
 pub struct Brute {
@@ -42,23 +42,6 @@ impl CPUPlayer for Brute {
         }
     }
 }
-
-static TILE_PATHS: [TilePath; 8] = [
-    TilePath::Straight,
-    TilePath::Diagonal,
-    TilePath::Center90,
-    TilePath::Corner90,
-    TilePath::Left45,
-    TilePath::Right45,
-    TilePath::Left135,
-    TilePath::Right135,
-];
-static ROTATIONS: [Rotation; 4] = [
-    Rotation::None,
-    Rotation::Clockwise90,
-    Rotation::Clockwise180,
-    Rotation::Clockwise270,
-];
 
 struct PotentialSetOfMoves {
     /// Save score for comparison against others
@@ -251,6 +234,7 @@ impl Brute {
 mod test {
     use super::*;
     use crate::board::TilePlacement;
+    use crate::tile::Rotation;
 
     use smallvec::smallvec;
 

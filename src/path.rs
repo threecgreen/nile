@@ -1,5 +1,6 @@
+use crate::board::TilePlacement;
 use crate::log::TilePlacementEvent;
-use crate::tile::{Coordinates, Rotation, Tile};
+use crate::tile::{Coordinates, Rotation, Tile, ROTATIONS};
 
 use std::convert::TryFrom;
 use std::ops::{Add, Neg};
@@ -20,6 +21,17 @@ pub enum TilePath {
     Left135,
     Right135,
 }
+
+pub static TILE_PATHS: [TilePath; 8] = [
+    TilePath::Straight,
+    TilePath::Diagonal,
+    TilePath::Center90,
+    TilePath::Corner90,
+    TilePath::Left45,
+    TilePath::Right45,
+    TilePath::Left135,
+    TilePath::Right135,
+];
 
 impl TilePath {
     pub fn directions(self) -> [Direction; 2] {
@@ -179,6 +191,7 @@ impl From<&TilePathType> for Tile {
     }
 }
 
+// TODO: this is probably redundant and can be replaced with just offsets
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum Direction {
@@ -290,6 +303,31 @@ pub fn eval_placement(
         .map(|o| (new_coordinates, *o))
 }
 
+/// Returns an `Option`, but it should only return `None` in cases where the set
+/// of offsets are invalid, e.g. `Offset(1, 0)` and `Offset(-1, 0)`. This set of
+/// offsets is invalid because the river would cross over itself.
+// TODO: this could probably be memoized, there's 8 x 8 unique offset pairs
+pub fn offsets_to_tile_placement(prev_offset: Offset, new_offset: Offset) -> Option<TilePlacement> {
+    TILE_PATHS.iter().find_map(|tp| {
+        ROTATIONS.iter().find_map(|r| {
+            let offsets: Vec<_> = tp
+                .directions()
+                .iter()
+                .map(|d| d.into_offset().rotate(*r))
+                .collect();
+            match (offsets[0], offsets[1]) {
+                (x, y)
+                    if (x == prev_offset && y == new_offset)
+                        || (x == new_offset && x == prev_offset) =>
+                {
+                    Some(TilePlacement::new(TilePathType::Normal(*tp), *r))
+                }
+                _ => None,
+            }
+        })
+    })
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -367,5 +405,20 @@ mod test {
             .map(|d| d.into_offset().rotate(Rotation::Clockwise180))
             .collect();
         assert_eq!(offsets, vec![Offset(-1, 0), Offset(1, 1)]);
+    }
+
+    #[test]
+    fn offsets_to_tile_placement_none() {
+        matches!(offsets_to_tile_placement(Offset(1, 0), Offset(-1, 0)), None);
+    }
+
+    #[test]
+    fn offsets_to_tile_placement_some() {
+        matches!(
+        offsets_to_tile_placement(Offset(1, 1), Offset(-1, 0)),
+        Some(tp) if tp == TilePlacement::new(
+            TilePathType::Normal(TilePath::Right45),
+            Rotation::Clockwise180
+        ));
     }
 }

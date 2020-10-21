@@ -15,6 +15,13 @@ pub enum Rotation {
     Clockwise270,
 }
 
+pub static ROTATIONS: [Rotation; 4] = [
+    Rotation::None,
+    Rotation::Clockwise90,
+    Rotation::Clockwise180,
+    Rotation::Clockwise270,
+];
+
 /// A unique location on the board
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]

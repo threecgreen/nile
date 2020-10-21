@@ -3,7 +3,7 @@ use crate::path::{self, eval_placement, Offset, TilePath, TilePathType};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -136,18 +136,6 @@ macro_rules! hash_map(
             m
         }
     };
-);
-
-macro_rules! hash_set(
-    { $($key:expr),+ } => {
-        {
-            let mut s = ::std::collections::HashSet::new();
-            $(
-                s.insert($key);
-            )+
-            s
-        }
-    }
 );
 
 impl Board {
@@ -359,12 +347,16 @@ impl Board {
                 last_placement.0,
             ));
         }
-        // Check if mult
+        // Check if multiple tiles in end of game area
         let end_of_game_cell_count = self
             .end_of_game_cells
             .iter()
             .filter(|c| !c.is_empty())
             .count();
+        // if end_of_game_cell_count == 0 {
+        //     // Check this turns doesn't leave the river encircled
+        //     self.no_encircles(last_placement)?;
+        // }
         let has_ended =
             Self::validate_end_of_game_cells(end_of_game_cell_count, self.last_placement)?;
         self.last_placement = last_placement;
@@ -372,8 +364,8 @@ impl Board {
     }
 
     pub fn in_bounds(&self, coordinates: Coordinates) -> bool {
-        // +1 for end of game tile
         (0..self.height() as i8).contains(&coordinates.0)
+            // +1 for end of game tile
             && (0..self.width() as i8 + 1).contains(&coordinates.1)
     }
 
@@ -443,41 +435,55 @@ impl Board {
     /// function to be more easily used by the AI in determining which potential
     /// moves are valid. This method is _almost_ static and can easily be tested
     /// with an empty board and all state passed in via the arguments.
-    pub fn no_encircles(
-        &self,
-        turn_coordinates: HashSet<Coordinates>,
-        last_placement: (Coordinates, Offset),
-    ) -> Result<(), String> {
-        let mut visited_coordinates = HashSet::new();
-        // Allows potential moves to be tested
-        for coordinates in turn_coordinates.iter() {
-            visited_coordinates.insert(coordinates.to_owned());
+    fn open_moves(&self) -> Vec<Offset> {
+        let next_coordinates = self.last_placement.0 + self.last_placement.1;
+        path::OFFSETS
+            .iter()
+            .filter_map(|offset| {
+                if let Err(_) = self.no_crossover(next_coordinates, *offset) {
+                    return None;
+                }
+                let coordinates = next_coordinates + *offset;
+                match self.cell(coordinates) {
+                    Some(cell) if cell.is_empty() => Some(*offset),
+                    _ => None,
+                }
+            })
+            .collect()
+    }
+
+    pub fn no_encircles(&self, last_placement: (Coordinates, Offset)) -> Result<(), String> {
+        let mut copy = self.clone();
+        copy.last_placement = last_placement;
+        let (last_coordinates, last_offset) = copy.last_placement;
+        let coordinates = last_coordinates + last_offset;
+        if copy.is_end_game_cell(coordinates) {
+            return Ok(());
         }
-        // Queue of coordinates to visit on the rectalinear graph known as the board
-        let mut coordinates_queue = VecDeque::new();
-        let (last_coordinates, last_offset) = last_placement;
-        coordinates_queue.push_back(last_coordinates + last_offset);
-        while let Some(coordinates) = coordinates_queue.pop_front() {
-            visited_coordinates.insert(coordinates);
-            for offset in path::OFFSETS.iter() {
-                let next_coordinates = coordinates + *offset;
-                match self.cell(next_coordinates) {
-                    Some(_) if self.is_end_game_cell(next_coordinates) => {
-                        // Reached end of board, therefore not encircled
-                        return Ok(());
-                    }
-                    // FIXME: still need to prevent diagonal crossover
-                    Some(next_cell) => {
-                        if !visited_coordinates.contains(&next_coordinates) && next_cell.is_empty()
-                        {
-                            coordinates_queue.push_back(next_coordinates);
+        if copy.cell(coordinates).is_none() {
+            return Err(format!(
+                "Invalid path leading to coordinates: {:?} that are off the board",
+                coordinates
+            ));
+        }
+        // TODO: keep track of visited coordinates
+        let open_moves = copy.open_moves();
+        for offset in open_moves.iter() {
+            if let Some(tp) = path::offsets_to_tile_placement(last_offset, *offset) {
+                if let Ok(_) = copy.place_tile(coordinates, tp) {
+                    // let snd_to_last_placement = copy.last_placement;
+                    // copy.last_placement = ;
+                    match copy.no_encircles((coordinates, *offset)) {
+                        Ok(()) => return Ok(()),
+                        Err(_) => {
+                            copy.remove_tile(coordinates);
+                            // copy.last_placement = snd_to_last_placement;
                         }
                     }
-                    _ => {}
-                };
+                }
             }
         }
-        Err("Encircled path".to_owned())
+        Err(format!("Encircled path. No paths leading to the end of game column from {:?} with open moves {:?}", coordinates, open_moves))
     }
 }
 
@@ -529,6 +535,18 @@ impl Board {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    // macro_rules! hash_set(
+    //     { $($key:expr),+ } => {
+    //         {
+    //             let mut s = ::std::collections::HashSet::new();
+    //             $(
+    //                 s.insert($key);
+    //             )+
+    //             s
+    //         }
+    //     }
+    // );
 
     use std::iter::FromIterator;
 
@@ -907,13 +925,107 @@ mod test {
         matches!(res, Ok(true));
     }
 
+    fn setup_encircled_board() -> Board {
+        // Test same board set up with different last offsets
+        let mut target = Board::new();
+        // let turn_coordinates = hash_set!(
+        //     Coordinates(3, 0),
+        //     Coordinates(2, 0),
+        //     Coordinates(1, 0),
+        //     Coordinates(0, 0),
+        //     Coordinates(0, 1),
+        //     Coordinates(0, 2),
+        //     Coordinates(1, 3),
+        //     Coordinates(2, 3),
+        //     Coordinates(3, 3),
+        //     Coordinates(3, 2),
+        //     Coordinates(2, 1)
+        // );
+
+        for i in 0..3 {
+            target
+                .place_tile(
+                    Coordinates(3 - i, 0),
+                    TilePlacement {
+                        rotation: Rotation::Clockwise90,
+                        tile_path_type: TilePathType::Normal(TilePath::Straight),
+                    },
+                )
+                .unwrap();
+        }
+        target
+            .place_tile(
+                Coordinates(0, 0),
+                TilePlacement {
+                    rotation: Rotation::Clockwise270,
+                    tile_path_type: TilePathType::Normal(TilePath::Center90),
+                },
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(0, 1),
+                TilePlacement {
+                    rotation: Rotation::None,
+                    tile_path_type: TilePathType::Normal(TilePath::Straight),
+                },
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(0, 2),
+                TilePlacement {
+                    rotation: Rotation::Clockwise90,
+                    tile_path_type: TilePathType::Normal(TilePath::Right45),
+                },
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(1, 3),
+                TilePlacement {
+                    rotation: Rotation::None,
+                    tile_path_type: TilePathType::Normal(TilePath::Left45),
+                },
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(2, 3),
+                TilePlacement {
+                    rotation: Rotation::Clockwise90,
+                    tile_path_type: TilePathType::Normal(TilePath::Straight),
+                },
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(3, 3),
+                TilePlacement {
+                    rotation: Rotation::Clockwise90,
+                    tile_path_type: TilePathType::Normal(TilePath::Center90),
+                },
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(3, 2),
+                TilePlacement {
+                    rotation: Rotation::Clockwise270,
+                    tile_path_type: TilePathType::Normal(TilePath::Right45),
+                },
+            )
+            .unwrap();
+        target
+    }
+
     /// Subset of board for testing
     /// ```text
     ///   0 1 2 3
     /// 0 +-+-+ .
     ///   |    \
     /// 1 + . . +
-    ///   | . . |
+    ///   |     |
     /// 2 + + . +
     ///   |  \  |
     /// 3 + . +-+
@@ -923,20 +1035,41 @@ mod test {
     /// ```
     #[test]
     fn no_encircles_depends_on_offset() {
-        // Test same board set up with different last offsets
-        let board = Board::new();
-        let turn_coordinates = hash_set!(
-            Coordinates(3, 0),
-            Coordinates(2, 0),
-            Coordinates(1, 0),
-            Coordinates(0, 0),
-            Coordinates(0, 1),
-            Coordinates(0, 2),
-            Coordinates(1, 3),
-            Coordinates(2, 3),
-            Coordinates(3, 3),
-            Coordinates(3, 2),
-            Coordinates(2, 1)
-        );
+        // let res = target.no_encircles2(turn_coordinates.clone(), encircled_last_placement);
+        let mut target = setup_encircled_board();
+        target
+            .place_tile(
+                Coordinates(2, 1),
+                TilePlacement {
+                    rotation: Rotation::Clockwise270,
+                    tile_path_type: TilePathType::Normal(TilePath::Diagonal),
+                },
+            )
+            .unwrap();
+        let res = target.no_encircles((Coordinates(2, 1), Offset(-1, -1)));
+        assert!(res.is_err());
+
+        target = setup_encircled_board();
+        target
+            .place_tile(
+                Coordinates(2, 1),
+                TilePlacement {
+                    rotation: Rotation::Clockwise180,
+                    tile_path_type: TilePathType::Normal(TilePath::Left45),
+                },
+            )
+            .unwrap();
+        let res = target.no_encircles((Coordinates(2, 1), Offset(-1, 0)));
+        assert!(res.is_err());
+
+        target = setup_encircled_board();
+        target
+            .place_tile(
+                Coordinates(2, 1),
+                TilePlacement::new(TilePathType::Normal(TilePath::Right135), Rotation::None),
+            )
+            .unwrap();
+        let res = target.no_encircles((Coordinates(2, 1), Offset(1, 0)));
+        assert!(res.is_ok());
     }
 }
