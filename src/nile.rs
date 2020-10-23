@@ -40,7 +40,7 @@ impl Nile {
                 .into_iter()
                 .map(|player| Player::new(player, &mut tile_box, false))
                 .collect();
-            for i in 0..ai_count {
+            for i in 1..=ai_count {
                 players.push(Player::new(format!("cpu{}", i), &mut tile_box, true))
             }
             Ok(Self {
@@ -301,8 +301,8 @@ impl Nile {
                         },
                         Err(e) => {
                             log(&format!(
-                                "Failed to end CPU player turn: {:?}; Board: {:?}",
-                                e, &self.board
+                                "Failed to end CPU player turn: {:?}; Placements: {:?}",
+                                e, tile_placement_events,
                             ));
                             self.undo_all();
                             let end_turn_update = self.cant_play().unwrap();
