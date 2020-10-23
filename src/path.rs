@@ -315,15 +315,24 @@ pub fn offsets_to_tile_placement(prev_offset: Offset, new_offset: Offset) -> Opt
                 .iter()
                 .map(|d| d.into_offset().rotate(*r))
                 .collect();
-            match (offsets[0], offsets[1]) {
-                (x, y)
-                    if (x == prev_offset && y == new_offset)
-                        || (x == new_offset && x == prev_offset) =>
-                {
-                    Some(TilePlacement::new(TilePathType::Normal(*tp), *r))
-                }
-                _ => None,
+            // `prev_offset` is flipped because the placement we're looking for is on the
+            // "receiving" end of the previous tile's offset
+            if (offsets[0] == -prev_offset && offsets[1] == new_offset)
+                || (offsets[0] == new_offset && offsets[1] == -prev_offset)
+            {
+                Some(TilePlacement::new(TilePathType::Normal(*tp), *r))
+            } else {
+                None
             }
+            // match (offsets[0], offsets[1]) {
+            //     (x, y)
+            //         if (x == prev_offset && y == new_offset)
+            //             || (x == new_offset && x == prev_offset) =>
+            //     {
+            //         Some(TilePlacement::new(TilePathType::Normal(*tp), *r))
+            //     }
+            //     _ => None,
+            // }
         })
     })
 }
@@ -414,11 +423,24 @@ mod test {
 
     #[test]
     fn offsets_to_tile_placement_some() {
-        matches!(
-        offsets_to_tile_placement(Offset(1, 1), Offset(-1, 0)),
-        Some(tp) if tp == TilePlacement::new(
-            TilePathType::Normal(TilePath::Right45),
-            Rotation::Clockwise180
-        ));
+        let tp = offsets_to_tile_placement(Offset(1, 1), Offset(-1, 0)).unwrap();
+        assert_eq!(
+            tp,
+            TilePlacement::new(
+                TilePathType::Normal(TilePath::Right45),
+                Rotation::Clockwise180
+            )
+        );
+
+        let tp = offsets_to_tile_placement(Offset(0, -1), Offset(1, 0)).unwrap();
+        // FIXME: directions need to be reworked. Center90, rotation none has directions S, W, or offsets
+        // (1, 0), (0, -1). To determine
+        assert_eq!(
+            tp,
+            TilePlacement::new(
+                TilePathType::Normal(TilePath::Center90),
+                Rotation::Clockwise270
+            )
+        );
     }
 }

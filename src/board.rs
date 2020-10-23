@@ -353,10 +353,10 @@ impl Board {
             .iter()
             .filter(|c| !c.is_empty())
             .count();
-        // if end_of_game_cell_count == 0 {
-        //     // Check this turns doesn't leave the river encircled
-        //     self.no_encircles(last_placement)?;
-        // }
+        if end_of_game_cell_count == 0 {
+            // Check this turns doesn't leave the river encircled
+            self.no_encircles(last_placement)?;
+        }
         let has_ended =
             Self::validate_end_of_game_cells(end_of_game_cell_count, self.last_placement)?;
         self.last_placement = last_placement;
@@ -453,10 +453,21 @@ impl Board {
     }
 
     pub fn no_encircles(&self, last_placement: (Coordinates, Offset)) -> Result<(), String> {
+        let mut visited = HashSet::new();
+        self.no_encircles_impl(last_placement, &mut visited)
+    }
+
+    fn no_encircles_impl(
+        &self,
+        last_placement: (Coordinates, Offset),
+        visited: &mut HashSet<Coordinates>,
+    ) -> Result<(), String> {
+        let (last_coordinates, last_offset) = last_placement;
+        let coordinates = last_coordinates + last_offset;
+        println!("{},{}", coordinates.0, coordinates.1);
+        visited.insert(coordinates);
         let mut copy = self.clone();
         copy.last_placement = last_placement;
-        let (last_coordinates, last_offset) = copy.last_placement;
-        let coordinates = last_coordinates + last_offset;
         if copy.is_end_game_cell(coordinates) {
             return Ok(());
         }
@@ -466,18 +477,24 @@ impl Board {
                 coordinates
             ));
         }
-        // TODO: keep track of visited coordinates
         let open_moves = copy.open_moves();
+
         for offset in open_moves.iter() {
+            if visited.contains(&(coordinates + *offset)) {
+                continue;
+            }
+            println!(
+                "{:?}, {:?}, {:?}",
+                last_offset,
+                *offset,
+                path::offsets_to_tile_placement(last_offset, *offset)
+            );
             if let Some(tp) = path::offsets_to_tile_placement(last_offset, *offset) {
                 if let Ok(_) = copy.place_tile(coordinates, tp) {
-                    // let snd_to_last_placement = copy.last_placement;
-                    // copy.last_placement = ;
-                    match copy.no_encircles((coordinates, *offset)) {
+                    match copy.no_encircles_impl((coordinates, *offset), visited) {
                         Ok(()) => return Ok(()),
                         Err(_) => {
                             copy.remove_tile(coordinates);
-                            // copy.last_placement = snd_to_last_placement;
                         }
                     }
                 }
@@ -1070,6 +1087,55 @@ mod test {
             )
             .unwrap();
         let res = target.no_encircles((Coordinates(2, 1), Offset(1, 0)));
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn no_encircle_valid_start() {
+        let mut target = Board::new();
+        target
+            .place_tile(
+                Coordinates(10, 0),
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Right45),
+                    Rotation::Clockwise90,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(11, 1),
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Diagonal),
+                    Rotation::Clockwise180,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(12, 2),
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Corner90),
+                    Rotation::Clockwise90,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(13, 1),
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Left135),
+                    Rotation::Clockwise180,
+                ),
+            )
+            .unwrap();
+        target
+            .place_tile(
+                Coordinates(12, 1),
+                TilePlacement::new(TilePathType::Normal(TilePath::Center90), Rotation::None),
+            )
+            .unwrap();
+        let res = target.no_encircles((Coordinates(12, 1), Offset(0, -1)));
         assert!(res.is_ok());
     }
 }
