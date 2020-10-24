@@ -55,7 +55,7 @@ export const GameForm: React.FC<IProps> = ({
             </Button>
             <Button title="Remove CPU player"
                 onClick={ onRemoveCpuPlayer }
-                enabled={ totalPlayerCount > 1 && cpuPlayerCount > 1 }
+                enabled={ totalPlayerCount > 1 && cpuPlayerCount > 0 }
             >
                 <Subtract16 aria-label="Remove CPU player" />
             </Button>

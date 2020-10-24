@@ -78,7 +78,7 @@ export const TileCell: React.FC<IProps> = ({
             {
                 isUniversal
                 && <TileSvg tile={ TileEnum.Universal }
-                    strokeColor="#888888"
+                    strokeColor="#aaaaaa"
                 />
             }
             <TileSvg tile={ tile_path_to_tile(tilePath) }
