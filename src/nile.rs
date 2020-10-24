@@ -262,72 +262,55 @@ impl Nile {
         }
         let player_id = self.current_turn;
         // Hard-code CPU implementation for now
-        Some(
-            match Brute::new(self.players.len()).take_turn(
-                player.tiles(),
-                &self.board,
-                player.total_score(),
-                self.other_player_scores(),
-            ) {
-                Some(tile_placement_events) => {
-                    for tpe in tile_placement_events.iter() {
-                        if let Err(err) = self.place_tile(
-                            tpe.tile_path_type.clone(),
-                            tpe.coordinates,
-                            tpe.rotation,
-                        ) {
-                            log(&format!(
-                                "Failed to place a tile from CPU player: {:?}; TilePlacement: {:?}",
-                                err, &tpe
-                            ));
-                            self.undo_all();
-                            let end_turn_update = self.cant_play().unwrap();
-                            return Some(CPUTurnUpdate {
-                                placements: Vec::new(),
-                                player_id,
-                                turn_score: end_turn_update.turn_score,
-                                game_has_ended: end_turn_update.game_has_ended,
-                                tile_count: self.tile_count(),
-                            });
-                        }
-                    }
-                    match self.end_turn() {
-                        Ok(end_turn_update) => CPUTurnUpdate {
-                            placements: tile_placement_events,
-                            player_id,
-                            turn_score: end_turn_update.turn_score,
-                            game_has_ended: end_turn_update.game_has_ended,
-                            tile_count: self.tile_count(),
-                        },
-                        Err(e) => {
-                            log(&format!(
-                                "Failed to end CPU player turn: {:?}; Placements: {:?}",
-                                e, tile_placement_events,
-                            ));
-                            self.undo_all();
-                            let end_turn_update = self.cant_play().unwrap();
-                            CPUTurnUpdate {
-                                placements: Vec::new(),
-                                player_id,
-                                turn_score: end_turn_update.turn_score,
-                                game_has_ended: end_turn_update.game_has_ended,
-                                tile_count: self.tile_count(),
-                            }
-                        }
-                    }
+        let lists_of_moves = Brute::new(self.players.len()).take_turn(
+            player.tiles(),
+            &self.board,
+            player.total_score(),
+            self.other_player_scores(),
+        );
+        'list_of_moves: for tile_placement_events in lists_of_moves {
+            for tpe in tile_placement_events.iter() {
+                if let Err(err) =
+                    self.place_tile(tpe.tile_path_type.clone(), tpe.coordinates, tpe.rotation)
+                {
+                    log(&format!(
+                        "Failed to place a tile from CPU player: {:?}; TilePlacement: {:?}",
+                        err, &tpe
+                    ));
+                    self.undo_all();
+                    // continue outer for loop
+                    continue 'list_of_moves;
                 }
-                None => {
-                    let end_turn_update = self.cant_play().unwrap();
-                    CPUTurnUpdate {
-                        placements: Vec::new(),
+            }
+            match self.end_turn() {
+                Ok(end_turn_update) => {
+                    return Some(CPUTurnUpdate {
+                        placements: tile_placement_events,
                         player_id,
                         turn_score: end_turn_update.turn_score,
                         game_has_ended: end_turn_update.game_has_ended,
                         tile_count: self.tile_count(),
-                    }
+                    });
                 }
-            },
-        )
+                Err(e) => {
+                    log(&format!(
+                        "Failed to end CPU player turn: {:?}; Placements: {:?}",
+                        e, tile_placement_events,
+                    ));
+                    self.undo_all();
+                    continue;
+                }
+            }
+        }
+        // Either no moves to begin with or all returned moves were invalid
+        let end_turn_update = self.cant_play().unwrap();
+        Some(CPUTurnUpdate {
+            placements: Vec::new(),
+            player_id,
+            turn_score: end_turn_update.turn_score,
+            game_has_ended: end_turn_update.game_has_ended,
+            tile_count: self.tile_count(),
+        })
     }
 
     fn dispatch(&mut self, event: Event) -> Result<Option<TurnScore>, String> {

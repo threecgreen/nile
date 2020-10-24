@@ -18,16 +18,15 @@ impl Brute {
 }
 
 impl CPUPlayer for Brute {
-    /// TODO: Return expected score and log error if actual doesn't match
     fn take_turn(
         &mut self,
         tiles: &TileArray,
         board: &Board,
         score: i16,
         other_scores: Vec<i16>,
-    ) -> Option<Vec<TilePlacementEvent>> {
+    ) -> Vec<Vec<TilePlacementEvent>> {
         let last_placement = board.last_placement();
-        match self.best_moves(
+        let mut all_moves = self.ranked_moves(
             board,
             score,
             &other_scores,
@@ -36,10 +35,13 @@ impl CPUPlayer for Brute {
             TurnScore::default(),
             tiles,
             &Vec::new(),
-        ) {
-            Some(moves) => Some(moves.placements),
-            None => None,
-        }
+        );
+        // Compare `y` against `x` for descending order
+        all_moves.sort_by(|x, y| y.score.cmp(&x.score));
+        all_moves
+            .into_iter()
+            .map(|potential_moves| potential_moves.placements)
+            .collect()
     }
 }
 
@@ -65,7 +67,7 @@ fn tile_paths_from_tile(t: Tile) -> Vec<TilePath> {
 }
 
 impl Brute {
-    fn best_moves(
+    fn ranked_moves(
         &self,
         board: &Board,
         score: i16,
@@ -75,7 +77,7 @@ impl Brute {
         turn_score: TurnScore,
         tiles: &TileArray,
         placements: &[TilePlacementEvent],
-    ) -> Option<PotentialSetOfMoves> {
+    ) -> Vec<PotentialSetOfMoves> {
         let next_coordinates = last_coordinates + last_offset;
         let mut potential_placements = Vec::new();
         for (idx, tile) in tiles.iter().enumerate() {
@@ -166,7 +168,7 @@ impl Brute {
                                 // Recurse
                                 let mut rem_tiles = tiles.clone();
                                 rem_tiles.remove(idx);
-                                if let Some(moves) = self.best_moves(
+                                potential_placements.extend(self.ranked_moves(
                                     board,
                                     score,
                                     other_scores,
@@ -175,9 +177,7 @@ impl Brute {
                                     new_score,
                                     &rem_tiles,
                                     &new_placements,
-                                ) {
-                                    potential_placements.push(moves);
-                                }
+                                ));
                             }
                         }
                     }
@@ -185,8 +185,6 @@ impl Brute {
             }
         }
         potential_placements
-            .into_iter()
-            .max_by(|p1, p2| p1.score.cmp(&p2.score))
     }
 
     fn next_tile_adjustment(&self, board: &Board, next_coordinates: Coordinates) -> TurnScore {
@@ -250,7 +248,8 @@ mod test {
             Tile::Straight,
             Tile::Straight,
         ];
-        let moves = target.take_turn(&tiles, &board, 0, vec![0]).unwrap();
+        let all_moves = target.take_turn(&tiles, &board, 0, vec![0]);
+        let moves = all_moves.first().unwrap();
         assert_eq!(moves.len(), 5);
         matches!(
             &moves[0].tile_path_type,
@@ -294,7 +293,8 @@ mod test {
             Tile::Diagonal,
         ];
 
-        let moves = target.take_turn(&tiles, &board, 30, vec![50]).unwrap();
+        let all_moves = target.take_turn(&tiles, &board, 30, vec![50]);
+        let moves = all_moves.first().unwrap();
         assert_eq!(moves.len(), 2);
     }
 
@@ -311,7 +311,7 @@ mod test {
         ];
 
         let moves = target.take_turn(&tiles, &board, 0, vec![146]);
-        matches!(moves, None);
+        assert!(moves.is_empty());
     }
 
     #[test]
@@ -327,9 +327,8 @@ mod test {
         ];
 
         // Optimal moves should place player in lead
-        let moves = target
-            .take_turn(&tiles, &board, 400, vec![900, 885])
-            .unwrap();
+        let all_moves = target.take_turn(&tiles, &board, 400, vec![900, 885]);
+        let moves = all_moves.first().unwrap();
         assert_eq!(moves[0].coordinates, Coordinates(10, 20));
         assert_eq!(
             moves[0].tile_path_type,

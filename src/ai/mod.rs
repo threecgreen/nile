@@ -12,7 +12,7 @@ pub trait CPUPlayer: std::fmt::Debug {
         board: &Board,
         score: i16,
         other_scores: Vec<i16>,
-    ) -> Option<Vec<TilePlacementEvent>>;
+    ) -> Vec<Vec<TilePlacementEvent>>;
 }
 
 pub use brute::Brute;

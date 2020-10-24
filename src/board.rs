@@ -450,7 +450,7 @@ impl Board {
             .collect()
     }
 
-    pub fn no_encircles(&self, last_placement: (Coordinates, Offset)) -> Result<(), String> {
+    fn no_encircles(&self, last_placement: (Coordinates, Offset)) -> Result<(), String> {
         let (last_coordinates, _) = last_placement;
         if self.is_end_game_cell(last_coordinates) {
             return Ok(());
