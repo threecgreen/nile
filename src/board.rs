@@ -355,8 +355,7 @@ impl Board {
             .count();
         // Check this turns doesn't leave the river encircled
         self.no_encircles(last_placement)?;
-        let has_ended =
-            Self::validate_end_of_game_cells(end_of_game_cell_count, self.last_placement)?;
+        let has_ended = Self::validate_end_of_game_cells(end_of_game_cell_count, last_placement)?;
         self.last_placement = last_placement;
         Ok(has_ended)
     }
@@ -537,6 +536,7 @@ pub mod wasm {
 
 #[cfg(test)]
 impl Board {
+    /// Test constructor
     pub fn with_last_placement(coordinates: Coordinates, offset: Offset) -> Self {
         let mut board = Self::new();
         board.last_placement = (coordinates, offset);
@@ -548,19 +548,19 @@ impl Board {
 mod test {
     use super::*;
 
-    // macro_rules! hash_set(
-    //     { $($key:expr),+ } => {
-    //         {
-    //             let mut s = ::std::collections::HashSet::new();
-    //             $(
-    //                 s.insert($key);
-    //             )+
-    //             s
-    //         }
-    //     }
-    // );
-
     use std::iter::FromIterator;
+
+    macro_rules! hash_set(
+        { $($key:expr),+ } => {
+            {
+                let mut s = ::std::collections::HashSet::new();
+                $(
+                    s.insert($key);
+                )+
+                s
+            }
+        }
+    );
 
     #[test]
     fn set_and_remove_are_idempotent() {
@@ -610,7 +610,7 @@ mod test {
     fn update_universal_path_on_cell_fails_for_empty() {
         let mut target = Cell::with_bonus(0);
         let res = target.update_universal_path(TilePath::Diagonal);
-        matches!(res, Err(e) if e.contains("empty"));
+        assert!(matches!(res, Err(e) if e.contains("empty")));
     }
 
     #[test]
@@ -623,7 +623,7 @@ mod test {
             bonus: 0,
         };
         let res = target.update_universal_path(TilePath::Right45);
-        matches!(res, Err(e) if e.contains("doesn't contain a universal tile"));
+        assert!(matches!(res, Err(e) if e.contains("doesn't contain a universal tile")));
     }
 
     #[test]
@@ -636,14 +636,14 @@ mod test {
             bonus: 0,
         };
         let res = target.update_universal_path(TilePath::Right45);
-        matches!(res, Ok(TilePath::Left45));
+        assert!(matches!(res, Ok(TilePath::Left45)));
     }
 
     #[test]
     fn board_cell_works_with_end_game() {
         let target = Board::new();
         let end_game_cell = target.cell(Coordinates(10, 21));
-        matches!(end_game_cell, Some(cell) if cell.bonus() == 500);
+        assert!(matches!(end_game_cell, Some(cell) if cell.bonus() == 500));
     }
 
     #[test]
@@ -692,8 +692,8 @@ mod test {
 
     #[test]
     fn no_crossover() {
-        let mut target = Board::new();
-        let coordinates = vec![Coordinates(5, 1), Coordinates(5, 0), Coordinates(6, 0)];
+        let mut target = Board::with_last_placement(Coordinates(4, 2), Offset(1, -1));
+        let coordinates = vec![Coordinates(5, 1), Coordinates(6, 0), Coordinates(6, 1)];
         target
             .place_tile(
                 coordinates[0],
@@ -703,7 +703,10 @@ mod test {
         target
             .place_tile(
                 coordinates[1],
-                TilePlacement::new(TilePathType::Normal(TilePath::Right135), Rotation::None),
+                TilePlacement::new(
+                    TilePathType::Normal(TilePath::Right135),
+                    Rotation::Clockwise270,
+                ),
             )
             .unwrap();
         target
@@ -711,13 +714,13 @@ mod test {
                 coordinates[2],
                 TilePlacement::new(
                     TilePathType::Normal(TilePath::Left135),
-                    Rotation::Clockwise180,
+                    Rotation::Clockwise90,
                 ),
             )
             .unwrap();
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
-        matches!(res, Err(msg) if msg.contains("cross over"));
+        assert!(matches!(res, Err(msg) if msg.contains("cross over")));
     }
 
     #[test]
@@ -774,7 +777,7 @@ mod test {
             .unwrap();
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
-        matches!(res, Ok(false));
+        assert!(matches!(res, Ok(false)));
     }
 
     #[test]
@@ -831,7 +834,7 @@ mod test {
             .unwrap();
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
-        matches!(res, Err(_));
+        assert!(res.is_err());
     }
 
     #[test]
@@ -878,7 +881,7 @@ mod test {
             .unwrap();
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
-        matches!(res, Err(_));
+        assert!(res.is_err());
     }
 
     #[test]
@@ -918,41 +921,30 @@ mod test {
     #[test]
     fn cell_out_of_bounds_cell_is_none() {
         let target = Board::new();
-        matches!(target.cell(Coordinates(14, 22)), None);
+        assert!(matches!(target.cell(Coordinates(14, 22)), None));
     }
 
     #[test]
     fn validate_turns_moves_ends_game() {
-        let mut target = Board::new();
+        let mut target = Board::with_last_placement(Coordinates(14, 20), Offset(0, 1));
+        const COORDINATES: Coordinates = Coordinates(14, BOARD_SIZE as i8);
         target
             .place_tile(
-                Coordinates(14, BOARD_SIZE as i8),
+                COORDINATES,
                 TilePlacement {
                     rotation: Rotation::None,
                     tile_path_type: TilePathType::Normal(TilePath::Straight),
                 },
             )
             .unwrap();
-        let res = target.validate_turns_moves(HashSet::new());
-        matches!(res, Ok(true));
+        let turn_coordinates = hash_set!(COORDINATES);
+        let res = target.validate_turns_moves(turn_coordinates);
+        assert!(matches!(res, Ok(true)));
     }
 
     fn setup_encircled_board() -> Board {
         // Test same board set up with different last offsets
         let mut target = Board::new();
-        // let turn_coordinates = hash_set!(
-        //     Coordinates(3, 0),
-        //     Coordinates(2, 0),
-        //     Coordinates(1, 0),
-        //     Coordinates(0, 0),
-        //     Coordinates(0, 1),
-        //     Coordinates(0, 2),
-        //     Coordinates(1, 3),
-        //     Coordinates(2, 3),
-        //     Coordinates(3, 3),
-        //     Coordinates(3, 2),
-        //     Coordinates(2, 1)
-        // );
 
         for i in 0..3 {
             target
@@ -1047,7 +1039,6 @@ mod test {
     /// ```
     #[test]
     fn no_encircles_depends_on_offset() {
-        // let res = target.no_encircles2(turn_coordinates.clone(), encircled_last_placement);
         let mut target = setup_encircled_board();
         target
             .place_tile(

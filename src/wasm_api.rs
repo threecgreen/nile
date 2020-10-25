@@ -137,10 +137,14 @@ mod test {
 
     use wasm_bindgen_test::*;
 
+    fn setup() -> WasmNile {
+        let player_names: Array = vec![JsValue::from("Carter")].iter().collect();
+        WasmNile::new(player_names, 1).unwrap()
+    }
+
     // #[wasm_bindgen_test]
     fn test_end_of_game() {
-        let player_names: Array = vec![JsValue::from("Carter")].iter().collect();
-        let mut target = WasmNile::new(player_names, 1).unwrap();
+        let mut target = setup();
         let placement_res = target
             .place_tile(
                 path::wasm::TilePathType::normal(TilePath::Straight),
@@ -152,5 +156,11 @@ mod test {
         let res = target.end_turn().unwrap();
         assert!(res.game_has_ended);
         assert!(target.take_cpu_turn().is_none())
+    }
+
+    #[wasm_bindgen_test]
+    fn take_cpu_turn_for_human_fails() {
+        let mut target = setup();
+        assert!(matches!(target.take_cpu_turn(), None));
     }
 }

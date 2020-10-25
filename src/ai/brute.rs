@@ -242,8 +242,8 @@ mod test {
         let board = Board::new();
         // Tiles to get to 60 bonus on first turn using all tiles
         let tiles = smallvec![
-            Tile::Center90,
-            Tile::Straight,
+            Tile::Right45,
+            Tile::Left45,
             Tile::Straight,
             Tile::Straight,
             Tile::Straight,
@@ -251,26 +251,46 @@ mod test {
         let all_moves = target.take_turn(&tiles, &board, 0, vec![0]);
         let moves = all_moves.first().unwrap();
         assert_eq!(moves.len(), 5);
-        matches!(
-            &moves[0].tile_path_type,
-            TilePathType::Normal(TilePath::Straight)
-        );
-        matches!(
-            &moves[1].tile_path_type,
-            TilePathType::Normal(TilePath::Straight)
-        );
-        matches!(
-            &moves[2].tile_path_type,
-            TilePathType::Normal(TilePath::Center90)
-        );
-        matches!(
-            &moves[3].tile_path_type,
-            TilePathType::Normal(TilePath::Straight)
-        );
-        matches!(
-            &moves[4].tile_path_type,
-            TilePathType::Normal(TilePath::Straight)
-        );
+        assert!(matches!(
+            &moves[0],
+            TilePlacementEvent {
+                coordinates: Coordinates(10, 0),
+                rotation: Rotation::None,
+                tile_path_type: TilePathType::Normal(TilePath::Straight)
+            }
+        ));
+        assert!(matches!(
+            &moves[1],
+            TilePlacementEvent {
+                coordinates: Coordinates(10, 1),
+                rotation: Rotation::Clockwise90,
+                tile_path_type: TilePathType::Normal(TilePath::Right45)
+            }
+        ));
+        assert!(matches!(
+            &moves[2],
+            TilePlacementEvent {
+                coordinates: Coordinates(11, 2),
+                rotation: Rotation::None,
+                tile_path_type: TilePathType::Normal(TilePath::Left45)
+            }
+        ));
+        assert!(matches!(
+            &moves[3],
+            TilePlacementEvent {
+                coordinates: Coordinates(12, 2),
+                rotation: Rotation::Clockwise90,
+                tile_path_type: TilePathType::Normal(TilePath::Straight)
+            }
+        ));
+        assert!(matches!(
+            &moves[4],
+            TilePlacementEvent {
+                coordinates: Coordinates(13, 2),
+                rotation: Rotation::Clockwise90,
+                tile_path_type: TilePathType::Normal(TilePath::Straight)
+            }
+        ));
     }
 
     #[test]

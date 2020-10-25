@@ -10,7 +10,7 @@ use crate::tile::{self, Coordinates, Rotation, Tile, TileBox};
 use js_sys::Array;
 use wasm_bindgen::prelude::*;
 
-/// Holds all state for one game
+/// Holds all game state
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct Nile {

@@ -50,7 +50,7 @@ impl TilePath {
             TilePath::Straight => [W, E],
             TilePath::Diagonal => [SW, NE],
             TilePath::Center90 => [S, W],
-            TilePath::Corner90 => [W, SE],
+            TilePath::Corner90 => [SW, SE],
             TilePath::Left45 => [S, NW],
             TilePath::Right45 => [S, NE],
             TilePath::Left135 => [S, SW],
@@ -324,7 +324,7 @@ mod test {
                 coordinates: Coordinates(0, 1),
             },
         );
-        matches!(res, Err(msg) if msg.starts_with("Coordinates"));
+        assert!(matches!(res, Err(msg) if msg.contains("doesn't align")));
     }
 
     #[test]
@@ -337,7 +337,7 @@ mod test {
                 coordinates: Coordinates(1, 1),
             },
         );
-        matches!(res, Err(msg) if msg.starts_with("Tile and rotation"));
+        assert!(matches!(res, Err(msg) if msg.starts_with("Tile and rotation")));
     }
 
     #[test]
@@ -346,11 +346,11 @@ mod test {
             (Coordinates(0, 0), Offset(1, 1)),
             &TilePlacementEvent {
                 tile_path_type: TilePathType::Normal(TilePath::Diagonal),
-                rotation: Rotation::Clockwise90,
+                rotation: Rotation::None,
                 coordinates: Coordinates(1, 1),
             },
         );
-        matches!(res, Err(msg) if msg.starts_with("Tile and rotation"));
+        assert!(matches!(res, Err(msg) if msg.starts_with("Tile and rotation")));
     }
 
     #[test]
@@ -363,7 +363,7 @@ mod test {
                 coordinates: Coordinates(9, 1),
             },
         );
-        matches!(res, Ok((Coordinates(9, 1), Offset(1, 0))));
+        assert!(matches!(res, Ok((Coordinates(9, 1), Offset(1, 0)))));
     }
 
     #[test]
@@ -376,7 +376,7 @@ mod test {
                 rotation: Rotation::Clockwise180,
             },
         );
-        matches!(res, Ok((Coordinates(11, 0), Offset(1, 1))));
+        assert!(matches!(res, Ok((Coordinates(11, 0), Offset(1, 1)))));
     }
 
     #[test]
@@ -391,7 +391,10 @@ mod test {
 
     #[test]
     fn offsets_to_tile_placement_none() {
-        matches!(offsets_to_tile_placement(Offset(1, 0), Offset(-1, 0)), None);
+        assert!(matches!(
+            offsets_to_tile_placement(Offset(1, 0), Offset(-1, 0)),
+            None
+        ));
     }
 
     #[test]

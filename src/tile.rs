@@ -183,7 +183,7 @@ mod test {
     fn draw_empty() {
         let mut target = TileBox::new();
         target.tiles = VecDeque::new();
-        matches!(target.draw(), None);
+        assert!(matches!(target.draw(), None));
     }
 
     #[test]
