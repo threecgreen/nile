@@ -381,7 +381,7 @@ impl Board {
                 "Tile placed in end-of-game column must be the last tile of the river".to_owned(),
             ),
             0 => Ok(false),
-            _ => Err("Can't play more than one tile in the end-of-game cells".to_owned()),
+            _ => Err("Can't play more than one tile in the end-of-game column".to_owned()),
         }
     }
 

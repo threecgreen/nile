@@ -35,7 +35,7 @@ impl Nile {
         if player_names.len() + ai_count < 2 || player_names.len() + ai_count > 4 {
             Err("Nile is a game for 2-4 players".to_owned())
         } else {
-            let mut tile_box = TileBox::new();
+            let mut tile_box = TileBox::default();
             let mut players: Vec<Player> = player_names
                 .into_iter()
                 .map(|player| Player::new(player, &mut tile_box, false))
@@ -334,7 +334,7 @@ impl Nile {
 
     fn advance_turn(&mut self) {
         self.current_turn = (self.current_turn + 1) % self.players.len();
-        self.has_ended = self.has_ended && self.players[self.current_turn].rack_is_empty();
+        self.has_ended = self.has_ended || self.players[self.current_turn].rack_is_empty();
     }
 
     fn if_not_ended(&self) -> Result<(), String> {
@@ -464,5 +464,15 @@ mod test {
             .move_tile(Coordinates::new(10, 0), Coordinates::new(9, 0))
             .unwrap();
         assert_eq!(begin_score, end_score);
+    }
+
+    #[test]
+    fn advance_turn_doesnt_unend_turn() {
+        let mut target = setup();
+        target.has_ended = true;
+        assert_eq!(target.current_turn, 0);
+        target.advance_turn();
+        assert_eq!(target.current_turn, 1);
+        assert!(target.has_ended);
     }
 }

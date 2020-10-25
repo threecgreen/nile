@@ -119,8 +119,8 @@ pub struct TileBox {
     rng: ThreadRng,
 }
 
-impl TileBox {
-    pub fn new() -> Self {
+impl Default for TileBox {
+    fn default() -> Self {
         let mut tiles = Vec::with_capacity(104);
         // Frequencies from the original game board
         Self::push_n(&mut tiles, Tile::Left135, 10);
@@ -133,9 +133,14 @@ impl TileBox {
         Self::push_n(&mut tiles, Tile::Corner90, 10);
         Self::push_n(&mut tiles, Tile::Universal, 4);
 
+        Self::new(tiles)
+    }
+}
+
+impl TileBox {
+    pub fn new(mut tiles: Vec<Tile>) -> Self {
         let mut rng = rand::thread_rng();
         tiles.shuffle(&mut rng);
-
         Self {
             tiles: VecDeque::from(tiles),
             rng,
@@ -173,7 +178,7 @@ mod test {
 
     #[test]
     fn draw_removes_tile_from_box() {
-        let mut target = TileBox::new();
+        let mut target = TileBox::default();
         let original_size = target.tiles.len();
         target.draw();
         assert!(target.tiles.len() == original_size - 1);
@@ -181,14 +186,14 @@ mod test {
 
     #[test]
     fn draw_empty() {
-        let mut target = TileBox::new();
+        let mut target = TileBox::default();
         target.tiles = VecDeque::new();
         assert!(matches!(target.draw(), None));
     }
 
     #[test]
     fn discard_inserts() {
-        let mut target = TileBox::new();
+        let mut target = TileBox::default();
         target.tiles = VecDeque::from(vec![Tile::Corner90, Tile::Straight]);
         let original_size = target.tiles.len();
         let discarded_tiles = vec![Tile::Universal, Tile::Left135];
@@ -201,7 +206,7 @@ mod test {
 
     #[test]
     fn insert_at_random_when_empty() {
-        let mut target = TileBox::new();
+        let mut target = TileBox::default();
         target.tiles = VecDeque::default();
         target.insert_at_random(Tile::Corner90);
         assert_eq!(target.tiles[0], Tile::Corner90)

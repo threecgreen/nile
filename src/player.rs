@@ -161,7 +161,7 @@ mod test {
     use super::*;
 
     fn setup() -> (TileBox, Player) {
-        let mut tile_box = TileBox::new();
+        let mut tile_box = TileBox::default();
         let target = Player::new("Test".to_owned(), &mut tile_box, false);
         (tile_box, target)
     }
