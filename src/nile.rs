@@ -188,16 +188,8 @@ impl Nile {
             return Err("Player has made moves this turn".to_owned());
         }
         // TODO: Check if any playable moves
-        // FIXME: can pass in `self.tile_box` to `player` and have it handle most of this
-        let tiles = player.discard_tiles();
-        let tile_score = tiles.iter().fold(0, |acc, t| acc + t.score());
-        let turn_score = TurnScore {
-            add: 0,
-            sub: tile_score,
-        };
-        player.add_score(turn_score);
-        self.tile_box.discard(tiles);
-        player.end_turn(&mut self.tile_box);
+        let turn_score = player.cant_play(&mut self.tile_box);
+
         self.cant_play_count += 1;
         self.has_ended = self.cant_play_count as usize == player_count;
         let update = EndTurnUpdate {

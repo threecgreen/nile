@@ -8,6 +8,7 @@ const MAX_TILES: usize = 5;
 
 pub type TileArray = SmallVec<[Tile; MAX_TILES]>;
 
+/// Holds all data related to a single player
 #[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Player {
@@ -23,7 +24,6 @@ pub struct Player {
 
 impl Player {
     pub fn new(name: String, tile_box: &mut TileBox, is_cpu: bool) -> Self {
-        // TODO: handle case where box is empty
         let mut tile_rack = TileArray::new();
         Self::fill_rack(&mut tile_rack, tile_box);
         Self {
@@ -35,6 +35,8 @@ impl Player {
         }
     }
 
+    /// Refill the player's `tile_rack` and return the total score of the tiles they played in
+    /// the current turn.
     pub fn end_turn(&mut self, tile_box: &mut TileBox) -> TurnScore {
         if self.tile_rack.is_empty() {
             // TODO: this should possibly only apply if the player began
@@ -82,6 +84,23 @@ impl Player {
             })
     }
 
+    /// The player can't play any tiles and is ending their turn. Discards all their current tiles
+    /// and refills their `tile_rack` from `tile_box`.
+    pub fn cant_play(&mut self, tile_box: &mut TileBox) -> TurnScore {
+        let tiles = self.discard_tiles();
+        let tile_score = tiles.iter().fold(0, |acc, t| acc + t.score());
+        let turn_score = TurnScore {
+            add: 0,
+            sub: tile_score,
+        };
+        self.add_score(turn_score);
+        tile_box.discard(tiles);
+        Self::fill_rack(&mut self.tile_rack, tile_box);
+        self.scores.push(turn_score);
+        self.current_turn_score = TurnScore::default();
+        turn_score
+    }
+
     /// The player removed a tile from the board is returning it to their rack
     pub fn return_tile(&mut self, tile: Tile) {
         self.tile_rack.push(tile);
@@ -97,7 +116,7 @@ impl Player {
         self.current_turn_score
     }
 
-    pub fn discard_tiles(&mut self) -> Vec<Tile> {
+    fn discard_tiles(&mut self) -> Vec<Tile> {
         let mut tiles = Vec::with_capacity(self.tile_rack.len());
         while let Some(tile) = self.tile_rack.pop() {
             tiles.push(tile);
@@ -186,6 +205,24 @@ mod test {
         assert_eq!(
             TurnScore { add: 20, sub: 0 },
             target.end_turn(&mut tile_box)
+        );
+    }
+
+    #[test]
+    fn cant_play_score() {
+        let (mut tile_box, mut target) = setup();
+        assert_eq!(target.scores, []);
+        let expected_score = target.tiles().iter().fold(0i16, |acc, t| acc - t.score());
+        let res = target.cant_play(&mut tile_box);
+        assert_eq!(res.score(), expected_score);
+        // Previously can't play would return the correct score but store a score with an added 20
+        // points for using all tiles.
+        assert_eq!(
+            target.scores,
+            vec![TurnScore {
+                add: 0,
+                sub: -expected_score
+            }]
         );
     }
 }
