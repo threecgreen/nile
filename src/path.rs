@@ -282,7 +282,7 @@ pub fn eval_placement(
         })?;
     offsets
         .iter()
-        // Assumes there's only two offsets
+        // Assumes there's only two offsets because `offsets` comes from `[Offset; 2]`
         .find(|o| *o != rev_offset)
         .ok_or_else(|| format!("No valid output offset for {:?}", placement.coordinates))
         .map(|o| (new_coordinates, *o))
