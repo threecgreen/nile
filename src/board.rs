@@ -45,9 +45,9 @@ impl TilePlacement {
 
     pub fn offsets(&self) -> Vec<Offset> {
         self.tile_path_type
-            .directions()
+            .offsets()
             .iter()
-            .map(|d| d.into_offset().rotate(self.rotation))
+            .map(|o| o.rotate(self.rotation))
             .collect()
     }
 }

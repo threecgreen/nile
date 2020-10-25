@@ -6,8 +6,9 @@ use std::convert::TryFrom;
 use std::ops::{Add, Neg};
 use wasm_bindgen::prelude::wasm_bindgen;
 
-/// Similar to `crate::tile::Tile` except without the universal tile, because
-/// when placed, a universal tile must represent one of the standard `TilePath`s
+/// Represents the paths the river can take in a single cell. Similar to
+/// `crate::tile::Tile` except without the universal tile, because when placed,
+/// a universal tile must represent one of the standard `TilePath`s
 #[repr(u8)]
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -34,18 +35,26 @@ pub static TILE_PATHS: [TilePath; 8] = [
 ];
 
 impl TilePath {
-    pub fn directions(self) -> [Direction; 2] {
-        use TilePath::*;
+    pub fn offsets(self) -> [Offset; 2] {
+        // Representations of the valid offsets as the cardinal directions making
+        // the `TilePath` to `Offset` mappings easier to read
+        const SW: Offset = Offset(1, -1);
+        const W: Offset = Offset(0, -1);
+        const NW: Offset = Offset(-1, -1);
+        const NE: Offset = Offset(-1, 1);
+        const E: Offset = Offset(0, 1);
+        const SE: Offset = Offset(1, 1);
+        const S: Offset = Offset(1, 0);
 
         match self {
-            Straight => [Direction::W, Direction::E],
-            Diagonal => [Direction::SW, Direction::NE],
-            Center90 => [Direction::S, Direction::W],
-            Corner90 => [Direction::SW, Direction::SE],
-            Left45 => [Direction::S, Direction::NW],
-            Right45 => [Direction::S, Direction::NE],
-            Left135 => [Direction::S, Direction::SW],
-            Right135 => [Direction::S, Direction::SE],
+            TilePath::Straight => [W, E],
+            TilePath::Diagonal => [SW, NE],
+            TilePath::Center90 => [S, W],
+            TilePath::Corner90 => [W, SE],
+            TilePath::Left45 => [S, NW],
+            TilePath::Right45 => [S, NE],
+            TilePath::Left135 => [S, SW],
+            TilePath::Right135 => [S, SE],
         }
     }
 }
@@ -153,6 +162,10 @@ pub mod wasm {
     }
 }
 
+/// When a universal tile is placed, the player decides which tile path they
+/// would like it to represent. For display purposes and because the player can
+/// change which path it represent, it is necessary to differentiate between,
+/// for example, a straight tile and a universal tile used as a straight path
 #[derive(Clone, Debug)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 pub enum TilePathType {
@@ -165,8 +178,8 @@ impl TilePathType {
         Tile::from(self).score()
     }
 
-    pub fn directions(&self) -> [Direction; 2] {
-        TilePath::from(self).directions()
+    pub fn offsets(&self) -> [Offset; 2] {
+        TilePath::from(self).offsets()
     }
 }
 
@@ -188,35 +201,10 @@ impl From<&TilePathType> for Tile {
     }
 }
 
-// TODO: this is probably redundant and can be replaced with just offsets
-#[repr(u8)]
-#[derive(Copy, Clone, Debug)]
-pub enum Direction {
-    SW,
-    W,
-    NW,
-    N,
-    NE,
-    E,
-    SE,
-    S,
-}
-
-impl Direction {
-    pub fn into_offset(self) -> Offset {
-        match self {
-            Direction::SW => Offset(1, -1),
-            Direction::W => Offset(0, -1),
-            Direction::NW => Offset(-1, -1),
-            Direction::N => Offset(-1, 0),
-            Direction::NE => Offset(-1, 1),
-            Direction::E => Offset(0, 1),
-            Direction::SE => Offset(1, 1),
-            Direction::S => Offset(1, 0),
-        }
-    }
-}
-
+/// An offset on the game board's grid. Used for representing how different
+/// tiles can "connect" to form the river.
+///
+/// Both items of tuple must be of {1, 0, -1}. `Offset(0, 0)` is invalid.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Offset(pub i8, pub i8);
 
@@ -279,9 +267,9 @@ pub fn eval_placement(
     }
     let offsets: Vec<Offset> = placement
         .tile_path_type
-        .directions()
+        .offsets()
         .iter()
-        .map(|d| d.into_offset().rotate(placement.rotation))
+        .map(|o| o.rotate(placement.rotation))
         .collect();
     let rev_offset = offsets
         .iter()
@@ -308,11 +296,7 @@ pub fn eval_placement(
 pub fn offsets_to_tile_placement(prev_offset: Offset, new_offset: Offset) -> Option<TilePlacement> {
     TILE_PATHS.iter().find_map(|tp| {
         ROTATIONS.iter().find_map(|r| {
-            let offsets: Vec<_> = tp
-                .directions()
-                .iter()
-                .map(|d| d.into_offset().rotate(*r))
-                .collect();
+            let offsets: Vec<_> = tp.offsets().iter().map(|o| o.rotate(*r)).collect();
             // `prev_offset` is flipped because the placement we're looking for is on the
             // "receiving" end of the previous tile's offset
             if (offsets[0] == -prev_offset && offsets[1] == new_offset)
@@ -322,15 +306,6 @@ pub fn offsets_to_tile_placement(prev_offset: Offset, new_offset: Offset) -> Opt
             } else {
                 None
             }
-            // match (offsets[0], offsets[1]) {
-            //     (x, y)
-            //         if (x == prev_offset && y == new_offset)
-            //             || (x == new_offset && x == prev_offset) =>
-            //     {
-            //         Some(TilePlacement::new(TilePathType::Normal(*tp), *r))
-            //     }
-            //     _ => None,
-            // }
         })
     })
 }
@@ -407,9 +382,9 @@ mod test {
     #[test]
     fn left45_offset() {
         let offsets: Vec<Offset> = TilePath::Left45
-            .directions()
+            .offsets()
             .iter()
-            .map(|d| d.into_offset().rotate(Rotation::Clockwise180))
+            .map(|o| o.rotate(Rotation::Clockwise180))
             .collect();
         assert_eq!(offsets, vec![Offset(-1, 0), Offset(1, 1)]);
     }
