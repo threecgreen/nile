@@ -38,3 +38,20 @@ button svg {
 .centerText {
     text-align: center;
 }
+
+/* Sticky footer */
+html, body, div#app-container {
+    height: 100%;
+    margin: 0;
+}
+
+div#app-container {
+    display: flex;
+    flex-direction: column;
+}
+main {
+    flex: 1 0 auto;
+}
+footer {
+    flex-shrink: 0;
+}

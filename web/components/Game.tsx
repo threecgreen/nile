@@ -87,7 +87,7 @@ export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
     // Render
     return (
         <>
-            <main>
+            <section>
                 {/* TODO: sticky header */}
                 <Controls
                     hasPlacedTile={ state.currentTurnTiles.size > 0 }
@@ -112,15 +112,15 @@ export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
                 <ErrorModal msg={ state.modal?.msg ?? null }
                     dismiss={ () => stateManager.dismiss() }
                 />
-            </main>
-            <footer>
+            </section>
+            <section>
                 {/* TODO: sticky footer */}
                 <Players currentPlayerId={ state.currentPlayerId }
                     selectedTileIdx={ state.selectedTile?.type === "rack" ? state.selectedTile.tile.idx : null }
                     playerData={ state.playerData }
                     onSelect={ (idx) => stateManager.selectRackTile(idx) }
                 />
-            </footer>
+            </section>
         </>
     );
 };

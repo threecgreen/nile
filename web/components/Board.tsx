@@ -1,7 +1,6 @@
 import { BoardArray, CoordinateTuple, Cell } from "lib/common";
 import React from "react";
 import styles from "./Board.module.css";
-import { GridCell } from "./Grid";
 import { EmptyCell, TileCell, TileType } from "./Tile";
 import { CoordinateSet } from "lib/CoordinateSet";
 
@@ -69,7 +68,7 @@ const BoardCell: React.FC<IBoardCellProps> = ({
     const isSelected =  selectedTile !== null
         && i === selectedTile[0] && j === selectedTile[1];
     return (
-        <GridCell key={ j }>
+        <td key={ j }>
             { cell.tilePlacement
             ? <TileCell tilePath={ cell.tilePlacement.tilePath }
                 isUniversal={ cell.tilePlacement.isUniversal }
@@ -83,7 +82,7 @@ const BoardCell: React.FC<IBoardCellProps> = ({
                 isEndGame={ isEndGame }
                 onDrop={ () => onDropFromRack(i, j) }
             /> }
-        </GridCell>
+        </td>
     );
 };
 BoardCell.displayName = "BoardCell";

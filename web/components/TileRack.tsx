@@ -1,7 +1,6 @@
 import { score } from "lib/common";
 import { Tile as TileEnum } from "nile";
 import React from "react";
-import { GridCell } from "./Grid";
 import { HiddenTile, RackTile } from "./Tile";
 import styles from "./TileRack.module.css";
 
@@ -27,7 +26,7 @@ export const TileRack: React.FC<IProps> = ({tiles, showTiles, selectedTileIdx, o
             <tbody>
                 <tr>
                     { tiles.map((tile, i) => (
-                        <GridCell key={ `${tile} - ${i}` }>
+                        <td key={ `${tile} - ${i}` }>
                             <div draggable={ showTiles }
                                 onDrag={ onDrag }
                                 onDragStart={ () => onSelect(i, tile) }
@@ -41,7 +40,7 @@ export const TileRack: React.FC<IProps> = ({tiles, showTiles, selectedTileIdx, o
                                     />
                                     : <HiddenTile /> }
                             </div>
-                        </GridCell>
+                        </td>
                     )) }
                 </tr>
                 <tr className={ styles.alignRight }>

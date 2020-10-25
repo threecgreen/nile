@@ -3,6 +3,7 @@ import { Game } from "components/Game";
 import { GameForm } from "components/GameForm";
 import React from "react";
 import { Button } from "components/Button";
+import { Footer } from "components/Footer";
 
 interface IState {
     playerNames: string[];
@@ -26,38 +27,44 @@ export const App: React.FC = () => {
         }));
     }
 
-    // onNewGame={}
     return (
-        <Container>
-            <h1>Nile</h1>
-            { state.hasConfirmed
-                // Incrementing key will remount Game
-                ? <>
-                    {/* TODO: Color green */}
-                    <Button title="New game"
-                        onClick={ () => setState((prevState) => ({...prevState, hasConfirmed: false, gameNumber: prevState.gameNumber + 1})) }
-                    >
-                        New game
-                    </Button>
-                    <Game key={ state.gameNumber }
-                    playerNames={ state.playerNames }
-                    cpuPlayerCount={ state.cpuPlayerCount }
-                    />
-                </>
-                : <>
-                    <h2 className="centerText">New game</h2>
-                    <GameForm playerNames={ state.playerNames }
-                        cpuPlayerCount={ state.cpuPlayerCount }
-                        onPlayerNameChange={ onChange }
-                        onAddPlayer={ () => setState((prevState) => ({...prevState, playerNames: [...prevState.playerNames, ""]})) }
-                        // Remove last player
-                        onRemovePlayer={ () => setState((prevState) => ({...prevState, playerNames: prevState.playerNames.filter((_, i) => i !== prevState.playerNames.length - 1)}))  }
-                        onAddCpuPlayer={ () => setState((prevState) => ({...prevState, cpuPlayerCount: prevState.cpuPlayerCount + 1})) }
-                        onRemoveCpuPlayer={ () => setState((prevState) => ({...prevState, cpuPlayerCount: prevState.cpuPlayerCount - 1})) }
-                        onClickStart={ () => setState((prevState) => ({...prevState, hasConfirmed: true})) }
-                    />
-                </> }
-        </Container>
+        <>
+            <main>
+                <Container>
+                    <h1>Nile</h1>
+                    { state.hasConfirmed
+                        // Incrementing key will remount Game
+                        ? <>
+                            {/* TODO: Color green */}
+                            <Button title="New game"
+                                onClick={ () => setState((prevState) => ({...prevState, hasConfirmed: false, gameNumber: prevState.gameNumber + 1})) }
+                            >
+                                New game
+                            </Button>
+                            <Game key={ state.gameNumber }
+                            playerNames={ state.playerNames }
+                            cpuPlayerCount={ state.cpuPlayerCount }
+                            />
+                        </>
+                        : <>
+                            <h2 className="centerText">New game</h2>
+                            <GameForm playerNames={ state.playerNames }
+                                cpuPlayerCount={ state.cpuPlayerCount }
+                                onPlayerNameChange={ onChange }
+                                onAddPlayer={ () => setState((prevState) => ({...prevState, playerNames: [...prevState.playerNames, ""]})) }
+                                // Remove last player
+                                onRemovePlayer={ () => setState((prevState) => ({...prevState, playerNames: prevState.playerNames.filter((_, i) => i !== prevState.playerNames.length - 1)}))  }
+                                onAddCpuPlayer={ () => setState((prevState) => ({...prevState, cpuPlayerCount: prevState.cpuPlayerCount + 1})) }
+                                onRemoveCpuPlayer={ () => setState((prevState) => ({...prevState, cpuPlayerCount: prevState.cpuPlayerCount - 1})) }
+                                onClickStart={ () => setState((prevState) => ({...prevState, hasConfirmed: true})) }
+                            />
+                        </> }
+                </Container>
+            </main>
+            <footer>
+                <Footer />
+            </footer>
+        </>
     );
 };
 App.displayName = "App";

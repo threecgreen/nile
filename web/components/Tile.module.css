@@ -44,7 +44,7 @@
 }
 
 .endGame {
-    background-color: rgba(113, 139, 219, 1);
+    background-color: rgba(96, 129, 228, 1);
 }
 .hasTile.endGame {
     background-color: rgba(113, 139, 219, 0.4);
