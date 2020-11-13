@@ -26,7 +26,6 @@ export const Game: React.FC<IProps> = ({playerNames, cpuPlayerCount}) => {
         if (e.ctrlKey || e.altKey || e.metaKey) {
             return;
         }
-        // TODO: create help text for these
         switch (e.key) {
             case "q": {
                 if (state.selectedTile) {

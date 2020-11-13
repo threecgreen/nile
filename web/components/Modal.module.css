@@ -16,4 +16,5 @@
     padding: 2.5rem;
     border: 1px solid #888;
     width: 75%;
+    max-width: 40rem;
 }

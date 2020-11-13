@@ -4,12 +4,14 @@ import { GameForm } from "components/GameForm";
 import React from "react";
 import { Button } from "components/Button";
 import { Footer } from "components/Footer";
+import { ShortcutsHelpModal } from "components/ShortcutsHelp";
 
 interface IState {
     playerNames: string[];
     hasConfirmed: boolean;
     cpuPlayerCount: number;
     gameNumber: number;
+    showShortcutsModal: boolean;
 }
 
 export const App: React.FC = () => {
@@ -18,6 +20,7 @@ export const App: React.FC = () => {
         hasConfirmed: false,
         cpuPlayerCount: 1,
         gameNumber: 1,
+        showShortcutsModal: false,
     });
 
     const onChange = (text: string, idx: number) => {
@@ -37,13 +40,23 @@ export const App: React.FC = () => {
                         ? <>
                             {/* TODO: Color green */}
                             <Button title="New game"
+                                // TODO: confirm starting new game
                                 onClick={ () => setState((prevState) => ({...prevState, hasConfirmed: false, gameNumber: prevState.gameNumber + 1})) }
                             >
                                 New game
                             </Button>
+                            <Button title="Shortcuts help"
+                                onClick={ () => setState((prevState) => ({...prevState, showShortcutsModal: true}))}
+                            >
+                                Shortcuts Help
+                            </Button>
+                            { state.showShortcutsModal &&
+                                <ShortcutsHelpModal
+                                    dismiss={ () => setState((prevState) => ({...prevState, showShortcutsModal: false}))}
+                                /> }
                             <Game key={ state.gameNumber }
-                            playerNames={ state.playerNames }
-                            cpuPlayerCount={ state.cpuPlayerCount }
+                                playerNames={ state.playerNames }
+                                cpuPlayerCount={ state.cpuPlayerCount }
                             />
                         </>
                         : <>
