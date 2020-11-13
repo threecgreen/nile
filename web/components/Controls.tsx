@@ -25,6 +25,12 @@ export const Controls: React.FC<IProps> = ({
     hasPlacedTile, hasSelectedTile, selectedIsUniversal,  canUndo, canRedo,
     onRotate, onRemoveTile, onUpdateUniversalPath, onUndo, onRedo, onEndTurn, onCantPlay,
 }) => {
+    const [isTilePathSelectorOpen, setIsTilePathSelectorOpen] = React.useState(false);
+    React.useEffect(() => {
+        if(!selectedIsUniversal && isTilePathSelectorOpen) {
+            setIsTilePathSelectorOpen(false);
+        }
+    }, [isTilePathSelectorOpen, selectedIsUniversal]);
     return (
         <div className={ styles.controls }>
             <Button enabled={ hasSelectedTile }
@@ -49,10 +55,11 @@ export const Controls: React.FC<IProps> = ({
             <div className={ c([styles.dropdown, selectedIsUniversal ? "" : "disabled"]) }>
                 <Button enabled={ selectedIsUniversal }
                     className={ styles.dropdown }
-                    onClick={ () => undefined }
+                    onClick={ () => setIsTilePathSelectorOpen(!isTilePathSelectorOpen) }
                 >
                     Tile Path <DownToBottom24 />
                 </Button>
+                { isTilePathSelectorOpen &&
                 <div className={ styles.dropdownContent }>
                     <TilePathSelection tilePath={ TilePath.Straight }
                         onUpdateUniversalPath={ onUpdateUniversalPath }
@@ -78,7 +85,7 @@ export const Controls: React.FC<IProps> = ({
                     <TilePathSelection tilePath={ TilePath.Right135 }
                         onUpdateUniversalPath={ onUpdateUniversalPath }
                     />
-                </div>
+                </div> }
             </div>
             <Button enabled={ canUndo }
                 onClick={ onUndo }

@@ -9,7 +9,6 @@
 }
 
 .dropdownContent {
-    display: none;
     position: absolute;
     box-shadow: 0px 2rem 2rem 0px rgba(0,0,0,0.2);
     z-index: 1;
@@ -20,9 +19,4 @@
     display: block;
     width: 2rem;
     height: 2rem;
-}
-
-.dropdown:hover button:enabled ~ .dropdownContent {
-    background-color: rgb(253, 255, 222);
-    display: block;
 }
