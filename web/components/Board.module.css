@@ -21,6 +21,12 @@
 .outer {
     display: flex;
     align-items: center;
-    justify-content: center;
     margin: auto;
+}
+
+/* Justify center cuts off board on mobile sizes */
+@media screen and (min-width: 768px) {
+    .outer {
+        justify-content: center;
+    }
 }
