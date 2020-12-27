@@ -1,0 +1,20 @@
+.negativeMargin {
+    margin: -0.5px;
+}
+
+.up {
+    position: relative;
+    left: -2.0625rem;
+    margin-right: -2.0625rem;
+}
+
+.right {
+    position: relative;
+    left: 0;
+}
+
+.downRight {
+    position: relative;
+    top: 2.0375rem;
+    margin: -0.5px;
+}
