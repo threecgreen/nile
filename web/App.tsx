@@ -5,6 +5,8 @@ import React from "react";
 import { Button } from "components/Button";
 import { Footer } from "components/Footer";
 import { ShortcutsHelpModal } from "components/ShortcutsHelp";
+import styles from "./App.module.css";
+import { CoverArt } from "components/CoverArt";
 
 interface IState {
     playerNames: string[];
@@ -15,6 +17,7 @@ interface IState {
 }
 
 export const App: React.FC = () => {
+    // TODO: useReducer
     const [state, setState] = React.useState<IState>({
         playerNames: [""],
         hasConfirmed: false,
@@ -34,7 +37,9 @@ export const App: React.FC = () => {
         <>
             <main>
                 <Container>
-                    <h1>Nile</h1>
+                    <CoverArt />
+                    <h1 className={ styles.landingTitle }>nile</h1>
+                    <h2 className={ styles.subtitle }>a path-creating game</h2>
                     { state.hasConfirmed
                         // Incrementing key will remount Game
                         ? <>

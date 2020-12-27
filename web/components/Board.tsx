@@ -75,7 +75,7 @@ const BoardCell: React.FC<IBoardCellProps> = ({
                 isSelected={ isSelected }
                 rotation={ cell.tilePlacement.rotation }
                 type={ type }
-                isFromCurrentTile={ isFromCurrentTurn }
+                isFromCurrentTurn={ isFromCurrentTurn }
                 onSelect={ () => onSelect(coordinates) }
             />
             : <EmptyCell bonus={ cell.bonus }
