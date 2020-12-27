@@ -34,14 +34,17 @@ interface IDisplayTileProps {
     tilePath: TilePath;
     isUniversal: boolean;
     rotation: Rotation;
+    className?: string;
 }
 /**
  * For use in display purposes such as in the landing page
  */
-export const DisplayTile: React.FC<IDisplayTileProps> = ({tilePath, isUniversal, rotation}) => (
+export const DisplayTile: React.FC<IDisplayTileProps> = ({tilePath, isUniversal, rotation, className}) => (
     <div
         className={ c([
+            className ?? "",
             styles.tile,
+            styles.displayTile,
             isUniversal ? styles.universal : undefined,
             styles.hasTile,
         ]) }

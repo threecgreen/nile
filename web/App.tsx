@@ -1,12 +1,12 @@
+import { Button } from "components/Button";
 import { Container } from "components/Container";
+import { CoverArt } from "components/CoverArt";
+import { Footer } from "components/Footer";
 import { Game } from "components/Game";
 import { GameForm } from "components/GameForm";
-import React from "react";
-import { Button } from "components/Button";
-import { Footer } from "components/Footer";
 import { ShortcutsHelpModal } from "components/ShortcutsHelp";
+import React from "react";
 import styles from "./App.module.css";
-import { CoverArt } from "components/CoverArt";
 
 interface IState {
     playerNames: string[];
