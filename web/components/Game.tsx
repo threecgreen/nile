@@ -1,6 +1,6 @@
 import { Board } from "components/Board";
+import { StateManager } from "lib/game_state";
 import { useEventListener, useRefFun } from "lib/hooks";
-import { StateManager } from "lib/state";
 import { WasmNile } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
