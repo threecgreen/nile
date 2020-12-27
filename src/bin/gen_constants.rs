@@ -23,10 +23,15 @@ fn write_constants() -> Result<(), Box<dyn Error>> {
     assert!(Path::new(env!("CARGO_MANIFEST_DIR")).exists());
     assert!(Path::new(env!("CARGO_MANIFEST_DIR")).join("web").exists());
     assert!(Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("web/generated")
+        .join("web")
+        .join("generated")
         .exists());
-    let const_file =
-        File::create(Path::new(env!("CARGO_MANIFEST_DIR")).join("web/generated/constants.ts"))?;
+    let const_file = File::create(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("web")
+            .join("generated")
+            .join("constants.ts"),
+    )?;
     let mut const_writer = BufWriter::new(&const_file);
     let version = env!("CARGO_PKG_VERSION");
     let git_sha = get_git_short_sha()?;
