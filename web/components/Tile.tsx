@@ -4,7 +4,10 @@ import React from "react";
 import styles from "./Tile.module.css";
 import { TileSvg } from "./TileSvg";
 
-const rotationToCSs = (rotation: Rotation): string => {
+const UNIVERSAL_TILE_STROKE_COLOR = "#aaaaaa";
+const RIVER_PATH_STROKE_COLOR = "royalblue";
+
+const rotationToCss = (rotation: Rotation): string => {
     switch (rotation) {
         case Rotation.Clockwise90:
             return "rotate(90deg)";
@@ -17,12 +20,45 @@ const rotationToCSs = (rotation: Rotation): string => {
     }
 }
 
+/**
+ * For use in a player's tile rack
+ */
 export const RackTile: React.FC<{tile: TileEnum, isSelected: boolean}> = ({tile, isSelected}) => (
     <div className={ c([styles.tile, isSelected ? styles.selected : undefined]) }>
         <TileSvg tile={ tile } />
     </div>
 )
 RackTile.displayName = "RackTile";
+
+interface IDisplayTileProps {
+    tilePath: TilePath;
+    isUniversal: boolean;
+    rotation: Rotation;
+}
+/**
+ * For use in display purposes such as in the landing page
+ */
+export const DisplayTile: React.FC<IDisplayTileProps> = ({tilePath, isUniversal, rotation}) => (
+    <div
+        className={ c([
+            styles.tile,
+            isUniversal ? styles.universal : undefined,
+            styles.hasTile,
+        ]) }
+        style={ {transform: rotationToCss(rotation)} }
+    >
+            {
+                isUniversal
+                && <TileSvg tile={ TileEnum.Universal }
+                    strokeColor={ UNIVERSAL_TILE_STROKE_COLOR }
+                />
+            }
+            <TileSvg tile={ tile_path_to_tile(tilePath) }
+                strokeColor={ RIVER_PATH_STROKE_COLOR }
+            />
+    </div>
+);
+DisplayTile.displayName = "DisplayTile";
 
 export enum TileType {
     Normal,
@@ -44,12 +80,12 @@ interface IProps {
     rotation: Rotation;
     isSelected: boolean;
     type: TileType,
-    isFromCurrentTile: boolean;
+    isFromCurrentTurn: boolean;
     onSelect: () => void;
 }
 
 export const TileCell: React.FC<IProps> = ({
-    tilePath, isUniversal, rotation, isSelected, type, isFromCurrentTile,
+    tilePath, isUniversal, rotation, isSelected, type, isFromCurrentTurn,
     ...props
 }) => {
     const onSelect = (e: React.MouseEvent) => {
@@ -69,20 +105,20 @@ export const TileCell: React.FC<IProps> = ({
                 tileTypeToClass[type],
                 styles.hasTile,
             ]) }
-            style={ {transform: rotationToCSs(rotation)} }
-            onClick={ isFromCurrentTile ? onSelect : undefined }
-            draggable={ isFromCurrentTile }
+            style={ {transform: rotationToCss(rotation)} }
+            onClick={ isFromCurrentTurn ? onSelect : undefined }
+            draggable={ isFromCurrentTurn }
             onDrag={ onDrag }
             onDragStart={ props.onSelect }
         >
             {
                 isUniversal
                 && <TileSvg tile={ TileEnum.Universal }
-                    strokeColor="#aaaaaa"
+                    strokeColor={ UNIVERSAL_TILE_STROKE_COLOR }
                 />
             }
             <TileSvg tile={ tile_path_to_tile(tilePath) }
-                strokeColor="royalblue"
+                strokeColor={ RIVER_PATH_STROKE_COLOR }
             />
         </div>
     );

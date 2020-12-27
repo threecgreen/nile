@@ -2,12 +2,6 @@
     font-family: Lato, sans-serif;
 }
 
-h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    letter-spacing: -0.05em;
-}
-
 button {
     color: black;
     background: rgb(96, 129, 228);
