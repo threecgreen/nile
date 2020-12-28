@@ -1,7 +1,7 @@
 import { RowCollapse24, RowExpand24 } from "@carbon/icons-react";
+import { Button } from "components/Button";
 import { PlayerData } from "lib/common";
 import React from "react";
-import { Button } from "./Button";
 import { Player } from "./Player";
 import styles from "./Players.module.css";
 

@@ -1,10 +1,10 @@
-import { Board } from "components/Board";
+import { Board } from "./Board";
 import { StateManager } from "lib/game_state";
 import { useEventListener, useRefFun } from "lib/hooks";
 import { WasmNile } from "nile";
 import React from "react";
 import { Controls } from "./Controls";
-import { ErrorModal } from "./Modal";
+import { ErrorModal } from "components/Modal";
 import { Players } from "./Players";
 
 interface IProps {

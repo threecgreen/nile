@@ -1,10 +1,10 @@
 import { Rotation, TilePath } from "nile";
 import React from "react";
-import { DisplayTile } from "./Tile";
 import styles from "./CoverArt.module.css";
+import { DisplayTile } from "./Tile";
 
 export const CoverArt: React.FC = () => (
-    <div>
+    <div className={ styles.coverArt }>
         <DisplayTile tilePath={ TilePath.Center90 }
             isUniversal={ false }
             rotation={ Rotation.Clockwise270 }

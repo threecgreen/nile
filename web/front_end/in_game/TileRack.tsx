@@ -1,7 +1,7 @@
+import { HiddenTile, RackTile } from "components/Tile";
 import { score } from "lib/common";
 import { Tile as TileEnum } from "nile";
 import React from "react";
-import { HiddenTile, RackTile } from "./Tile";
 import styles from "./TileRack.module.css";
 
 interface IProps {

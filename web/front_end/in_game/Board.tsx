@@ -1,8 +1,8 @@
-import { BoardArray, CoordinateTuple, Cell } from "lib/common";
+import { EmptyCell, TileCell, TileType } from "components/Tile";
+import { BoardArray, Cell, CoordinateTuple } from "lib/common";
+import { CoordinateSet } from "lib/CoordinateSet";
 import React from "react";
 import styles from "./Board.module.css";
-import { EmptyCell, TileCell, TileType } from "./Tile";
-import { CoordinateSet } from "lib/CoordinateSet";
 
 interface IProps {
     board: BoardArray;

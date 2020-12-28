@@ -1,6 +1,6 @@
 import React from "react";
 import { PlayerNameInput } from "./PlayerNameInput";
-import { Button } from "./Button";
+import { Button } from "../../components/Button";
 import { AddFilled16, Subtract16 } from "@carbon/icons-react";
 import styles from "./GameForm.module.css";
 
