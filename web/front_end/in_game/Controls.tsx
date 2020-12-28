@@ -1,10 +1,10 @@
-import { DownToBottom24, Redo24, RotateClockwise24, RotateCounterclockwise24, Undo24, Checkmark24, Close24, TrashCan24 } from "@carbon/icons-react";
+import { Checkmark24, Close24, DownToBottom24, Redo24, RotateClockwise24, RotateCounterclockwise24, TrashCan24, Undo24 } from "@carbon/icons-react";
+import { Button } from "components/Button";
+import { RackTile } from "components/Tile";
 import { c } from "lib/utils";
 import { TilePath, tile_path_to_tile } from "nile";
 import React from "react";
-import { Button } from "./Button";
 import styles from "./Controls.module.css";
-import { RackTile } from "./Tile";
 
 interface IProps {
     hasPlacedTile: boolean;

@@ -1,7 +1,7 @@
+import { Button } from "components/Button";
+import { Modal } from "components/Modal";
 import React from "react";
 import styles from "./ShortcutsHelp.module.css";
-import { Modal } from "./Modal";
-import { Button } from "./Button";
 
 /**
  * Keep updated with keydown event handlers in Game.tsx

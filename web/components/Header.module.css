@@ -1,4 +1,5 @@
 h1.landingTitle {
+    text-align: left;
     font-size: 3rem;
     font-style: normal;
     font-weight: 900;
@@ -7,13 +8,21 @@ h1.landingTitle {
 }
 
 h2.subtitle {
+    text-align: left;
     font-style: normal;
     font-weight: 500;
-    font-size: 2.25rem;
+    font-size: 2rem;
     color: rgba(0, 0, 0, 0.66);
     margin: 0;
 }
 
+.header {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1.5rem;
+    margin-bottom: 4rem;
+}
 .header > * {
     display: inline-block;
     margin-right: 1rem;
