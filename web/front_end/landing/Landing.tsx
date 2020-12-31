@@ -1,6 +1,8 @@
-import React from "react";
-import { IState, Action } from "lib/app_state";
 import { GameForm } from "front_end/landing/GameForm";
+import { Action, IState } from "lib/app_state";
+import React from "react";
+import { ClickButton, LinkButton } from "./Buttons";
+import styles from "./Landing.module.css";
 
 interface IProps {
     state: IState;
@@ -10,7 +12,18 @@ interface IProps {
 export const Landing: React.FC<IProps> = ({state, dispatch}) => {
     return (
         <>
-            <h2 className="centerText">New game</h2>
+            <div className={ styles.centerContent }>
+                <LinkButton href="#about">
+                    about
+                </LinkButton>
+                <LinkButton href="#how-to-play">
+                    how to play
+                </LinkButton>
+                <ClickButton onClick={ () => null }>
+                    new game
+                </ClickButton>
+            </div>
+            {/* TODO:: only show if new game is clicked  */}
             <GameForm playerNames={ state.playerNames }
                 cpuPlayerCount={ state.cpuPlayerCount }
                 onPlayerNameChange={ (name, idx) => dispatch({type: "updatePlayer", name, idx}) }
@@ -21,6 +34,21 @@ export const Landing: React.FC<IProps> = ({state, dispatch}) => {
                 onRemoveCpuPlayer={ () => dispatch({type: "removeCpuPlayer"}) }
                 onClickStart={ () => dispatch({type: "startGame"}) }
             />
+
+            <section>
+                <h3 className={ styles.sectionTitle }><a id="about">about</a></h3>
+                <p>
+                    A web version of a 1960s tile-based board game, in nile players take turns extending the course of the river, getting bonuses, and setting up opponents for penalties.
+                </p>
+                <p>
+                    Play against other people, the AI, or a mix. Supports 2–4 players.
+                </p>
+            </section>
+
+            <h3 className={ styles.sectionTitle }><a id="how-to-play">how to play</a></h3>
+            <section>
+
+            </section>
         </>
     );
 }
