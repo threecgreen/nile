@@ -11,6 +11,7 @@ interface IProps {
 
 export const Landing: React.FC<IProps> = ({state, dispatch}) => {
     return (
+        // FIXME: move Container here and make narrower
         <>
             <div className={ styles.centerContent }>
                 <LinkButton href="#about">
@@ -19,22 +20,25 @@ export const Landing: React.FC<IProps> = ({state, dispatch}) => {
                 <LinkButton href="#how-to-play">
                     how to play
                 </LinkButton>
-                <ClickButton onClick={ () => null }>
+                <ClickButton onClick={ () => dispatch({type: "setShowNewGameForm", showNewGameForm: true}) }>
                     new game
                 </ClickButton>
             </div>
-            {/* TODO:: only show if new game is clicked  */}
-            <GameForm playerNames={ state.playerNames }
-                cpuPlayerCount={ state.cpuPlayerCount }
-                onPlayerNameChange={ (name, idx) => dispatch({type: "updatePlayer", name, idx}) }
-                onAddPlayer={ () => dispatch({type: "addPlayer"}) }
-                // Remove last player
-                onRemovePlayer={ () => dispatch({type: "removePlayer"}) }
-                onAddCpuPlayer={ () => dispatch({type: "addCpuPlayer"}) }
-                onRemoveCpuPlayer={ () => dispatch({type: "removeCpuPlayer"}) }
-                onClickStart={ () => dispatch({type: "startGame"}) }
-            />
-
+            { state.showNewGameForm &&
+                <section>
+                    <h3 className={ styles.sectionTitle }>New game options</h3>
+                    <GameForm playerNames={ state.playerNames }
+                        cpuPlayerCount={ state.cpuPlayerCount }
+                        onPlayerNameChange={ (name, idx) => dispatch({type: "updatePlayer", name, idx}) }
+                        onAddPlayer={ () => dispatch({type: "addPlayer"}) }
+                        // Remove last player
+                        onRemovePlayer={ () => dispatch({type: "removePlayer"}) }
+                        onAddCpuPlayer={ () => dispatch({type: "addCpuPlayer"}) }
+                        onRemoveCpuPlayer={ () => dispatch({type: "removeCpuPlayer"}) }
+                        onClickStart={ () => dispatch({type: "startGame"}) }
+                    />
+                </section>
+            }
             <section>
                 <h3 className={ styles.sectionTitle }><a id="about">about</a></h3>
                 <p>

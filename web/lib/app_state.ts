@@ -4,6 +4,7 @@ export interface IState {
     cpuPlayerCount: number;
     gameNumber: number;
     showShortcutsModal: boolean;
+    showNewGameForm: boolean;
 }
 
 export type Action =
@@ -14,7 +15,8 @@ export type Action =
     | {type: "removeCpuPlayer"}
     | {type: "startGame"}
     | {type: "newGame"}
-    | {type: "setShowShortcutsModal", showShortcutsModal: boolean};
+    | {type: "setShowShortcutsModal", showShortcutsModal: boolean}
+    | {type: "setShowNewGameForm", showNewGameForm: boolean};
 
 export const initState = (): IState => ({
     playerNames: [""],
@@ -22,6 +24,7 @@ export const initState = (): IState => ({
     cpuPlayerCount: 1,
     gameNumber: 1,
     showShortcutsModal: false,
+    showNewGameForm: false,
 });
 
 export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
@@ -50,6 +53,8 @@ export const reducer: React.Reducer<IState, Action> = (prevState, action) => {
             return {...prevState, hasConfirmed: false, gameNumber: prevState.gameNumber + 1};
         case "setShowShortcutsModal":
             return {...prevState, showShortcutsModal: action.showShortcutsModal};
+        case "setShowNewGameForm":
+            return {...prevState, showNewGameForm: action.showNewGameForm};
         default:
             return prevState;
     }
