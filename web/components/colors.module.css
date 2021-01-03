@@ -1,6 +1,27 @@
 .riverTurquoiseBg {
-    background: #47C1AB;
+    background: rgba(71, 193, 171, 1);
 }
-.nileBlue {
-    background: #3C68F2;
+.riverTurquoiseBg:disabled {
+    background: rgba(71, 193, 171, 0.4);
+}
+.riverTurquoiseBg:hover {
+    /* background-color: ; */
+}
+
+
+.nileBlueBg {
+    background: rgba(60, 104, 242, 1);
+}
+.nileBlueBg:disabled {
+    background: rgba(60, 104, 242, 0.4);
+}
+.nileBlueBg:hover {
+    /* background-color: ; */
+}
+
+.redBg {
+    background: rgba(255, 20, 20, 1);
+}
+.redBg:disabled {
+    background: rgba(255, 20, 20, 0.4);
 }

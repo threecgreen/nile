@@ -10,7 +10,7 @@ interface ILinkButtonProps {
 
 export const LinkButton: React.FC<ILinkButtonProps> = ({href, ...props}) => (
     <a href={ href }
-        className={ c([styles.landingButton, colors.nileBlue, "btn"]) }
+        className={ c([styles.landingButton, colors.nileBlueBg, "btn"]) }
     >
         { props.children }
     </a>

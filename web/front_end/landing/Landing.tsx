@@ -1,7 +1,9 @@
+import { Container } from "components/Container";
 import { GameForm } from "front_end/landing/GameForm";
 import { Action, IState } from "lib/app_state";
 import React from "react";
 import { ClickButton, LinkButton } from "./Buttons";
+import { Header } from "./Header";
 import styles from "./Landing.module.css";
 
 interface IProps {
@@ -11,8 +13,8 @@ interface IProps {
 
 export const Landing: React.FC<IProps> = ({state, dispatch}) => {
     return (
-        // FIXME: move Container here and make narrower
-        <>
+        <Container>
+            <Header />
             <div className={ styles.centerContent }>
                 <LinkButton href="#about">
                     about
@@ -26,7 +28,7 @@ export const Landing: React.FC<IProps> = ({state, dispatch}) => {
             </div>
             { state.showNewGameForm &&
                 <section>
-                    <h3 className={ styles.sectionTitle }>New game options</h3>
+                    <h3 className={ styles.sectionTitle }>new game</h3>
                     <GameForm playerNames={ state.playerNames }
                         cpuPlayerCount={ state.cpuPlayerCount }
                         onPlayerNameChange={ (name, idx) => dispatch({type: "updatePlayer", name, idx}) }
@@ -53,7 +55,7 @@ export const Landing: React.FC<IProps> = ({state, dispatch}) => {
             <section>
 
             </section>
-        </>
+        </Container>
     );
 }
 Landing.displayName = "Landing";

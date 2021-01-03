@@ -1,7 +1,8 @@
 import React from "react";
 import { PlayerNameInput } from "./PlayerNameInput";
-import { Button } from "../../components/Button";
+import { Button } from "components/Button";
 import { AddFilled16, Subtract16 } from "@carbon/icons-react";
+import colors from "components/colors.module.css";
 import styles from "./GameForm.module.css";
 
 interface IProps {
@@ -33,12 +34,14 @@ export const GameForm: React.FC<IProps> = ({
                 />
             )) }
             <Button title="Add player"
+                className={ colors.nileBlueBg }
                 onClick={ onAddPlayer }
                 enabled={ totalPlayerCount < 4 }
             >
                 <AddFilled16 aria-label="Add player" />
             </Button>
             <Button title="Remove player"
+                className={ colors.nileBlueBg }
                 // Remove last player
                 onClick={ onRemovePlayer }
                 enabled={ totalPlayerCount > 1 && playerNames.length > 1 }
@@ -48,12 +51,14 @@ export const GameForm: React.FC<IProps> = ({
             <br/>
             <span className={ styles.cpuCount }>CPU players: { cpuPlayerCount }</span>
             <Button title="Add CPU player"
+                className={ colors.nileBlueBg }
                 onClick={ onAddCpuPlayer }
                 enabled={ totalPlayerCount < 4 }
             >
                 <AddFilled16 aria-label="Add CPU player" />
             </Button>
             <Button title="Remove CPU player"
+                className={ colors.nileBlueBg }
                 onClick={ onRemoveCpuPlayer }
                 enabled={ totalPlayerCount > 1 && cpuPlayerCount > 0 }
             >
@@ -61,6 +66,7 @@ export const GameForm: React.FC<IProps> = ({
             </Button>
             <br/>
             <Button title={ canStart ? "Start new game" : "Need at least two players" }
+                className={ colors.riverTurquoiseBg }
                 onClick={ onClickStart }
                 enabled={ canStart }
             >

@@ -22,7 +22,8 @@ export const Player: React.FC<IProps> = ({player, id, selectedTileIdx, isCurrent
             style={ {gridColumn: id + 1} }
         >
             <h2 className={ isCurrentTurn ? styles.current : styles.other }>
-                { player.name }
+                {/* // nbsp keeps grid if empty player name */}
+                { player.name }&nbsp;
             </h2>
             <TileRack tiles={ player.tileRack }
                 showTiles={ isCurrentTurn && !isCpu }

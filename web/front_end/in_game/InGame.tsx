@@ -1,7 +1,10 @@
 import { Button } from "components/Button";
+import colors from "components/colors.module.css";
+import { Container } from "components/Container";
 import { Action, IState } from "lib/app_state";
 import React from "react";
 import { Game } from "./Game";
+import { Header } from "./Header";
 import { ShortcutsHelpModal } from "./ShortcutsHelp";
 
 interface IProps {
@@ -11,9 +14,10 @@ interface IProps {
 
 export const InGame: React.FC<IProps> = ({state, dispatch}) => {
     return (
-        <>
-            {/* TODO: Color green */}
+        <Container>
+            <Header />
             <Button title="New game"
+                className={ colors.riverTurquoiseBg }
                 // TODO: confirm starting new game
                 onClick={ () => dispatch({type: "newGame"}) }
             >
@@ -32,7 +36,7 @@ export const InGame: React.FC<IProps> = ({state, dispatch}) => {
                 playerNames={ state.playerNames }
                 cpuPlayerCount={ state.cpuPlayerCount }
             />
-        </>
+        </Container>
     );
 }
 InGame.displayName = "InGame";

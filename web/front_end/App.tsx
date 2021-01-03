@@ -1,6 +1,5 @@
 import { Container } from "components/Container";
 import { Footer } from "components/Footer";
-import { Header } from "components/Header";
 import { InGame } from "front_end/in_game/InGame";
 import { Landing } from "front_end/landing/Landing";
 import { initState, reducer } from "lib/app_state";
@@ -12,12 +11,9 @@ export const App: React.FC = () => {
     return (
         <>
             <main>
-                <Container>
-                    <Header />
-                    { state.hasConfirmed
-                        ? <InGame state={ state } dispatch={ dispatch } />
-                        : <Landing state={ state } dispatch={ dispatch } />}
-                </Container>
+                { state.hasConfirmed
+                    ? <InGame state={ state } dispatch={ dispatch } />
+                    : <Landing state={ state } dispatch={ dispatch } />}
             </main>
             <footer>
                 <Footer />

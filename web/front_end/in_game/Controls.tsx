@@ -5,6 +5,7 @@ import { c } from "lib/utils";
 import { TilePath, tile_path_to_tile } from "nile";
 import React from "react";
 import styles from "./Controls.module.css";
+import colors from "components/colors.module.css";
 
 interface IProps {
     hasPlacedTile: boolean;
@@ -34,18 +35,21 @@ export const Controls: React.FC<IProps> = ({
     return (
         <div className={ styles.controls }>
             <Button enabled={ hasSelectedTile }
+                className={ colors.nileBlueBg }
                 onClick={ () => onRotate(false) }
                 title="Rotate tile counter-clockwise"
             >
                 <RotateCounterclockwise24 aria-label="Rotate counter-clockwise" />
             </Button>
             <Button enabled={ hasSelectedTile }
+                className={ colors.nileBlueBg }
                 onClick={ () => onRotate(true) }
                 title="Rotate tile clockwise"
             >
                 <RotateClockwise24 aria-label="Rotate clockwise" />
             </Button>
             <Button enabled={ hasPlacedTile }
+                className={ colors.redBg }
                 onClick={ onRemoveTile }
                 title="Remove tile"
             >
@@ -54,7 +58,7 @@ export const Controls: React.FC<IProps> = ({
             </Button>
             <div className={ c([styles.dropdown, selectedIsUniversal ? "" : "disabled"]) }>
                 <Button enabled={ selectedIsUniversal }
-                    className={ styles.dropdown }
+                    className={ c([styles.dropdown, colors.nileBlueBg]) }
                     onClick={ () => setIsTilePathSelectorOpen(!isTilePathSelectorOpen) }
                 >
                     Tile Path <DownToBottom24 />
@@ -88,18 +92,21 @@ export const Controls: React.FC<IProps> = ({
                 </div> }
             </div>
             <Button enabled={ canUndo }
+                className={ colors.nileBlueBg }
                 onClick={ onUndo }
                 title="Undo"
             >
                 <Undo24 aria-label="undo" />
             </Button>
             <Button enabled={ canRedo }
+                className={ colors.nileBlueBg }
                 onClick={ onRedo }
                 title="Redo"
             >
                 <Redo24 aria-label="redo" />
             </Button>
             <Button
+                className={ colors.riverTurquoiseBg }
                 // Must have played at least one tile
                 enabled={ hasPlacedTile }
                 onClick={ onEndTurn }
@@ -108,6 +115,7 @@ export const Controls: React.FC<IProps> = ({
                 End Turn
             </Button>
             <Button
+                className={ colors.redBg }
                 enabled={ !hasPlacedTile }
                 onClick={ onCantPlay }
             >

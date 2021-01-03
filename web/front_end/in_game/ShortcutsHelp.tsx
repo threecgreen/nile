@@ -13,7 +13,7 @@ const BINDINGS: Array<[string, string]> = [
     ["u", "undo"],
     ["r", "redo"],
     ["E", "end turn"],
-    ["C", "can't play"],
+    ["C", "can’t play"],
 ];
 
 export const ShortcutsHelp: React.FC = () => (
