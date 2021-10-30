@@ -1,21 +1,23 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+  schedule:
+    - cron:  '30 18 * * 1'
 
 env:
   CARGO_TERM_COLOR: always
   FORCE_COLOR: true
 
 jobs:
-  rust:
-
+  rust-build:
+    name: Wasm build and JS
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-    - name: Wasm Build
+    - name: Wasm build
       run: wasm-pack build
     - name: Generate JS constants
       run: cargo run --bin gen_constants
@@ -27,19 +29,49 @@ jobs:
       run: |
         cd web
         npm run build
-    - name: Wasm Test
-      run: wasm-pack test --node
-    - name: Rust Test
-      run: cargo test
-    - name: JS Test
+    - name: JS test
       run: |
         cd web
         npm run test
-    - name: Rust Lint
-      run: |
-        rustup component add clippy || exit 0
-        cargo clippy
-    - name: JS Lint
+    - name: JS lint
       run: |
         cd web
         npm run lint
+
+  rust-test:
+    name: Rust test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install wasm-pack
+      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+    - name: Wasm test
+      run: wasm-pack test --node
+    - name: Rust test
+      run: cargo test
+
+  rust-lint:
+    name: Rust lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+        rustup component add clippy || exit 0
+        cargo clippy
+
+  rust-audit:
+    name: Rust audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: cargo audit
+
+  js-audit:
+    name: JS Audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Audit
+      run: |
+        cd web
+        npm audit
