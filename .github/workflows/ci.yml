@@ -20,7 +20,10 @@ jobs:
     - name: Wasm build
       run: wasm-pack build
     - name: Generate JS constants
-      run: cargo run --bin gen_constants
+      uses: actions-rs/cargo@v1
+      with:
+        command: run
+        args: --bin gen_constants
     - name: Install JS dependencies
       run: |
         cd web
@@ -48,30 +51,44 @@ jobs:
     - name: Wasm test
       run: wasm-pack test --node
     - name: Rust test
-      run: cargo test
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
 
   rust-lint:
     name: Rust lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - run: |
-        rustup component add clippy || exit 0
-        cargo clippy
+    - name: Install with clippy
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        components: clippy
+    - name: clippy
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
 
   rust-audit:
     name: Rust audit
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - run: cargo audit
+    - name: Audit
+      uses: actions-rs/cargo@v1
+      with:
+        command: audit
 
   js-audit:
     name: JS Audit
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
     - uses: actions/checkout@v2
     - name: Audit
-      run: |
-        cd web
-        npm audit --production
+      run: npm audit --production
