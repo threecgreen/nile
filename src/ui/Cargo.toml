@@ -1,0 +1,20 @@
+[package]
+name = "nile-ui"
+version = "0.1.0"
+description = "Board game Nile in the browser"
+authors = ["Carter Green <cartergr@usc.edu>"]
+repository = "https://github.com/threecgreen/nile"
+readme = "../../README.md"
+license = "MIT"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2.68"
+nile = { path = "../core" }
+yew = "0.18.0"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.18"

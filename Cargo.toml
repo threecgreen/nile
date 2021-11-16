@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "./src/core"
+    "./src/core",
+    "./src/ui",
 ]
 
 [profile.release]
