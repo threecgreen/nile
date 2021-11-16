@@ -6,7 +6,7 @@ authors = ["Carter Green <cartergr@usc.edu>"]
 repository = "https://github.com/threecgreen/nile"
 readme = "README.md"
 license = "MIT"
-edition = "2018"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
