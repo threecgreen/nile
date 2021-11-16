@@ -18,8 +18,7 @@ impl WasmNile {
     #[wasm_bindgen(constructor)]
     pub fn new(player_names: Array, ai_count: usize) -> Result<WasmNile, JsValue> {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-        let iterator =
-            js_sys::try_iter(&player_names)?.ok_or_else(|| "Need to pass array of strings")?;
+        let iterator = js_sys::try_iter(&player_names)?.ok_or("Need to pass array of strings")?;
         let mut player_names = Vec::<String>::new();
         for name in iterator {
             // Bubble up iteration errors
