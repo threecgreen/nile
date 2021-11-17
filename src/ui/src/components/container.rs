@@ -1,10 +1,12 @@
 use yew::prelude::*;
 
+use super::utils::update_if_changed;
+
 pub struct Container {
     props: Props,
 }
 
-#[derive(Clone, Properties)]
+#[derive(Clone, Properties, PartialEq)]
 pub struct Props {
     #[prop_or_default]
     pub children: Children,
@@ -19,8 +21,7 @@ impl Component for Container {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.props = props;
-        true
+        update_if_changed(&mut self.props, props)
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {

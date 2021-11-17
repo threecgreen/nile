@@ -1,7 +1,8 @@
 use nile::Tile;
 use yew::prelude::*;
 
-use crate::components::tile_svg::svg_wrapper::SvgWrapper;
+use self::svg_wrapper::SvgWrapper;
+use super::utils::update_if_changed;
 
 pub struct TileSvg {
     props: Props,
@@ -23,12 +24,7 @@ impl Component for TileSvg {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if props == self.props {
-            false
-        } else {
-            self.props = props;
-            true
-        }
+        update_if_changed(&mut self.props, props)
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
@@ -147,6 +143,8 @@ impl TileSvg {
 mod svg_wrapper {
     use yew::{html, Children, Component, Properties};
 
+    use crate::components::utils::update_if_changed;
+
     pub struct SvgWrapper {
         props: Props,
     }
@@ -172,12 +170,7 @@ mod svg_wrapper {
         }
 
         fn change(&mut self, props: Self::Properties) -> yew::ShouldRender {
-            if props == self.props {
-                self.props = props;
-                true
-            } else {
-                false
-            }
+            update_if_changed(&mut self.props, props)
         }
 
         fn view(&self) -> yew::Html {

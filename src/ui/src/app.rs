@@ -1,4 +1,4 @@
-use crate::components::Footer;
+use crate::components::{Container, Footer};
 use yew::prelude::*;
 
 pub struct App {
@@ -10,7 +10,18 @@ pub struct App {
     show_shortcuts_modal: bool,
 }
 
-pub enum Msg {}
+pub enum Msg {
+    PlayerNameChange(PlayerNameChange),
+    RemovePlayer,
+    AddCpuPlayer,
+    RemoveCpuPlayer,
+    Confirm,
+}
+
+pub struct PlayerNameChange {
+    idx: usize,
+    name: String,
+}
 
 impl Component for App {
     type Message = Msg;
@@ -27,24 +38,48 @@ impl Component for App {
         }
     }
 
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::PlayerNameChange(PlayerNameChange { idx, name }) => {
+                if let Some(player_name) = self.player_names.get_mut(idx) {
+                    *player_name = name;
+                    true
+                } else {
+                    false
+                }
+            }
+            Msg::RemovePlayer => self.player_names.pop().is_some(),
+            Msg::AddCpuPlayer => {
+                self.cpu_player_count += 1;
+                true
+            }
+            Msg::RemoveCpuPlayer => {
+                self.cpu_player_count -= 0;
+                true
+            }
+            Msg::Confirm => {
+                self.has_confirmed = true;
+                true
+            }
+        }
+    }
+
+    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+        false
+    }
+
     fn view(&self) -> Html {
         html! {
             <>
                 <main>
-                    <h1>{ "Nile" }</h1>
+                    <Container>
+                        <h1>{ "Nile" }</h1>
+                    </Container>
                 </main>
                 <footer>
                     <Footer />
                 </footer>
             </>
         }
-    }
-
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        match msg {}
-    }
-
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
     }
 }
