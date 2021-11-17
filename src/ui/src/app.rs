@@ -1,20 +1,18 @@
-use std::sync::mpsc::channel;
-
+use crate::components::Footer;
 use yew::prelude::*;
 
-pub struct Model {
+pub struct App {
+    link: ComponentLink<App>,
     player_names: Vec<String>,
     has_confirmed: bool,
     cpu_player_count: u8,
     game_number: u32,
     show_shortcuts_modal: bool,
-
-    link: ComponentLink<Model>,
 }
 
 pub enum Msg {}
 
-impl Component for Model {
+impl Component for App {
     type Message = Msg;
     type Properties = ();
 
@@ -35,6 +33,9 @@ impl Component for Model {
                 <main>
                     <h1>{ "Nile" }</h1>
                 </main>
+                <footer>
+                    <Footer />
+                </footer>
             </>
         }
     }
