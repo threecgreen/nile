@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 
 /// Holds all game state
 #[wasm_bindgen]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Nile {
     // the game board
     board: Board,
@@ -65,6 +65,10 @@ impl Nile {
 
     pub fn current_turn(&self) -> usize {
         self.current_turn
+    }
+
+    pub fn current_player(&self) -> &Player {
+        &self.players[self.current_turn]
     }
 
     pub fn can_undo(&self) -> bool {

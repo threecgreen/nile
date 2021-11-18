@@ -113,7 +113,7 @@ pub mod wasm {
 }
 
 /// Holds tiles that can still be drawn by a player
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TileBox {
     tiles: VecDeque<Tile>,
     rng: ThreadRng,

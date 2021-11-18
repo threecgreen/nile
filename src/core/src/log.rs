@@ -108,7 +108,7 @@ impl Event {
 }
 
 /// Game event log
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Log {
     /// Immutable events of past turns
     events: Vec<Event>,
