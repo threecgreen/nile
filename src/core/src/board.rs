@@ -124,7 +124,7 @@ pub struct Board {
     end_of_game_cells: Vec<Cell>,
 }
 
-const BOARD_SIZE: usize = 21;
+pub const BOARD_SIZE: usize = 21;
 
 macro_rules! hash_map(
     { $($key:expr => $value:expr),+ } => {

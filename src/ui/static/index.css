@@ -62,6 +62,7 @@ footer {
     max-width: 1080px;
     margin: 0 auto;
 }
+
 /* footer */
 .footer-background {
     background-color: rgb(96, 129, 228);
@@ -90,4 +91,57 @@ footer {
     font-size: small;
     text-align: right;
     padding-right: 1rem;
+}
+
+/* tile */
+.tile {
+    height: 2rem;
+    width: 2rem;
+    border: solid;
+    border-width: 1px;
+
+    background-color: rgb(253, 255, 222);
+
+    /* For bonus/penalty text */
+    text-align: center;
+}
+.tile p {
+    margin-top: 0.5rem;
+}
+.universal {
+    position: relative;
+}
+.universal > :first-child ~ * {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+.selected {
+    background-color: lightcyan;
+}
+
+.penalty {
+    background-color: rgba(255, 123, 0, 1);
+}
+.has-tile.penalty {
+    background-color: rgba(255, 123, 0, 0.4);
+}
+.bonus {
+    background-color: rgba(26, 173, 36, 1);
+}
+.has-tile.bonus {
+    background-color: rgba(26, 173, 36, 0.4);
+}
+.end-game {
+    background-color: rgba(96, 129, 228, 1);
+}
+.has-tile.end-game {
+    background-color: rgba(113, 139, 219, 0.4);
+}
+.hidden-tile {
+    background: repeating-linear-gradient(135deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem),
+                repeating-linear-gradient(45deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem);
+    /* background-size: calc(0.5rem * 1.414); */
 }

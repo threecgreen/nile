@@ -6,8 +6,8 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 #[repr(u8)]
 #[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Copy, Clone, Debug, PartialEq)]
+#[cfg_attr(test, derive(Eq))]
 pub enum Rotation {
     None,
     Clockwise90,

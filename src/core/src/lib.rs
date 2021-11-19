@@ -8,12 +8,9 @@ mod score;
 mod tile;
 mod wasm_api;
 
-pub use crate::board::{Board, Cell, TilePlacement};
+pub use crate::board::{Board, Cell, TilePlacement, BOARD_SIZE};
 pub use crate::nile::{CPUTurnUpdate, EndTurnUpdate, Nile};
-pub use crate::path::{
-    wasm::{tile_path_to_tile, TilePathType},
-    TilePath,
-};
+pub use crate::path::{TilePath, TilePathType};
 pub use crate::player::Player;
 pub use crate::score::TurnScore;
 pub use crate::tile::{wasm::tile_score, Coordinates, Rotation, Tile};

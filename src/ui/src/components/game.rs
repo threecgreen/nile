@@ -1,13 +1,14 @@
-use crate::state::GameStore;
 use std::rc::Rc;
 
+use crate::state::{GameStore, State};
+
 use yew::prelude::*;
-// use yew::services::KeyboardService;
+use yewdux::prelude::Dispatch;
 
 pub struct Game {
-    store: GameStore,
+    dispatch: Dispatch<GameStore>,
+    state: Rc<State>,
     link: ComponentLink<Self>,
-    // keyboard_service: KeyboardService,
 }
 
 #[derive(Clone, Properties, PartialEq)]
@@ -16,29 +17,32 @@ pub struct Props {
     pub cpu_player_count: u8,
 }
 
+pub enum Msg {
+    State(Rc<State>),
+}
+
 impl Component for Game {
     type Properties = Props;
     type Message = Msg;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let dispatch = Dispatch::bridge_state(link.callback(Msg::State));
         Self {
-            state: Rc::new(State {
-                nile: nile::Nile::new(props.player_names, props.cpu_player_count as usize)
-                    // TODO: remove expect
-                    .expect("nile"),
-                current_turn_tiles: HashSet::new(),
-            }),
+            dispatch,
+            state: Rc::new(State::new_game(props.player_names, props.cpu_player_count)),
             link,
-            keyboard_service: KeyboardService {},
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        todo!()
+        match msg {
+            Msg::State(state) => self.state = state,
+        };
+        true
     }
 
     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        todo!()
+        todo!("Implement new game")
     }
 
     fn view(&self) -> Html {

@@ -1,25 +1,25 @@
 use nile::{CPUTurnUpdate, Coordinates, EndTurnUpdate, Nile, TilePath, TilePlacement, TurnScore};
-use std::{collections::HashSet, hash::Hash};
-use yewdux::prelude::{Reducer, ReducerStore};
+use std::collections::HashSet;
+use yewdux::prelude::{DispatchProps, Reducer, ReducerStore};
 
 #[derive(Clone)]
 pub struct State {
     /// Main game state
-    nile: nile::Nile,
+    pub nile: nile::Nile,
     /// Used for determining if placed tile is movable, rotatable, etc.
-    current_turn_tiles: HashSet<Coordinates>,
-    selected_tile: Option<SelectedTile>,
-    modal: Option<Modal>,
+    pub current_turn_tiles: HashSet<Coordinates>,
+    pub selected_tile: Option<SelectedTile>,
+    pub modal: Option<Modal>,
 }
 
 #[derive(Clone)]
-enum SelectedTile {
+pub enum SelectedTile {
     Rack(RackTile),
     Board(Coordinates),
 }
 
 #[derive(Clone)]
-enum Modal {
+pub enum Modal {
     Error(String),
     EndOfGame(String),
 }
@@ -63,6 +63,7 @@ impl Reducer for State {
     }
 }
 
+// FIXME: so types more match the methods in StateManager
 pub enum Action {
     SelectRackTile(RackTile),
     SelectBoardTile(Coordinates),
@@ -81,29 +82,29 @@ pub enum Action {
 }
 
 #[derive(Clone)]
-struct RackTile {
+pub struct RackTile {
     tile_path: TilePath,
     is_universal: bool,
     rack_idx: u8,
 }
 
-struct PlaceTile {
+pub struct PlaceTile {
     dragged_tile: RackTile,
     tile_placement: TilePlacement,
     score: TurnScore,
 }
 
-struct RemoveTile {
+pub struct RemoveTile {
     coordinates: Coordinates,
     score: TurnScore,
 }
 
-struct UpdateUniversalPath {
+pub struct UpdateUniversalPath {
     coordinates: Coordinates,
     tile_placement: TilePlacement,
 }
 
-struct MoveTile {
+pub struct MoveTile {
     old_coordinates: Coordinates,
     new_coordinates: Coordinates,
     tile_placement: TilePlacement,

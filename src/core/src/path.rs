@@ -166,8 +166,8 @@ pub mod wasm {
 /// would like it to represent. For display purposes and because the player can
 /// change which path it represent, it is necessary to differentiate between,
 /// for example, a straight tile and a universal tile used as a straight path
-#[derive(Clone, Debug)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(test, derive(Eq))]
 pub enum TilePathType {
     Normal(TilePath),
     Universal(TilePath),
