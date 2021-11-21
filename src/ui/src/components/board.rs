@@ -1,9 +1,8 @@
-use nile::{Cell, Coordinates, TilePlacement, BOARD_SIZE};
+use nile::{Cell, Coordinates, BOARD_SIZE};
 use yew::prelude::*;
-use yewdux::prelude::{DispatchPropsMut, Dispatcher, Reducer};
+use yewdux::prelude::Dispatcher;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
-use crate::components::tile::tile_cell;
 use crate::state::{GameStore, SelectedTile};
 
 use super::tile::empty_cell::EmptyCell;
@@ -11,7 +10,7 @@ use super::tile::tile_cell::{Selection, TileCell, TileCellType};
 use super::utils::update_if_changed;
 use crate::state::Action;
 
-struct BoardImpl {
+pub struct BoardImpl {
     props: DispatchProps<GameStore>,
 }
 pub type Board = WithDispatch<BoardImpl>;
@@ -20,45 +19,51 @@ impl Component for BoardImpl {
     type Properties = DispatchProps<GameStore>;
     type Message = ();
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
         Self { props }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
         false
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        // TODO: narrow to just used props
         update_if_changed(&mut self.props, props)
     }
 
     fn view(&self) -> Html {
-        let bridge = self.props.bridge();
         let state = self.props.state();
         let board = state.nile.board();
         let current_turn_tiles = &state.current_turn_tiles;
-        let selection = state.selected_tile;
+        let selection = state.selected_tile.as_ref();
         let cells = (0..BOARD_SIZE as i8)
             .map(|i| {
-                (0..BOARD_SIZE as i8).map(|j| {
-                    let coordinates = Coordinates(i, j);
-                    let cell = board.cell(coordinates).unwrap();
-                    let is_seleted = match selection {
-                        Some(SelectedTile::Board(c)) => c == coordinates,
-                        _ => false,
-                    };
-                    let on_select = {
-                        Callback::from(|_| {
-                            self.props.send( Action::SelectBoardTile(coordinates));
-                        })
-                    };
+                html! {
+                    <tr key={ format!("{}", i) }>
+                        { for
+                            (0..BOARD_SIZE as i8).map(|j| {
+                                let coordinates = Coordinates(i, j);
+                                let cell = board.cell(coordinates).unwrap();
+                                let is_seleted = match selection {
+                                    Some(SelectedTile::Board(c)) => *c == coordinates,
+                                    _ => false,
+                                };
+                                let on_select =
+                                        self.props.callback(move |_| Action::SelectBoardTile(coordinates))
+                                ;
+                                let on_drop =
+                                        self.props.callback(move |_| Action::PlaceTile(coordinates))
+                                ;
 
-                    html! {
-                        <td key={ format!("{}", j) }>
-                            { Self::view_cell(cell, TileCellType::from((cell, board.is_end_game_cell(coordinates))), Selection::from((is_seleted, current_turn_tiles.contains(&coordinates))), on_select) }
-                        </td>
-                    }
-                })
+                                html! {
+                                    <td key={ format!("{}", j) }>
+                                        { Self::view_cell(cell, TileCellType::from((cell, board.is_end_game_cell(coordinates))), Selection::from((is_seleted, current_turn_tiles.contains(&coordinates))), on_select, on_drop) }
+                                    </td>
+                                }
+                            }) }
+                    </tr>
+                }
             })
             .collect::<Html>();
 
@@ -67,8 +72,9 @@ impl Component for BoardImpl {
                 <span class="start">{ "Start" }</span>
                 <span class="arrow">{ "→" }</span>
                 <table class="board">
-                    // {
-                    // }
+                    <tbody>
+                        { cells }
+                    </tbody>
                 </table>
             </div>
         }
@@ -103,7 +109,7 @@ impl From<(bool, bool)> for Selection {
 
 impl BoardImpl {
     fn view_cell(
-        cell: Cell,
+        cell: &Cell,
         tile_cell_type: TileCellType,
         selection: Selection,
         on_select: Callback<()>,

@@ -1,4 +1,4 @@
-use crate::components::{Container, Footer};
+use crate::components::{Container, Footer, Game};
 use yew::prelude::*;
 
 pub struct App {
@@ -29,7 +29,8 @@ impl Component for App {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
-            player_names: Vec::default(),
+            // player_names: Vec::default(),
+            player_names: vec!["Player1".to_owned()],
             has_confirmed: false,
             cpu_player_count: 1,
             game_number: 1,
@@ -74,6 +75,9 @@ impl Component for App {
                 <main>
                     <Container>
                         <h1>{ "Nile" }</h1>
+                        <Game player_names={ self.player_names.clone() }
+                            cpu_player_count={ self.cpu_player_count }
+                        />
                     </Container>
                 </main>
                 <footer>

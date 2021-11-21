@@ -9,12 +9,16 @@ pub struct Button {
 #[derive(Clone, Properties, PartialEq)]
 pub struct Props {
     pub on_click: Callback<()>,
-    #[prop_or("")]
+    #[prop_or_default]
     pub class: &'static str,
     #[prop_or(true)]
     pub is_enabled: bool,
-    #[prop_or("")]
+    #[prop_or_default]
     pub title: &'static str,
+    #[prop_or_default]
+    pub aria_label: &'static str,
+    #[prop_or_default]
+    pub children: Children,
 }
 
 impl Component for Button {
@@ -46,7 +50,9 @@ impl Component for Button {
                 class={ self.props.class }
                 disabled={ !self.props.is_enabled }
                 title={ self.props.title }
+                aria-label={ self.props.aria_label }
             >
+                { self.props.children.clone() }
             </button>
         }
     }

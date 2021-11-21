@@ -121,7 +121,6 @@ footer {
 .selected {
     background-color: lightcyan;
 }
-
 .penalty {
     background-color: rgba(255, 123, 0, 1);
 }
@@ -144,4 +143,25 @@ footer {
     background: repeating-linear-gradient(135deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem),
                 repeating-linear-gradient(45deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem);
     /* background-size: calc(0.5rem * 1.414); */
+}
+
+/* controls */
+.controls {
+    text-align: center;
+    margin: 1rem;
+}
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-content {
+    position: absolute;
+    box-shadow: 0px 2rem 2rem 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+.dropdown-content a {
+    text-decoration: none;
+    display: block;
+    width: 2rem;
+    height: 2rem;
 }

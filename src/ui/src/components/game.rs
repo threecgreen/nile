@@ -1,6 +1,13 @@
 use std::rc::Rc;
 
-use crate::state::{GameStore, State};
+use super::board::Board;
+use crate::{
+    components::{
+        carbon_icon::{CarbonIcon, Size},
+        controls::Controls,
+    },
+    state::{GameStore, State},
+};
 
 use yew::prelude::*;
 use yewdux::prelude::Dispatch;
@@ -49,6 +56,8 @@ impl Component for Game {
         html! {
             <>
                 <section>
+                    <Controls />
+                    <Board />
                 </section>
                 <section>
                 </section>

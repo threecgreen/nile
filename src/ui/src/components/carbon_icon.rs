@@ -10,9 +10,7 @@ pub struct CarbonIcon {
 #[repr(u8)]
 pub enum Size {
     S16,
-    S20,
     S24,
-    S32,
 }
 
 #[derive(Clone, Properties, PartialEq)]
@@ -52,9 +50,7 @@ impl Size {
     fn to_path(self) -> &'static str {
         match self {
             Size::S16 => "16",
-            Size::S20 => "20",
             Size::S24 => "24",
-            Size::S32 => "32",
         }
     }
 }

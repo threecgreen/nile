@@ -1,7 +1,8 @@
 mod board;
-mod board_cell;
 mod button;
+mod carbon_icon;
 mod container;
+mod controls;
 mod footer;
 mod game;
 mod tile;
@@ -10,3 +11,4 @@ mod utils;
 
 pub use container::Container;
 pub use footer::Footer;
+pub use game::Game;
