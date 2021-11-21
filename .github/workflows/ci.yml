@@ -16,23 +16,17 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install wasm-pack
-      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      run: cargo install trunk wasm-bindgen-cli
     - name: Wasm build
       run: |
-        cd src/core
-        wasm-pack build
+        cd src/ui
+        trunk build
 
   rust-test:
     name: Rust test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install wasm-pack
-      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-    - name: Wasm test
-      run: |
-        cd src/core
-        wasm-pack test --node
     - name: Rust test
       uses: actions-rs/cargo@v1
       with:
