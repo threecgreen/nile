@@ -11,13 +11,17 @@ env:
 
 jobs:
   rust-build:
-    name: Wasm build and JS
+    name: Trunk build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install wasm-pack
-      run: cargo install trunk wasm-bindgen-cli
-    - name: Wasm build
+    - name: Install trunk
+      run: cargo install trunk
+    - name: Install wasm target
+      uses: actions-rs/toolchain@v1
+      with:
+        target: wasm32-unknown-unknown
+    - name: Trunk build
       run: |
         cd src/ui
         trunk build
