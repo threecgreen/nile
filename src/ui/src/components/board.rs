@@ -118,7 +118,7 @@ impl BoardImpl {
         match cell.tile() {
             Some(tp) => {
                 html! {
-                    <TileCell tile_path_type={ tp.tile_path_type().clone() }
+                    <TileCell tile_path_type={ *tp.tile_path_type() }
                         rotation={ tp.rotation() }
                         tile_cell_type={ tile_cell_type }
                         selection={ selection }

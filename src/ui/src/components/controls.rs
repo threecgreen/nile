@@ -40,7 +40,7 @@ impl Component for ControlsImpl {
         let state = self.props.state();
         let on_rotate_counterclockwise = self
             .props
-            .callback_once(|_| Action::RotateSelectedTile(Rotation::Clockwise));
+            .callback_once(|_| Action::RotateSelectedTile(Rotation::Counterclockwise));
         let on_rotate_clockwise = self
             .props
             .callback_once(|_| Action::RotateSelectedTile(Rotation::Clockwise));
