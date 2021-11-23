@@ -44,7 +44,7 @@ impl Component for ControlsImpl {
         let on_rotate_clockwise = self
             .props
             .callback_once(|_| Action::RotateSelectedTile(Rotation::Clockwise));
-        let on_remove_tile = self.props.callback(|_| Action::RemoveTile);
+        let on_remove_tile = self.props.callback(|_| Action::RemoveSelectedTile);
         let on_undo = self.props.callback(|_| Action::Undo);
         let on_redo = self.props.callback(|_| Action::Redo);
         let on_end_turn = self.props.callback(|_| Action::EndTurn);

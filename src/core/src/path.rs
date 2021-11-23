@@ -201,6 +201,15 @@ impl From<&TilePathType> for Tile {
     }
 }
 
+impl From<Tile> for TilePathType {
+    fn from(tile: Tile) -> Self {
+        match tile {
+            Tile::Universal => Self::Universal(TilePath::Straight),
+            _ => Self::Normal(TilePath::try_from(tile).expect("not a universal")),
+        }
+    }
+}
+
 /// An offset on the game board's grid. Used for representing how different
 /// tiles can "connect" to form the river.
 ///

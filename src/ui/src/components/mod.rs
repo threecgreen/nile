@@ -8,7 +8,7 @@ mod game;
 mod player;
 mod tile;
 mod tile_svg;
-mod utils;
+pub mod utils;
 
 pub use container::Container;
 pub use footer::Footer;

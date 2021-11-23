@@ -9,10 +9,10 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(test, derive(Eq))]
 pub enum Rotation {
-    None,
-    Clockwise90,
-    Clockwise180,
-    Clockwise270,
+    None = 0,
+    Clockwise90 = 1,
+    Clockwise180 = 2,
+    Clockwise270 = 3,
 }
 
 pub static ROTATIONS: [Rotation; 4] = [

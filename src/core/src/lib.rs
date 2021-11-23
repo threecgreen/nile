@@ -13,7 +13,7 @@ pub use crate::nile::{CPUTurnUpdate, EndTurnUpdate, Nile};
 pub use crate::path::{TilePath, TilePathType};
 pub use crate::player::{Player, TileArray};
 pub use crate::score::TurnScore;
-pub use crate::tile::{wasm::tile_score, Coordinates, Rotation, Tile};
+pub use crate::tile::{wasm::tile_score, Coordinates, Rotation, Tile, ROTATIONS};
 pub use crate::wasm_api::WasmNile;
 
 use wasm_bindgen::prelude::*;
