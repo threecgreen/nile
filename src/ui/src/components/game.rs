@@ -5,6 +5,7 @@ use crate::{
     components::{
         carbon_icon::{CarbonIcon, Size},
         controls::Controls,
+        player::Players,
     },
     state::{GameStore, State},
 };
@@ -60,6 +61,7 @@ impl Component for Game {
                     <Board />
                 </section>
                 <section>
+                    <Players />
                 </section>
             </>
         }

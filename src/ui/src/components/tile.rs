@@ -269,3 +269,28 @@ pub mod empty_cell {
         }
     }
 }
+
+pub struct HiddenTile {}
+
+impl Component for HiddenTile {
+    type Properties = ();
+    type Message = ();
+
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        Self {}
+    }
+
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        false
+    }
+
+    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+        false
+    }
+
+    fn view(&self) -> Html {
+        html! {
+            <div class={ classes!("tile", "hidden-tile") } />
+        }
+    }
+}

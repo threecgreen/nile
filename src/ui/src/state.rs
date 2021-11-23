@@ -94,6 +94,7 @@ pub enum Action {
     SetError(String),
     SetEndOfGame(String),
     Dismiss,
+    None,
 }
 
 #[derive(Clone, PartialEq)]
@@ -105,5 +106,5 @@ pub enum Rotation {
 
 #[derive(Clone)]
 pub struct SelectRackTile {
-    rack_idx: u8,
+    pub rack_idx: u8,
 }

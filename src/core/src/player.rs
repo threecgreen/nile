@@ -10,7 +10,7 @@ pub type TileArray = SmallVec<[Tile; MAX_TILES]>;
 
 /// Holds all data related to a single player
 #[wasm_bindgen]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Player {
     name: String,
     tile_rack: TileArray,
@@ -23,7 +23,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(name: String, tile_box: &mut TileBox, is_cpu: bool) -> Self {
+    pub(crate) fn new(name: String, tile_box: &mut TileBox, is_cpu: bool) -> Self {
         let mut tile_rack = TileArray::new();
         Self::fill_rack(&mut tile_rack, tile_box);
         Self {
@@ -37,7 +37,7 @@ impl Player {
 
     /// Refill the player's `tile_rack` and return the total score of the tiles they played in
     /// the current turn.
-    pub fn end_turn(&mut self, tile_box: &mut TileBox) -> TurnScore {
+    pub(crate) fn end_turn(&mut self, tile_box: &mut TileBox) -> TurnScore {
         if self.tile_rack.is_empty() {
             // TODO: this should possibly only apply if the player began
             // their turn with 5 tiles
@@ -71,7 +71,7 @@ impl Player {
 
     /// The player is placing a tile of variant `tile`. Validate the player has at least one of
     /// these tiles and remove it from their rack.
-    pub fn place_tile(&mut self, tile: Tile) -> Option<Tile> {
+    pub(crate) fn place_tile(&mut self, tile: Tile) -> Option<Tile> {
         self.tile_rack
             .iter()
             .position(|t| *t == tile)
@@ -86,7 +86,7 @@ impl Player {
 
     /// The player can't play any tiles and is ending their turn. Discards all their current tiles
     /// and refills their `tile_rack` from `tile_box`.
-    pub fn cant_play(&mut self, tile_box: &mut TileBox) -> TurnScore {
+    pub(crate) fn cant_play(&mut self, tile_box: &mut TileBox) -> TurnScore {
         let tiles = self.discard_tiles();
         let tile_score = tiles.iter().fold(0, |acc, t| acc + t.score());
         let turn_score = TurnScore {
@@ -102,7 +102,7 @@ impl Player {
     }
 
     /// The player removed a tile from the board is returning it to their rack
-    pub fn return_tile(&mut self, tile: Tile) {
+    pub(crate) fn return_tile(&mut self, tile: Tile) {
         self.tile_rack.push(tile);
     }
 
@@ -111,7 +111,7 @@ impl Player {
     }
 
     /// Modify the current turn score and return the updated turn score
-    pub fn add_score(&mut self, score: TurnScore) -> TurnScore {
+    pub(crate) fn add_score(&mut self, score: TurnScore) -> TurnScore {
         self.current_turn_score += score;
         self.current_turn_score
     }
@@ -122,6 +122,14 @@ impl Player {
             tiles.push(tile);
         }
         tiles
+    }
+
+    pub fn scores(&self) -> &Vec<TurnScore> {
+        &self.scores
+    }
+
+    pub fn current_turn_score(&self) -> TurnScore {
+        self.current_turn_score
     }
 }
 

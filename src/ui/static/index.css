@@ -165,3 +165,42 @@ footer {
     width: 2rem;
     height: 2rem;
 }
+
+/* players */
+.players {
+    display: grid;
+    align-content: center;
+}
+.players > div {
+    margin: auto;
+    display: grid;
+    gap: 2rem;
+}
+button.expand-collapse {
+    margin-left: auto;
+    margin-right: auto;
+}
+table.scores {
+    padding-top: 1rem;
+}
+table.scores td {
+    min-width: 1rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.current {
+    color: royalblue;
+}
+.other {
+    color: rgb(40, 40, 40)
+}
+
+/* tile rack */
+.alignRight > td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}

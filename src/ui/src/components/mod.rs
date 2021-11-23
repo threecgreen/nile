@@ -5,6 +5,7 @@ mod container;
 mod controls;
 mod footer;
 mod game;
+mod player;
 mod tile;
 mod tile_svg;
 mod utils;
