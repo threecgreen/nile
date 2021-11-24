@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::ai::{Brute, CPUPlayer};
 use crate::board::{Board, TilePlacement};
 use crate::log;
@@ -5,11 +7,19 @@ use crate::log::{Event, Log, TilePlacementEvent};
 use crate::path::{TilePath, TilePathType};
 use crate::player::{Player, TileArray};
 use crate::score::TurnScore;
-use crate::tile::{self, Coordinates, Rotation, Tile, TileBox};
+use crate::tile::{Coordinates, Rotation, Tile, TileBox};
 
 use js_sys::Array;
 use wasm_bindgen::prelude::*;
 
+// FIXME: distinguish between:
+//  * (strictly) game logic and state, i.e. nothing about UI
+//      * current_turn_placements
+//      * what gets invoked by the CPU players' moves invoke
+//  * "executor" and busines logic:
+//      * undo/redo
+//      * selected_tile
+//      * what invokes or executes the CPU players' moves
 /// Holds all game state
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
@@ -22,6 +32,12 @@ pub struct Nile {
     players: Vec<Player>,
     /// the index in `players` of the player whose turn it is
     current_turn: usize,
+    /// whether the player has selected a tile in the UI. Many actions are performed on the
+    /// selected tile
+    selected_tile: Option<SelectedTile>,
+    /// coordinates where tiles were place in the current turn. Could be derived from `log` but
+    /// keeping it here is faster
+    current_turn_placements: HashSet<Coordinates>,
     /// event log for undoing and redoing
     log: Log,
     /// Count of consecutive "can't plays"
@@ -30,9 +46,17 @@ pub struct Nile {
     has_ended: bool,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum SelectedTile {
+    /// index of selected tile in rack
+    Rack(u8),
+    Board(Coordinates),
+}
+
 impl Nile {
-    pub fn new(player_names: Vec<String>, ai_count: usize) -> Result<Self, String> {
-        if player_names.len() + ai_count < 2 || player_names.len() + ai_count > 4 {
+    pub fn new(player_names: Vec<String>, cpu_player_count: u8) -> Result<Self, String> {
+        let player_count = player_names.len() + cpu_player_count as usize;
+        if player_count < 2 || player_count > 4 {
             Err("Nile is a game for 2-4 players".to_owned())
         } else {
             let mut tile_box = TileBox::default();
@@ -40,7 +64,7 @@ impl Nile {
                 .into_iter()
                 .map(|player| Player::new(player, &mut tile_box, false))
                 .collect();
-            for i in 1..=ai_count {
+            for i in 1..=cpu_player_count {
                 players.push(Player::new(format!("cpu{}", i), &mut tile_box, true))
             }
             Ok(Self {
@@ -48,6 +72,8 @@ impl Nile {
                 tile_box,
                 players,
                 current_turn: 0,
+                selected_tile: None,
+                current_turn_placements: HashSet::default(),
                 log: Log::new(),
                 cant_play_count: 0,
                 has_ended: false,
@@ -71,6 +97,28 @@ impl Nile {
         &self.players[self.current_turn]
     }
 
+    /// Returns the current `SelectedTile` if it exists, whether on the board or the rack
+    pub fn selected_tile(&self) -> &Option<SelectedTile> {
+        &self.selected_tile
+    }
+
+    /// If a board tile is currently selected, returns its coordinates
+    pub fn selected_board_tile(&self) -> Option<Coordinates> {
+        match self.selected_tile {
+            Some(SelectedTile::Board(coordinates)) => Some(coordinates),
+            _ => None,
+        }
+    }
+
+    /// If a rack tile is currently selected, returns its index in the `current_player()`'s
+    /// `.tiles()`
+    pub fn selected_rack_tile(&self) -> Option<u8> {
+        match self.selected_tile {
+            Some(SelectedTile::Rack(rack_idx)) => Some(rack_idx),
+            _ => None,
+        }
+    }
+
     pub fn can_undo(&self) -> bool {
         self.log.can_undo()
     }
@@ -81,6 +129,37 @@ impl Nile {
 
     pub fn has_ended(&self) -> bool {
         self.has_ended
+    }
+
+    pub fn select_rack_tile(&mut self, rack_idx: u8) -> Result<(), String> {
+        if self
+            .current_player()
+            .tiles()
+            .get(rack_idx as usize)
+            .is_some()
+        {
+            self.selected_tile = Some(SelectedTile::Rack(rack_idx));
+            // no `log` call because selections are not undoable events
+            Ok(())
+        } else {
+            Err(format!("Invalid rack index: {}", rack_idx))
+        }
+    }
+
+    pub fn select_board_tile(&mut self, coordinates: Coordinates) -> Result<(), String> {
+        if !self.current_turn_placements.contains(&coordinates) {
+            return Err("Can only select tiles from this turn".to_owned());
+        }
+        self.board
+            .cell(coordinates)
+            .map_or(Err(format!("Invalid {:?}", coordinates)), |cell| {
+                if cell.tile().is_some() {
+                    self.selected_tile = Some(SelectedTile::Board(coordinates));
+                    Ok(())
+                } else {
+                    Err(format!("No tile at {:?}", coordinates))
+                }
+            })
     }
 
     pub fn place_tile(
@@ -107,13 +186,15 @@ impl Nile {
                 e
             })?;
         let turn_score = player.add_score(event_score);
+        self.selected_tile = Some(SelectedTile::Board(coordinates));
+        self.current_turn_placements.insert(coordinates);
         self.log.place_tile(tile_path_type, coordinates, rotation);
         Ok(turn_score)
     }
 
     pub fn rotate_tile(
         &mut self,
-        coordinates: tile::Coordinates,
+        coordinates: Coordinates,
         rotation: Rotation,
     ) -> Result<(), String> {
         self.if_not_ended()?;
@@ -125,7 +206,7 @@ impl Nile {
             .ok_or_else(|| "No tile there".to_owned())?
             .rotation();
 
-        if !self.log.cell_changed_in_turn(coordinates) {
+        if !self.current_turn_placements.contains(&coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
         self.board.rotate_tile(coordinates, rotation)?;
@@ -135,7 +216,7 @@ impl Nile {
 
     pub fn remove_tile(&mut self, coordinates: Coordinates) -> Result<TurnScore, String> {
         self.if_not_ended()?;
-        if !self.log.cell_changed_in_turn(coordinates) {
+        if !self.current_turn_placements.contains(&coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
         let (tile_placement, event_score) = self
@@ -145,6 +226,7 @@ impl Nile {
         let player = self.players.get_mut(self.current_turn).expect("Player");
         player.return_tile(Tile::from(tile_placement.tile_path_type()));
         let turn_score = player.add_score(event_score);
+        assert!(self.current_turn_placements.remove(&coordinates));
         self.log.remove_tile(
             tile_placement.tile_path_type().clone(),
             coordinates,
@@ -159,7 +241,7 @@ impl Nile {
         tile_path: TilePath,
     ) -> Result<(), String> {
         self.if_not_ended()?;
-        if !self.log.cell_changed_in_turn(coordinates) {
+        if !self.current_turn_placements.contains(&coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
         let old_tile_path = self.board.update_universal_path(coordinates, tile_path)?;
@@ -174,16 +256,20 @@ impl Nile {
         new_coordinates: Coordinates,
     ) -> Result<TurnScore, String> {
         self.if_not_ended()?;
-        if !self.log.cell_changed_in_turn(old_coordinates) {
+        if !self.current_turn_placements.contains(&old_coordinates) {
             return Err("Can't change tiles from another turn".to_owned());
         }
         let score_change = self.board.move_tile(old_coordinates, new_coordinates)?;
         let player = self.players.get_mut(self.current_turn).expect("Player");
         let turn_score = player.add_score(score_change);
+        assert!(self.current_turn_placements.remove(&old_coordinates));
+        assert!(self.current_turn_placements.insert(new_coordinates));
         self.log.move_tile(old_coordinates, new_coordinates);
         Ok(turn_score)
     }
 
+    /// Called when the current player _claims_ they can't play any tiles. If successful, ends their
+    /// turn
     pub fn cant_play(&mut self) -> Result<EndTurnUpdate, String> {
         self.if_not_ended()?;
         let player_count = self.players.len();
@@ -206,6 +292,7 @@ impl Nile {
         Ok(update)
     }
 
+    /// Called when a human player ends their turn normally (they played at least one tile)
     pub fn end_turn(&mut self) -> Result<EndTurnUpdate, String> {
         self.if_not_ended()?;
         self.has_ended = self
@@ -216,6 +303,7 @@ impl Nile {
         let tiles = player.tiles().to_owned();
         self.advance_turn();
         self.log.end_turn();
+        self.current_turn_placements.clear();
         // Reset count
         self.cant_play_count = 0;
 
@@ -227,17 +315,18 @@ impl Nile {
         })
     }
 
+    /// Attempt to undo an action
     pub fn undo(&mut self) -> Result<Option<TurnScore>, String> {
         self.if_not_ended()?;
-        let event = self
+        let token = self
             .log
-            .begin_undo()
+            .undo()
             .ok_or_else(|| "Nothing to undo".to_owned())?;
-        let res = self.dispatch(event);
-        self.log.end_undo();
+        let res = self.dispatch(token.event);
         res
     }
 
+    /// Attempt to redo a previously-undone action
     pub fn redo(&mut self) -> Result<Option<TurnScore>, String> {
         self.if_not_ended()?;
         let event = self
@@ -309,6 +398,7 @@ impl Nile {
         })
     }
 
+    /// executes the given `event`. Used for undoing and redoing events at user request
     fn dispatch(&mut self, event: Event) -> Result<Option<TurnScore>, String> {
         match event {
             Event::PlaceTile(tpe) => self

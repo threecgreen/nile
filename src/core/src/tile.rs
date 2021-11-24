@@ -9,10 +9,10 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(test, derive(Eq))]
 pub enum Rotation {
-    None = 0,
-    Clockwise90 = 1,
-    Clockwise180 = 2,
-    Clockwise270 = 3,
+    None,
+    Clockwise90,
+    Clockwise180,
+    Clockwise270,
 }
 
 pub static ROTATIONS: [Rotation; 4] = [
@@ -21,6 +21,12 @@ pub static ROTATIONS: [Rotation; 4] = [
     Rotation::Clockwise180,
     Rotation::Clockwise270,
 ];
+
+impl Default for Rotation {
+    fn default() -> Self {
+        Self::None
+    }
+}
 
 /// A unique location on the board
 #[wasm_bindgen]

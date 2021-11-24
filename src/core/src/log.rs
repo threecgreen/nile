@@ -71,7 +71,7 @@ type MoveTileEvent = RevertableEvent<Coordinates>;
 /// Internal representation of a user event. All information necessary for
 /// undoing a `Event` is self-contained.
 #[derive(Clone, Debug)]
-pub enum Event {
+pub(crate) enum Event {
     PlaceTile(TilePlacementEvent),
     RotateTile(RotationEvent),
     RemoveTile(TilePlacementEvent),
@@ -109,13 +109,26 @@ impl Event {
 
 /// Game event log
 #[derive(Debug, Clone)]
-pub struct Log {
+pub(crate) struct Log {
     /// Immutable events of past turns
     events: Vec<Event>,
     /// Events from this turn that can be redone
     redo_events: Vec<Event>,
     /// Events from this turn that can be undone
     undo_events: Vec<Event>,
+}
+
+/// RAII undo token
+pub struct UndoToken<'a> {
+    /// The revert event, **not** the event being undone
+    pub event: Event,
+    handle: &'a mut Log,
+}
+
+impl<'a> Drop for UndoToken<'a> {
+    fn drop(&mut self) {
+        self.handle.end_undo()
+    }
 }
 
 impl Log {
@@ -127,14 +140,22 @@ impl Log {
         }
     }
 
-    pub fn begin_undo(&mut self) -> Option<Event> {
-        self.undo_events.pop().and_then(|e| {
-            self.redo_events.push(e.clone());
-            e.revert()
-        })
+    pub fn undo<'a>(&'a mut self) -> Option<UndoToken<'a>> {
+        self.undo_events
+            .pop()
+            .and_then(|e| {
+                self.redo_events.push(e.clone());
+                e.revert()
+            })
+            .map(|event| UndoToken {
+                event,
+                handle: &mut self,
+            })
     }
 
-    pub fn end_undo(&mut self) {
+    /// Pops the action that was revert event off the undo stack because the revert event
+    /// is "undone" by redoing
+    fn end_undo(&mut self) {
         self.undo_events.pop();
     }
 
