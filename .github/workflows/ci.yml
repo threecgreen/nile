@@ -21,6 +21,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         target: wasm32-unknown-unknown
+        toolchain: stable
     - name: Trunk build
       run: |
         cd src/ui
