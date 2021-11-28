@@ -318,11 +318,12 @@ impl Nile {
     /// Attempt to undo an action
     pub fn undo(&mut self) -> Result<Option<TurnScore>, String> {
         self.if_not_ended()?;
-        let token = self
+        let event = self
             .log
-            .undo()
+            .begin_undo()
             .ok_or_else(|| "Nothing to undo".to_owned())?;
-        let res = self.dispatch(token.event);
+        let res = self.dispatch(event);
+        self.log.end_undo();
         res
     }
 

@@ -118,19 +118,6 @@ pub(crate) struct Log {
     undo_events: Vec<Event>,
 }
 
-/// RAII undo token
-pub struct UndoToken<'a> {
-    /// The revert event, **not** the event being undone
-    pub event: Event,
-    handle: &'a mut Log,
-}
-
-impl<'a> Drop for UndoToken<'a> {
-    fn drop(&mut self) {
-        self.handle.end_undo()
-    }
-}
-
 impl Log {
     pub fn new() -> Self {
         Self {
@@ -140,22 +127,16 @@ impl Log {
         }
     }
 
-    pub fn undo<'a>(&'a mut self) -> Option<UndoToken<'a>> {
-        self.undo_events
-            .pop()
-            .and_then(|e| {
-                self.redo_events.push(e.clone());
-                e.revert()
-            })
-            .map(|event| UndoToken {
-                event,
-                handle: &mut self,
-            })
+    pub fn begin_undo<'a>(&'a mut self) -> Option<Event> {
+        self.undo_events.pop().and_then(|e| {
+            self.redo_events.push(e.clone());
+            e.revert()
+        })
     }
 
     /// Pops the action that was revert event off the undo stack because the revert event
     /// is "undone" by redoing
-    fn end_undo(&mut self) {
+    pub fn end_undo(&mut self) {
         self.undo_events.pop();
     }
 
