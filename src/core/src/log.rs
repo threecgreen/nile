@@ -94,17 +94,11 @@ impl Log {
         }
     }
 
-    pub fn begin_undo<'a>(&'a mut self) -> Option<Event> {
+    pub fn undo<'a>(&'a mut self) -> Option<Event> {
         self.undo_events.pop().and_then(|e| {
             self.redo_events.push(e.clone());
             e.revert()
         })
-    }
-
-    /// Pops the action that was revert event off the undo stack because the revert event
-    /// is "undone" by redoing
-    pub fn end_undo(&mut self) {
-        self.undo_events.pop();
     }
 
     pub fn redo(&mut self) -> Option<Event> {
