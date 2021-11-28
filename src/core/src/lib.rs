@@ -6,15 +6,13 @@ mod path;
 mod player;
 mod score;
 mod tile;
-mod wasm_api;
 
-pub use crate::board::{Board, Cell, TilePlacement, BOARD_SIZE};
+pub use crate::board::{Board, Cell, TilePlacement, BOARD_DIM};
 pub use crate::nile::{CPUTurnUpdate, EndTurnUpdate, Nile};
 pub use crate::path::{TilePath, TilePathType};
 pub use crate::player::{Player, TileArray};
 pub use crate::score::TurnScore;
-pub use crate::tile::{wasm::tile_score, Coordinates, Rotation, Tile, ROTATIONS};
-pub use crate::wasm_api::WasmNile;
+pub use crate::tile::{Coordinates, Rotation, Tile, ROTATIONS};
 
 use wasm_bindgen::prelude::*;
 

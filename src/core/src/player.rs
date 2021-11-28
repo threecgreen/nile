@@ -2,14 +2,12 @@ use crate::score::TurnScore;
 use crate::tile::{Tile, TileBox};
 
 use smallvec::SmallVec;
-use wasm_bindgen::prelude::*;
 
 const MAX_TILES: usize = 5;
 
 pub type TileArray = SmallVec<[Tile; MAX_TILES]>;
 
 /// Holds all data related to a single player
-#[wasm_bindgen]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Player {
     name: String,
@@ -131,36 +129,15 @@ impl Player {
     pub fn current_turn_score(&self) -> TurnScore {
         self.current_turn_score
     }
-}
 
-pub mod wasm {
-    use super::Player;
+    pub fn total_score(&self) -> i16 {
+        self.scores
+            .iter()
+            .fold(0, |total, score| total + score.score())
+    }
 
-    use js_sys::Array;
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen]
-    impl Player {
-        pub fn get_name(&self) -> JsValue {
-            JsValue::from(self.name())
-        }
-
-        pub fn get_tiles(&self) -> Array {
-            self.tiles()
-                .iter()
-                .map(|t| JsValue::from_f64(*t as i32 as f64))
-                .collect()
-        }
-
-        pub fn total_score(&self) -> i16 {
-            self.scores
-                .iter()
-                .fold(0, |total, score| total + score.score())
-        }
-
-        pub fn is_cpu(&self) -> bool {
-            self.is_cpu
-        }
+    pub fn is_cpu(&self) -> bool {
+        self.is_cpu
     }
 }
 

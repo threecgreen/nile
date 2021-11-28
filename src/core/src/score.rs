@@ -1,5 +1,4 @@
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
-use wasm_bindgen::prelude::*;
 
 /// For scoring, it's valuable to keep display penalties (negative scores)
 /// separate for tile and bonus scores. This is also how it's handled on the
@@ -7,7 +6,6 @@ use wasm_bindgen::prelude::*;
 ///
 /// Both `add` and `sub` should be >= 0, unless the `TurnScore` instance is
 /// part of an undo or revert option like removing a tile.
-#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub struct TurnScore {
     pub add: i16,

@@ -2,10 +2,8 @@ use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::collections::VecDeque;
-use wasm_bindgen::prelude::wasm_bindgen;
 
 #[repr(u8)]
-#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(test, derive(Eq))]
 pub enum Rotation {
@@ -29,21 +27,11 @@ impl Default for Rotation {
 }
 
 /// A unique location on the board
-#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Coordinates(pub i8, pub i8);
 
-#[wasm_bindgen]
-impl Coordinates {
-    #[wasm_bindgen(constructor)]
-    pub fn new(row: i8, column: i8) -> Self {
-        Self(row, column)
-    }
-}
-
 /// A game piece that can be placed on the board
 #[repr(u8)]
-#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Tile {
     /// ```text
@@ -106,15 +94,6 @@ impl Tile {
             Tile::Left135 | Tile::Right135 => 5,
             Tile::Universal => 35,
         }
-    }
-}
-
-pub mod wasm {
-    use super::*;
-
-    #[wasm_bindgen]
-    pub fn tile_score(tile: Tile) -> i16 {
-        tile.score()
     }
 }
 

@@ -1,4 +1,4 @@
-use nile::{Cell, Coordinates, BOARD_SIZE};
+use nile::{Cell, Coordinates, BOARD_DIM};
 use yew::prelude::*;
 use yewdux::prelude::Dispatcher;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
@@ -37,12 +37,12 @@ impl Component for BoardImpl {
         let board = state.nile.board();
         let current_turn_tiles = &state.current_turn_tiles;
         let selection = state.selected_tile.as_ref();
-        let cells = (0..BOARD_SIZE as i8)
+        let cells = (0..BOARD_DIM as i8)
             .map(|i| {
                 html! {
                     <tr key={ format!("{}", i) }>
                         { for
-                            (0..BOARD_SIZE as i8).map(|j| {
+                            (0..BOARD_DIM as i8).map(|j| {
                                 let coordinates = Coordinates(i, j);
                                 let cell = board.cell(coordinates).unwrap();
                                 let is_seleted = match selection {

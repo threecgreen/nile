@@ -4,13 +4,11 @@ use crate::tile::{Coordinates, Rotation, Tile, ROTATIONS};
 
 use std::convert::TryFrom;
 use std::ops::{Add, Neg};
-use wasm_bindgen::prelude::wasm_bindgen;
 
 /// Represents the paths the river can take in a single cell. Similar to
 /// `crate::tile::Tile` except without the universal tile, because when placed,
 /// a universal tile must represent one of the standard `TilePath`s
 #[repr(u8)]
-#[wasm_bindgen]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TilePath {
     Straight,
@@ -97,67 +95,6 @@ impl TryFrom<Tile> for TilePath {
             Tile::Left135 => Ok(super::TilePath::Left135),
             Tile::Right135 => Ok(super::TilePath::Right135),
             Tile::Universal => Err("Can't convert universal tile to tile path".to_owned()),
-        }
-    }
-}
-
-pub mod wasm {
-    use crate::tile::Tile;
-
-    use std::convert::TryFrom;
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen]
-    pub fn tile_path_to_tile(tile_path: super::TilePath) -> Tile {
-        Tile::from(tile_path)
-    }
-
-    #[wasm_bindgen]
-    #[derive(Clone, Debug)]
-    // wasm_bindgen only supports C-style enums, so we wrap
-    // `super::TilePathType` in a tuple struct to make it representable in wasm
-    pub struct TilePathType(super::TilePathType);
-
-    #[wasm_bindgen]
-    impl TilePathType {
-        pub fn universal(tp: super::TilePath) -> Self {
-            TilePathType(super::TilePathType::Universal(tp))
-        }
-
-        pub fn normal(tp: super::TilePath) -> Self {
-            TilePathType(super::TilePathType::Normal(tp))
-        }
-
-        pub fn tile_into_normal(t: Tile) -> Result<TilePathType, JsValue> {
-            Ok(Self::normal(super::TilePath::try_from(t)?))
-        }
-
-        pub fn tile_into_universal(t: Tile) -> Result<TilePathType, JsValue> {
-            Ok(Self::universal(super::TilePath::try_from(t)?))
-        }
-
-        pub fn tile_path(&self) -> super::TilePath {
-            super::TilePath::from(&self.0)
-        }
-
-        pub fn tile(&self) -> Tile {
-            Tile::from(&self.0)
-        }
-
-        pub fn is_universal(&self) -> bool {
-            matches!(self.0, super::TilePathType::Universal(_))
-        }
-    }
-
-    impl From<TilePathType> for super::TilePathType {
-        fn from(wasm_tpt: TilePathType) -> Self {
-            wasm_tpt.0
-        }
-    }
-
-    impl From<super::TilePathType> for TilePathType {
-        fn from(tpt: super::TilePathType) -> Self {
-            TilePathType(tpt)
         }
     }
 }

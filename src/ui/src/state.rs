@@ -64,7 +64,7 @@ pub type GameStore = ReducerStore<State>;
 impl State {
     pub fn new_game(player_names: Vec<String>, cpu_player_count: u8) -> Self {
         Self {
-            nile: Nile::new(player_names, cpu_player_count as usize).unwrap(),
+            nile: Nile::new(player_names, cpu_player_count).unwrap(),
             current_turn_tiles: HashSet::new(),
             selected_tile: None,
             modal: None,

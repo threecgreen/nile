@@ -4,9 +4,7 @@ use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation};
 
 use std::collections::{HashMap, HashSet};
-use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
 #[derive(Clone, Debug)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 pub struct TilePlacement {
@@ -14,19 +12,7 @@ pub struct TilePlacement {
     rotation: Rotation,
 }
 
-#[wasm_bindgen]
-impl TilePlacement {
-    pub fn get_tile_path_type(&self) -> path::wasm::TilePathType {
-        path::wasm::TilePathType::from(self.tile_path_type.clone())
-    }
-
-    pub fn get_rotation(&self) -> Rotation {
-        self.rotation
-    }
-}
-
-/// Accessor methods for rust. The fields can't be public because
-/// `TilePlacementType` isn't representable in wasm
+/// Accessor methods for rust.
 impl TilePlacement {
     pub fn new(tile_path_type: TilePathType, rotation: Rotation) -> Self {
         Self {
@@ -52,14 +38,12 @@ impl TilePlacement {
     }
 }
 
-#[wasm_bindgen]
 #[derive(Clone, Debug, Default)]
 pub struct Cell {
     bonus: i16,
     tile: Option<TilePlacement>,
 }
 
-#[wasm_bindgen]
 impl Cell {
     pub fn tile(&self) -> Option<TilePlacement> {
         self.tile.clone()
@@ -116,7 +100,6 @@ impl Cell {
 }
 
 /// The board is 21x21 plus a special end of game column
-#[wasm_bindgen]
 #[derive(Clone, Debug)]
 pub struct Board {
     last_placement: (Coordinates, Offset),
@@ -124,7 +107,7 @@ pub struct Board {
     end_of_game_cells: Vec<Cell>,
 }
 
-pub const BOARD_SIZE: usize = 21;
+pub const BOARD_DIM: usize = 21;
 
 macro_rules! hash_map(
     { $($key:expr => $value:expr),+ } => {
@@ -178,18 +161,18 @@ impl Board {
             (10, 10) => -60,
             (10, 18) => -160
         );
-        let cells: Vec<Cell> = (0..BOARD_SIZE * BOARD_SIZE)
+        let cells: Vec<Cell> = (0..BOARD_DIM * BOARD_DIM)
             .map(|i| {
                 let row = {
-                    let row = i / BOARD_SIZE;
+                    let row = i / BOARD_DIM;
                     // Board is reflected across horizontal axis
                     if row > 10 {
-                        BOARD_SIZE - 1 - row
+                        BOARD_DIM - 1 - row
                     } else {
                         row
                     }
                 };
-                let col = i % BOARD_SIZE;
+                let col = i % BOARD_DIM;
                 bonuses
                     .get(&(row, col))
                     .map(|b| Cell::with_bonus(*b))
@@ -210,7 +193,7 @@ impl Board {
     }
 
     pub fn cell(&self, coordinates: Coordinates) -> Option<&Cell> {
-        let width = self.width();
+        let width = BOARD_DIM;
         if self.is_end_game_cell(coordinates) {
             self.end_of_game_cells.get(coordinates.0 as usize)
         } else if self.in_bounds(coordinates) {
@@ -223,8 +206,8 @@ impl Board {
     }
 
     fn get_mut_cell(&mut self, coordinates: Coordinates) -> Option<&mut Cell> {
-        let width = self.width();
-        if coordinates.1 as usize == self.width() {
+        let width = BOARD_DIM;
+        if coordinates.1 as usize == BOARD_DIM {
             self.end_of_game_cells.get_mut(coordinates.0 as usize)
         } else if self.in_bounds(coordinates) {
             let row = coordinates.0 as usize;
@@ -314,7 +297,7 @@ impl Board {
 
     pub fn is_end_game_cell(&self, coordinates: Coordinates) -> bool {
         let Coordinates(_, column) = coordinates;
-        column == self.width() as i8
+        column == BOARD_DIM as i8
     }
 
     /// Called as part of end of turn. Returns whether the game has ended, i.e.
@@ -367,9 +350,9 @@ impl Board {
     }
 
     pub fn in_bounds(&self, coordinates: Coordinates) -> bool {
-        (0..self.height() as i8).contains(&coordinates.0)
+        (0..BOARD_DIM as i8).contains(&coordinates.0)
             // +1 for end of game tile
-            && (0..self.width() as i8 + 1).contains(&coordinates.1)
+            && (0..BOARD_DIM as i8 + 1).contains(&coordinates.1)
     }
 
     pub fn validate_end_of_game_cells(
@@ -378,8 +361,8 @@ impl Board {
     ) -> Result<bool, String> {
         let (Coordinates(row, column), offset) = last_placement;
         match end_of_game_cell_count {
-            1 if offset == Offset(0, 1) && column as usize == BOARD_SIZE => Ok(true),
-            1 if column as usize == BOARD_SIZE => Err(format!(
+            1 if offset == Offset(0, 1) && column as usize == BOARD_DIM => Ok(true),
+            1 if column as usize == BOARD_DIM => Err(format!(
                 "Tile in end-of-game column at {:?} must align with the dot",
                 Coordinates(row, column),
             )),
@@ -501,42 +484,6 @@ impl Board {
             }
         }
         Err(format!("Encircled path. No paths leading to the end of game column from {:?} with open moves {:?}", coordinates, open_moves))
-    }
-}
-
-pub mod wasm {
-    use super::{Board, Cell, Coordinates, BOARD_SIZE};
-
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen]
-    impl Board {
-        pub fn height(&self) -> usize {
-            BOARD_SIZE
-        }
-
-        pub fn width(&self) -> usize {
-            BOARD_SIZE
-        }
-
-        pub fn get_cell(&self, row: i8, column: i8) -> Result<Cell, JsValue> {
-            self.cell(Coordinates(row, column))
-                .cloned()
-                .ok_or_else(|| JsValue::from("Invalid coordinates"))
-        }
-    }
-
-    #[cfg(test)]
-    mod test {
-        use super::*;
-
-        use wasm_bindgen_test::*;
-
-        #[wasm_bindgen_test]
-        fn get_cell_out_of_bounds_cell_is_none() {
-            let target = Board::new();
-            assert!(target.get_cell(14, 22).is_err());
-        }
     }
 }
 
@@ -933,7 +880,7 @@ mod test {
     #[test]
     fn validate_turns_moves_ends_game() {
         let mut target = Board::with_last_placement(Coordinates(14, 20), Offset(0, 1));
-        const COORDINATES: Coordinates = Coordinates(14, BOARD_SIZE as i8);
+        const COORDINATES: Coordinates = Coordinates(14, BOARD_DIM as i8);
         target
             .place_tile(
                 COORDINATES,

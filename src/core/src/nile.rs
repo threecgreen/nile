@@ -9,9 +9,6 @@ use crate::player::{Player, TileArray};
 use crate::score::TurnScore;
 use crate::tile::{Coordinates, Rotation, Tile, TileBox};
 
-use js_sys::Array;
-use wasm_bindgen::prelude::*;
-
 // FIXME: distinguish between:
 //  * (strictly) game logic and state, i.e. nothing about UI
 //      * current_turn_placements
@@ -21,7 +18,6 @@ use wasm_bindgen::prelude::*;
 //      * selected_tile
 //      * what invokes or executes the CPU players' moves
 /// Holds all game state
-#[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Nile {
     // the game board
@@ -456,7 +452,6 @@ impl Nile {
     }
 }
 
-#[wasm_bindgen]
 #[derive(Debug)]
 pub struct EndTurnUpdate {
     pub turn_score: TurnScore,
@@ -464,19 +459,7 @@ pub struct EndTurnUpdate {
     pub game_has_ended: bool,
 }
 
-#[wasm_bindgen]
-impl EndTurnUpdate {
-    pub fn get_tiles(&self) -> Array {
-        self.tiles
-            .clone()
-            .into_iter()
-            .map(|t| JsValue::from_f64(t as i32 as f64))
-            .collect()
-    }
-}
-
 // TODO: consolidate into `EndTurnUpdate`
-#[wasm_bindgen]
 #[derive(Debug)]
 pub struct CPUTurnUpdate {
     pub player_id: usize,
@@ -485,22 +468,6 @@ pub struct CPUTurnUpdate {
     pub game_has_ended: bool,
     /// we don't need to display or expose what tiles the cpu actually has
     pub tile_count: usize,
-}
-
-pub mod wasm {
-    use super::*;
-
-    use crate::log;
-
-    #[wasm_bindgen]
-    impl CPUTurnUpdate {
-        pub fn get_placements(&self) -> Array {
-            self.placements
-                .iter()
-                .map(|tpe| JsValue::from(log::wasm::TilePlacementEvent::from(tpe.to_owned())))
-                .collect()
-        }
-    }
 }
 
 #[cfg(test)]
@@ -527,16 +494,14 @@ mod test {
         let tile = get_normal_tile(&mut target);
         let inter_score = target
             .place_tile(
-                crate::path::wasm::TilePathType::tile_into_normal(tile)
-                    .unwrap()
-                    .into(),
-                Coordinates::new(10, 0),
+                TilePathType::from(tile),
+                Coordinates(10, 0),
                 Rotation::Clockwise90,
             )
             .unwrap();
         assert_ne!(inter_score, TurnScore::default());
         assert_ne!(inter_score.score(), 0);
-        let final_score = target.remove_tile(Coordinates::new(10, 0)).unwrap();
+        let final_score = target.remove_tile(Coordinates(10, 0)).unwrap();
         assert_eq!(final_score, TurnScore::default());
         assert_eq!(final_score.score(), 0);
     }
@@ -547,16 +512,14 @@ mod test {
         let tile = get_normal_tile(&mut target);
         let begin_score = target
             .place_tile(
-                crate::path::wasm::TilePathType::tile_into_normal(tile)
-                    .unwrap()
-                    .into(),
-                Coordinates::new(10, 0),
+                TilePathType::from(tile),
+                Coordinates(10, 0),
                 Rotation::Clockwise90,
             )
             .unwrap();
         let end_score = target
             // Neither cell has a bonus
-            .move_tile(Coordinates::new(10, 0), Coordinates::new(9, 0))
+            .move_tile(Coordinates(10, 0), Coordinates(9, 0))
             .unwrap();
         assert_eq!(begin_score, end_score);
     }

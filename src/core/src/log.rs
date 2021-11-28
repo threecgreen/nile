@@ -13,39 +13,6 @@ pub struct TilePlacementEvent {
     pub rotation: tile::Rotation,
 }
 
-pub mod wasm {
-    use super::*;
-    use crate::path::wasm;
-
-    use wasm_bindgen::prelude::*;
-
-    /// Wasm wrapper type around `super::TilePlacementEvent` because
-    /// `TilePathType` is not directly representable in JS.
-    #[wasm_bindgen]
-    pub struct TilePlacementEvent(super::TilePlacementEvent);
-
-    #[wasm_bindgen]
-    impl TilePlacementEvent {
-        pub fn get_tile_path_type(&self) -> wasm::TilePathType {
-            wasm::TilePathType::from(self.0.tile_path_type.clone())
-        }
-
-        pub fn get_coordinates(&self) -> Coordinates {
-            self.0.coordinates
-        }
-
-        pub fn get_rotation(&self) -> tile::Rotation {
-            self.0.rotation
-        }
-    }
-
-    impl From<super::TilePlacementEvent> for TilePlacementEvent {
-        fn from(tpe: super::TilePlacementEvent) -> Self {
-            Self(tpe)
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Rotation {
     pub coordinates: Coordinates,
