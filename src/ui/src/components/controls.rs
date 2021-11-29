@@ -65,7 +65,7 @@ impl Component for ControlsImpl {
                 >
                     <CarbonIcon name="rotate_clockwise" size={ Size::S24 } />
                 </Button>
-                <Button is_enabled={ !state.current_turn_tiles.is_empty() }
+                <Button is_enabled={ !state.nile.current_turn_placements().is_empty() }
                     on_click={ on_remove_tile }
                     title="Remove tile"
                     aria_label="Remove selected tile from the board"
@@ -87,7 +87,7 @@ impl Component for ControlsImpl {
                 >
                     <CarbonIcon name="redo" size={ Size::S24 } />
                 </Button>
-                <Button is_enabled={ !state.current_turn_tiles.is_empty() }
+                <Button is_enabled={ !state.nile.current_turn_placements().is_empty() }
                     on_click={ on_end_turn }
                     title="End turn"
                     aria_label="End turn"
@@ -95,7 +95,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="checkmark" size={ Size::S24 } />
                     { "End Turn" }
                 </Button>
-                <Button is_enabled={ state.current_turn_tiles.is_empty() }
+                <Button is_enabled={ state.nile.current_turn_placements().is_empty() }
                     on_click={ on_cant_play }
                     title="Can’t play"
                     aria_label="Can’t play"

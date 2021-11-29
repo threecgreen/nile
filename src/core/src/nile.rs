@@ -60,6 +60,10 @@ impl Engine {
         self.log.can_redo()
     }
 
+    pub fn current_turn_placements(&self) -> &HashSet<Coordinates> {
+        self.nile.current_turn_placements()
+    }
+
     pub fn has_ended(&self) -> bool {
         self.nile.has_ended()
     }
@@ -398,6 +402,10 @@ impl Nile {
 
     pub fn current_player(&self) -> &Player {
         &self.players[self.current_turn]
+    }
+
+    pub fn current_turn_placements(&self) -> &HashSet<Coordinates> {
+        &self.current_turn_placements
     }
 
     pub fn has_ended(&self) -> bool {

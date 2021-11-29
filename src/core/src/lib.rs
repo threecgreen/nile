@@ -8,7 +8,7 @@ mod score;
 mod tile;
 
 pub use crate::board::{Board, Cell, TilePlacement, BOARD_DIM};
-pub use crate::nile::{CPUTurnUpdate, EndTurnUpdate, Engine, Nile};
+pub use crate::nile::{CPUTurnUpdate, EndTurnUpdate, Engine, Nile, SelectedTile};
 pub use crate::path::{TilePath, TilePathType};
 pub use crate::player::{Player, TileArray};
 pub use crate::score::TurnScore;

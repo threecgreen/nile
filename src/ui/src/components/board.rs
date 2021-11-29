@@ -3,7 +3,7 @@ use yew::prelude::*;
 use yewdux::prelude::Dispatcher;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
-use crate::state::{GameStore, SelectedTile};
+use crate::state::GameStore;
 
 use super::tile::empty_cell::EmptyCell;
 use super::tile::tile_cell::{Selection, TileCell, TileCellType};
@@ -35,8 +35,8 @@ impl Component for BoardImpl {
     fn view(&self) -> Html {
         let state = self.props.state();
         let board = state.nile.board();
-        let current_turn_tiles = &state.current_turn_tiles;
-        let selection = state.selected_tile.as_ref();
+        let current_turn_placements = state.nile.current_turn_placements();
+        let selection = state.nile.selected_board_tile();
         let cells = (0..BOARD_DIM as i8)
             .map(|i| {
                 html! {
@@ -46,7 +46,7 @@ impl Component for BoardImpl {
                                 let coordinates = Coordinates(i, j);
                                 let cell = board.cell(coordinates).unwrap();
                                 let is_seleted = match selection {
-                                    Some(SelectedTile::Board(c)) => *c == coordinates,
+                                    Some(c) => c == coordinates,
                                     _ => false,
                                 };
                                 let on_select =
@@ -58,7 +58,7 @@ impl Component for BoardImpl {
 
                                 html! {
                                     <td key={ format!("{}", j) }>
-                                        { Self::view_cell(cell, TileCellType::from((cell, board.is_end_game_cell(coordinates))), Selection::from((is_seleted, current_turn_tiles.contains(&coordinates))), on_select, on_drop) }
+                                        { Self::view_cell(cell, TileCellType::from((cell, board.is_end_game_cell(coordinates))), Selection::from((is_seleted, current_turn_placements.contains(&coordinates))), on_select, on_drop) }
                                     </td>
                                 }
                             }) }

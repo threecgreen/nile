@@ -109,7 +109,7 @@ mod player {
 
     use crate::{
         components::utils::{if_render, if_render_html},
-        state::{Action, SelectRackTile, SelectedTile},
+        state::{Action, SelectRackTile},
     };
 
     use super::*;
@@ -178,10 +178,7 @@ mod player {
             let current_turn_score_fwd = Self::sum_turn_scores(player.scores());
             let current_turn_score = player.current_turn_score();
             let mut score_fwd = 0;
-            let selected_tile_idx = match (is_current_turn, state.selected_tile.as_ref()) {
-                (true, Some(SelectedTile::Rack(idx))) => Some(idx.rack_idx),
-                _ => None,
-            };
+            let selected_tile_idx = state.nile.selected_rack_tile();
             let on_select = self.props.callback(move |_| {
                 if let Some(rack_idx) = selected_tile_idx {
                     Action::SelectRackTile(SelectRackTile { rack_idx })
