@@ -1,5 +1,6 @@
 use self::player::Player;
 use self::rack::TileRack;
+use nile::console;
 use yew::prelude::*;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
@@ -42,6 +43,7 @@ impl Component for PlayersImpl {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        console::debug("`Players` change");
         // TODO: narrow to used props
         update_if_changed(&mut self.props, props)
     }
@@ -162,8 +164,20 @@ mod player {
         }
 
         fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            self.props.state().nile.players()[self.id as usize]
-                != props.dispatch.state().nile.players()[self.id as usize]
+            console::debug("`Player` change");
+            let id = self.id as usize;
+            let current_state = self.props.state();
+            let new_state = props.dispatch.state();
+            if current_state.nile.players()[id] != new_state.nile.players()[id]
+                || current_state.nile.selected_tile() != new_state.nile.selected_tile()
+            {
+                self.props = props.dispatch;
+                self.id = props.id;
+                self.are_scores_expanded = props.are_scores_expanded;
+                true
+            } else {
+                false
+            }
         }
 
         fn view(&self) -> Html {
@@ -179,13 +193,9 @@ mod player {
             let current_turn_score = player.current_turn_score();
             let mut score_fwd = 0;
             let selected_tile_idx = state.nile.selected_rack_tile();
-            let on_select = self.props.callback(move |_| {
-                if let Some(rack_idx) = selected_tile_idx {
-                    Action::SelectRackTile(SelectRackTile { rack_idx })
-                } else {
-                    Action::None
-                }
-            });
+            let on_select = self
+                .props
+                .callback(move |rack_idx| Action::SelectRackTile(SelectRackTile { rack_idx }));
             html! {
                 // grid columns start at 1
                 <section style={ format!("grid-column: {}", id + 1) }>
@@ -263,7 +273,7 @@ mod rack {
         pub show_tiles: bool,
         #[prop_or_default]
         pub selected_tile_idx: Option<u8>,
-        pub on_select: Callback<()>,
+        pub on_select: Callback<u8>,
     }
 
     impl Component for TileRack {
@@ -274,7 +284,7 @@ mod rack {
             Self { props }
         }
 
-        fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
             false
         }
 
@@ -286,51 +296,54 @@ mod rack {
             let on_drag = Callback::from(move |e: DragEvent| {
                 e.prevent_default();
             });
-            let on_drag_start = {
-                let on_select = self.props.on_select.clone();
-                Callback::from(move |e: DragEvent| {
-                    e.prevent_default();
-                    on_select.emit(());
-                })
-            };
-            let on_touch_start = {
-                let on_select = self.props.on_select.clone();
-                Callback::from(move |e: TouchEvent| {
-                    e.prevent_default();
-                    on_select.emit(());
-                })
-            };
-            let on_click = {
-                let on_select = self.props.on_select.clone();
-                Callback::from(move |e: MouseEvent| {
-                    e.prevent_default();
-                    on_select.emit(());
-                })
-            };
             html! {
                 <table>
                     <tbody>
                         <tr>
-                            { for self.props.tiles.iter().enumerate().map(|(i, tile)| { html!{
-                                <td key={ format!("${:?} - ${}", tile, i) }>
-                                    <div draggable={ if self.props.show_tiles { "on" } else { "off" }  }
-                                        ondrag={ on_drag.clone() }
-                                        ondragstart={ on_drag_start.clone() }
-                                        ontouchstart={ on_touch_start.clone() }
-                                        onclick={ on_click.clone() }
-                                    >
-                                        { if self.props.show_tiles {
-                                            html! {
-                                                <RackTile tile={ tile.clone() } is_selected={ matches!(self.props.selected_tile_idx, Some(idx) if idx as usize == i) } />
-                                            }
-                                        } else {
-                                            html! {
-                                                <HiddenTile />
-                                            }
-                                        } }
-                                    </div>
-                                </td>
-                            } }) }
+                            { for self.props.tiles.iter().enumerate().map(|(i, tile)| {
+                                let i = i as u8;
+                                let on_drag_start = {
+                                    let on_select = self.props.on_select.clone();
+                                    Callback::from(move |e: DragEvent| {
+                                        e.prevent_default();
+                                        on_select.emit(i);
+                                    })
+                                };
+                                let on_touch_start = {
+                                    let on_select = self.props.on_select.clone();
+                                    Callback::from(move |e: TouchEvent| {
+                                        e.prevent_default();
+                                        on_select.emit(i);
+                                    })
+                                };
+                                let on_click = {
+                                    let on_select = self.props.on_select.clone();
+                                    Callback::from(move |e: MouseEvent| {
+                                        e.prevent_default();
+                                        on_select.emit(i);
+                                    })
+                                };
+                                html! {
+                                    <td key={ format!("${:?} - ${}", tile, i) }>
+                                        <div draggable={ if self.props.show_tiles { "on" } else { "off" }  }
+                                            ondrag={ on_drag.clone() }
+                                            ondragstart={ on_drag_start.clone() }
+                                            ontouchstart={ on_touch_start.clone() }
+                                            onclick={ on_click.clone() }
+                                        >
+                                            { if self.props.show_tiles {
+                                                html! {
+                                                    <RackTile tile={ tile.clone() } is_selected={ matches!(self.props.selected_tile_idx, Some(idx) if idx == i) } />
+                                                }
+                                            } else {
+                                                html! {
+                                                    <HiddenTile />
+                                                }
+                                            } }
+                                        </div>
+                                    </td>
+                                }
+                            }) }
                         </tr>
                         <tr class="align-right">
                             { for self.props.tiles.iter().enumerate().map(|(i, tile)| { html! {

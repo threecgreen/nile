@@ -204,3 +204,83 @@ table.scores td {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
+
+/* board */
+.board {
+    align-self: center;
+}
+.arrow {
+    color: royalblue;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    /* Fix vertical centering */
+    margin-bottom: 0.5rem;
+}
+.start {
+    color: royalblue;
+    text-transform: uppercase;
+    font-size: 1.2rem;
+}
+.outer {
+    display: flex;
+    align-items: center;
+    margin: auto;
+}
+/* Justify center cuts off board on mobile sizes */
+@media screen and (min-width: 768px) {
+    .outer {
+        justify-content: center;
+    }
+}
+
+/* modal */
+.modal {
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    /* Transparent black */
+    background-color: rgba(0, 0, 0, 0.4);
+}
+.modal-content {
+    background-color: #eeeeee;
+    margin: 15% auto;
+    padding: 2.5rem;
+    border: 1px solid #888;
+    width: 75%;
+    max-width: 40rem;
+}
+
+/* shortcut help */
+.shortcuts-help {
+    margin: 2rem;
+}
+.shortcuts-help td {
+    line-height: 130%;
+    padding-right: 0.5rem;
+}
+/* Right align first column */
+.shortcuts-help tr > td:first-of-type {
+    text-align: right;
+}
+.help-key {
+    background-color: rgb(243,243,243);
+    color: rgb(33,33,33);
+    margin-left: 2px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-radius: 3px;
+    border: solid 1px #ccc;
+    border-bottom-color: rgb(204, 204, 204);
+    border-bottom-color: #bbb;
+    box-shadow: inset 0 -1px 0 #bbb;
+    font-family: monospace;
+    font-size: 11px;
+}

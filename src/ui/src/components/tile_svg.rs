@@ -96,14 +96,15 @@ impl TileSvg {
     }
     fn left135(&self) -> Html {
         html! {
-            <SvgWrapper style={ Self::reflect_to_css(true) }>
+            <SvgWrapper style={ Self::reflect_to_css(false) }>
                 { self.tile135() }
             </SvgWrapper>
         }
     }
     fn right135(&self) -> Html {
         html! {
-            <SvgWrapper style={ Self::reflect_to_css(false) }>
+            // For 45, left is reflected, but for 135 right is
+            <SvgWrapper style={ Self::reflect_to_css(true) }>
                 { self.tile135() }
             </SvgWrapper>
         }

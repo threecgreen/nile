@@ -1,4 +1,4 @@
-use nile::{Coordinates, Engine, SelectedTile, TilePath};
+use nile::{console, Coordinates, Engine, SelectedTile, TilePath};
 use yewdux::prelude::{Reducer, ReducerStore};
 
 use crate::components::utils::update_if_changed;
@@ -10,6 +10,7 @@ pub struct State {
     pub modal: Option<Modal>,
 }
 
+#[derive(Debug)]
 pub enum Action {
     SelectRackTile(SelectRackTile),
     SelectBoardTile(Coordinates),
@@ -35,14 +36,14 @@ pub enum Modal {
     EndOfGame(String),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(u8)]
 pub enum Rotation {
     Clockwise,
     Counterclockwise,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SelectRackTile {
     pub rack_idx: u8,
 }
@@ -81,6 +82,7 @@ impl Reducer for State {
     }
 
     fn reduce(&mut self, action: Self::Action) -> yewdux::prelude::Changed {
+        console::info(&format!("Received action: {:?}", action));
         match action {
             Action::SelectRackTile(select_rack_tile) => self
                 .nile
@@ -156,6 +158,7 @@ impl State {
                     }
                 }) as usize
                     % nile::ROTATIONS.len()];
+                console::debug("rotating");
                 self.nile
                     .rotate_selected_tile(new_rotation)
                     .map_or_else(|msg| self.set_error(msg), |()| true)
@@ -163,6 +166,7 @@ impl State {
     }
 
     fn set_error(&mut self, msg: String) -> yewdux::prelude::Changed {
+        console::error(&msg);
         update_if_changed(&mut self.modal, Some(Modal::Error(msg)))
     }
 

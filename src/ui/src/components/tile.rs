@@ -26,7 +26,7 @@ pub mod rack_tile {
             Self { props }
         }
 
-        fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
             false
         }
 
@@ -89,7 +89,7 @@ pub mod tile_cell {
             Self { props }
         }
 
-        fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
             false
         }
 
@@ -181,9 +181,9 @@ pub mod tile_cell {
     const fn rotation_to_css(rotation: Rotation) -> &'static str {
         match rotation {
             Rotation::None => "",
-            Rotation::Clockwise90 => "rotation(90deg)",
-            Rotation::Clockwise180 => "rotation(180deg)",
-            Rotation::Clockwise270 => "rotation(270deg)",
+            Rotation::Clockwise90 => "transform: rotate(90deg)",
+            Rotation::Clockwise180 => "transform: rotate(180deg)",
+            Rotation::Clockwise270 => "transform: rotate(270deg)",
         }
     }
 }
@@ -206,11 +206,11 @@ pub mod empty_cell {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
             Self { props }
         }
 
-        fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
             false
         }
 
@@ -276,11 +276,11 @@ impl Component for HiddenTile {
     type Properties = ();
     type Message = ();
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
         Self {}
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
         false
     }
 
