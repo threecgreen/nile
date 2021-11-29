@@ -2,7 +2,6 @@ use std::collections::HashSet;
 
 use crate::ai::{Brute, CPUPlayer};
 use crate::board::{Board, TilePlacement};
-use crate::log;
 use crate::log::{Event, Log, TilePlacementEvent};
 use crate::path::{TilePath, TilePathType};
 use crate::player::{Player, TileArray};
@@ -11,10 +10,6 @@ use crate::tile::{Coordinates, Rotation, Tile, TileBox};
 
 pub type ActionResult = Result<(), String>;
 
-//  * "executor" and busines logic:
-//      * undo/redo
-//      * selected_tile
-//      * what invokes or executes the CPU players' moves
 /// Handles high-level game and UI logic. Executes CPU players' moves, handles undo/redo
 #[derive(Debug, Clone)]
 pub struct Engine {
@@ -214,6 +209,7 @@ impl Engine {
         self.nile.end_turn()?;
         self.log.end_turn();
         self.selected_tile = None;
+        self.take_cpu_turns_if_any();
         Ok(())
     }
 
@@ -221,11 +217,20 @@ impl Engine {
         self.nile.cant_play()?;
         self.log.end_turn();
         self.selected_tile = None;
+        self.take_cpu_turns_if_any();
         Ok(())
     }
 
+    fn take_cpu_turns_if_any(&mut self) {
+        while self.current_player().is_cpu() {
+            if self.take_cpu_turn().is_none() {
+                break;
+            }
+        }
+    }
+
     /// Process a CPU turn
-    pub fn take_cpu_turn(&mut self) -> Option<CPUTurnUpdate> {
+    fn take_cpu_turn(&mut self) -> Option<CPUTurnUpdate> {
         if self.nile.has_ended {
             return None;
         }
@@ -243,15 +248,15 @@ impl Engine {
             player.tiles(),
             &self.nile.board,
             player.total_score(),
-            self.nile.other_player_scores(),
+            self.other_player_scores(),
         );
         'list_of_moves: for tile_placement_events in lists_of_moves {
             for tpe in tile_placement_events.iter() {
                 if let Err(err) =
                     self.nile
-                        .place_tile(tpe.tile_path_type.clone(), tpe.coordinates, tpe.rotation)
+                        .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation)
                 {
-                    log(&format!(
+                    crate::console::warn(&format!(
                         "Failed to place a tile from CPU player: {:?}; TilePlacement: {:?}",
                         err, &tpe
                     ));
@@ -259,6 +264,10 @@ impl Engine {
                     // continue outer for loop
                     continue 'list_of_moves;
                 }
+                // Add to log in case there's a problem with the moves and everything needs to be
+                // undo
+                self.log
+                    .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation);
             }
             match self.end_turn() {
                 Ok(()) => {
@@ -272,7 +281,7 @@ impl Engine {
                     });
                 }
                 Err(e) => {
-                    log(&format!(
+                    crate::console::warn(&format!(
                         "Failed to end CPU player turn: {:?}; Placements: {:?}",
                         e, tile_placement_events,
                     ));
@@ -329,12 +338,24 @@ impl Engine {
         };
         Ok(())
     }
+
+    /// Get scores of players other than the current player
+    fn other_player_scores(&self) -> Vec<i16> {
+        self.nile
+            .players()
+            .iter()
+            .enumerate()
+            .filter_map(|(id, player)| {
+                if id == self.nile.current_turn() {
+                    None
+                } else {
+                    Some(player.total_score())
+                }
+            })
+            .collect()
+    }
 }
 
-// FIXME: distinguish between:
-//  * (strictly) game logic and state, i.e. nothing about UI
-//      * current_turn_placements
-//      * what gets invoked by the CPU players' moves invoke
 /// Holds all game state
 #[derive(Debug, Clone)]
 pub struct Nile {
@@ -492,7 +513,6 @@ impl Nile {
         player.add_score(score_change);
         assert!(self.current_turn_placements.remove(&old_coordinates));
         assert!(self.current_turn_placements.insert(new_coordinates));
-        // self.log.move_tile(old_coordinates, new_coordinates);
         Ok(())
     }
 
@@ -527,7 +547,6 @@ impl Nile {
         let _turn_score = player.end_turn(&mut self.tile_box);
         // let tiles = player.tiles().to_owned();
         self.advance_turn();
-        self.current_turn_placements.clear();
         // Reset count
         self.cant_play_count = 0;
 
@@ -541,6 +560,7 @@ impl Nile {
     fn advance_turn(&mut self) {
         self.current_turn = (self.current_turn + 1) % self.players.len();
         self.has_ended = self.has_ended || self.players[self.current_turn].rack_is_empty();
+        self.current_turn_placements.clear();
     }
 
     fn if_not_ended(&self) -> Result<(), String> {
@@ -549,21 +569,6 @@ impl Nile {
         } else {
             Ok(())
         }
-    }
-
-    /// Get scores of players other than the current player
-    fn other_player_scores(&self) -> Vec<i16> {
-        self.players
-            .iter()
-            .enumerate()
-            .filter_map(|(id, player)| {
-                if id == self.current_turn {
-                    None
-                } else {
-                    Some(player.total_score())
-                }
-            })
-            .collect()
     }
 }
 
