@@ -1,4 +1,4 @@
-use nile::{console, Coordinates, Engine, SelectedTile, TilePath};
+use nile::{console, Coordinates, Engine, Player, SelectedTile, TilePath, TilePathType};
 use yewdux::prelude::{Reducer, ReducerStore};
 
 use crate::components::utils::update_if_changed;
@@ -12,6 +12,7 @@ pub struct State {
 
 #[derive(Debug)]
 pub enum Action {
+    NewGame(NewGameOptions),
     SelectRackTile(SelectRackTile),
     SelectBoardTile(Coordinates),
     /// place a tile on the board. It will be moved from its previous location
@@ -24,16 +25,22 @@ pub enum Action {
     EndTurn,
     CantPlay,
     // CpuTurn,
-    SetError(String),
-    SetEndOfGame(String),
+    // SetError(String),
+    // SetEndOfGame(String),
     Dismiss,
-    None,
+    // None,
 }
 
 #[derive(Clone, PartialEq)]
 pub enum Modal {
     Error(String),
     EndOfGame(String),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct NewGameOptions {
+    pub player_names: Vec<String>,
+    pub cpu_player_count: u8,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -72,18 +79,35 @@ impl State {
             _ => false,
         }
     }
+
+    pub fn selected_is_universal(&self) -> bool {
+        self.nile
+            .selected_board_tile()
+            .and_then(|coordinates| self.nile.board().cell(coordinates))
+            .and_then(|cell| cell.tile())
+            .map_or(false, |c| {
+                matches!(c.tile_path_type(), TilePathType::Universal(_))
+            })
+    }
 }
 
 impl Reducer for State {
     type Action = Action;
 
     fn new() -> Self {
-        Self::new_game(vec!["default".to_owned()], 1)
+        Self::new_game(vec![String::default()], 1)
     }
 
     fn reduce(&mut self, action: Self::Action) -> yewdux::prelude::Changed {
         console::info(&format!("Received action: {:?}", action));
         match action {
+            Action::NewGame(NewGameOptions {
+                player_names,
+                cpu_player_count,
+            }) => {
+                self.nile = Engine::new(player_names, cpu_player_count).expect("nile engine");
+                true
+            }
             Action::SelectRackTile(select_rack_tile) => self
                 .nile
                 .select_rack_tile(select_rack_tile.rack_idx)
@@ -120,25 +144,17 @@ impl Reducer for State {
                 .redo()
                 .map(|_| true)
                 .unwrap_or_else(|e| self.set_error(e)),
-            Action::EndTurn => self
-                .nile
-                .end_turn()
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::CantPlay => self
-                .nile
-                .cant_play()
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
+            Action::EndTurn => self.end_turn(),
+            Action::CantPlay => self.cant_play(),
             // Action::CpuTurn => self
             //     .nile
             //     .take_cpu_turn()
             //     .map(|_| true)
             //     .unwrap_or_else(|e| self.set_error(e)),
-            Action::SetError(msg) => self.set_error(msg),
-            Action::SetEndOfGame(msg) => self.set_end_of_game(msg),
+            // Action::SetError(msg) => self.set_error(msg),
+            // Action::SetEndOfGame(msg) => self.set_end_of_game(msg),
             Action::Dismiss => self.dismiss(),
-            Action::None => false,
+            // Action::None => false,
         }
     }
 }
@@ -158,20 +174,66 @@ impl State {
                     }
                 }) as usize
                     % nile::ROTATIONS.len()];
-                console::debug("rotating");
                 self.nile
                     .rotate_selected_tile(new_rotation)
                     .map_or_else(|msg| self.set_error(msg), |()| true)
             })
     }
 
+    fn end_turn(&mut self) -> yewdux::prelude::Changed {
+        self.nile
+            .end_turn()
+            .map(|has_ended| {
+                if has_ended {
+                    self.set_end_of_game();
+                }
+                true
+            })
+            .unwrap_or_else(|e| self.set_error(e))
+    }
+
+    fn cant_play(&mut self) -> yewdux::prelude::Changed {
+        self.nile
+            .cant_play()
+            .map(|has_ended| {
+                if has_ended {
+                    self.set_end_of_game();
+                }
+                true
+            })
+            .unwrap_or_else(|e| self.set_error(e))
+    }
+
+    fn set_end_of_game(&mut self) -> yewdux::prelude::Changed {
+        let winning_score = self
+            .nile
+            .players()
+            .iter()
+            .fold(i16::MIN, |acc, p| i16::max(acc, p.total_score()));
+        let winners: Vec<&Player> = self
+            .nile
+            .players()
+            .iter()
+            .filter(|p| p.total_score() == winning_score)
+            .collect();
+        let msg = match winners.len() {
+            0 => unreachable!(),
+            1 => format!("{} has won", winners[0].name()),
+            _ => format!(
+                "{} tied",
+                winners
+                    .iter()
+                    .map(|p| p.name())
+                    .collect::<Vec<&str>>()
+                    .join(", ")
+            ),
+        };
+        update_if_changed(&mut self.modal, Some(Modal::EndOfGame(msg)))
+    }
+
     fn set_error(&mut self, msg: String) -> yewdux::prelude::Changed {
         console::error(&msg);
         update_if_changed(&mut self.modal, Some(Modal::Error(msg)))
-    }
-
-    fn set_end_of_game(&mut self, msg: String) -> yewdux::prelude::Changed {
-        update_if_changed(&mut self.modal, Some(Modal::EndOfGame(msg)))
     }
 
     fn dismiss(&mut self) -> yewdux::prelude::Changed {

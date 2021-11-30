@@ -135,7 +135,7 @@ impl Engine {
             }
             Some(SelectedTile::Board(old_coordinates)) => {
                 self.nile.move_tile(old_coordinates, coordinates)?;
-                self.selected_tile = Some(SelectedTile::Board(old_coordinates));
+                self.selected_tile = Some(SelectedTile::Board(coordinates));
                 self.log.move_tile(old_coordinates, coordinates);
                 Ok(())
             }
@@ -205,24 +205,24 @@ impl Engine {
         self.dispatch(event)
     }
 
-    pub fn end_turn(&mut self) -> ActionResult {
+    pub fn end_turn(&mut self) -> Result<bool, String> {
         self.nile.end_turn()?;
         self.log.end_turn();
         self.selected_tile = None;
         self.take_cpu_turns_if_any();
-        Ok(())
+        Ok(self.has_ended())
     }
 
-    pub fn cant_play(&mut self) -> ActionResult {
+    pub fn cant_play(&mut self) -> Result<bool, String> {
         self.nile.cant_play()?;
         self.log.end_turn();
         self.selected_tile = None;
         self.take_cpu_turns_if_any();
-        Ok(())
+        Ok(self.has_ended())
     }
 
     fn take_cpu_turns_if_any(&mut self) {
-        while self.current_player().is_cpu() {
+        while !self.has_ended() == self.current_player().is_cpu() {
             if self.take_cpu_turn().is_none() {
                 break;
             }
@@ -270,13 +270,13 @@ impl Engine {
                     .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation);
             }
             match self.end_turn() {
-                Ok(()) => {
+                Ok(has_ended) => {
                     return Some(CPUTurnUpdate {
                         placements: tile_placement_events,
                         player_id,
                         // FIXME: populate
                         turn_score: TurnScore::default(),
-                        game_has_ended: self.nile.has_ended,
+                        game_has_ended: has_ended,
                         tile_count: self.nile.tile_count(),
                     });
                 }
@@ -518,7 +518,7 @@ impl Nile {
 
     /// Called when the current player _claims_ they can't play any tiles. If successful, ends their
     /// turn
-    pub fn cant_play(&mut self) -> ActionResult {
+    pub fn cant_play(&mut self) -> Result<bool, String> {
         self.if_not_ended()?;
         if !self.current_turn_placements.is_empty() {
             return Err("Player has placed tiles this turn".to_owned());
@@ -531,11 +531,11 @@ impl Nile {
         self.cant_play_count += 1;
         self.has_ended = self.cant_play_count as usize == player_count;
         self.advance_turn();
-        Ok(())
+        Ok(self.has_ended)
     }
 
     /// Called when a human player ends their turn normally (they played at least one tile)
-    pub fn end_turn(&mut self) -> ActionResult {
+    pub fn end_turn(&mut self) -> Result<bool, String> {
         self.if_not_ended()?;
         if self.current_turn_placements.is_empty() {
             return Err("Can't end turn normally without placing at least one tile. Use can't play if there are no playable moves".to_owned());
@@ -550,7 +550,7 @@ impl Nile {
         // Reset count
         self.cant_play_count = 0;
 
-        Ok(())
+        Ok(self.has_ended)
     }
 
     fn tile_count(&self) -> usize {

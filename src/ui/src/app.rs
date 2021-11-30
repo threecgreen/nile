@@ -1,4 +1,6 @@
-use crate::components::{utils::update_if_changed, Button, Container, Footer, Game, Modal};
+use crate::components::{
+    utils::update_if_changed, Button, Container, Footer, Game, GameForm, Modal,
+};
 use yew::prelude::*;
 
 pub struct App {
@@ -11,6 +13,7 @@ pub struct App {
 }
 
 pub enum Msg {
+    AddPlayer,
     PlayerNameChange(PlayerNameChange),
     RemovePlayer,
     AddCpuPlayer,
@@ -22,8 +25,8 @@ pub enum Msg {
 }
 
 pub struct PlayerNameChange {
-    idx: usize,
-    name: String,
+    pub idx: usize,
+    pub name: String,
 }
 
 impl Component for App {
@@ -32,8 +35,7 @@ impl Component for App {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
-            // player_names: Vec::default(),
-            player_names: vec!["Player1".to_owned()],
+            player_names: vec![String::default()],
             has_confirmed: false,
             cpu_player_count: 1,
             game_number: 1,
@@ -44,6 +46,15 @@ impl Component for App {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
+            Msg::AddPlayer => {
+                let total_player_count = self.player_names.len() + self.cpu_player_count as usize;
+                if total_player_count < 4 {
+                    self.player_names.push(String::default());
+                    true
+                } else {
+                    false
+                }
+            }
             Msg::PlayerNameChange(PlayerNameChange { idx, name }) => {
                 if let Some(player_name) = self.player_names.get_mut(idx) {
                     *player_name = name;
@@ -119,9 +130,14 @@ impl App {
     }
 
     fn view_game_form(&self) -> Html {
+        let dispatch = self.link.callback(|action| action);
         html! {
             <>
                 <h2 class="center-text">{ "New game" }</h2>
+                <GameForm player_names={ self.player_names.clone() }
+                    cpu_player_count={ self.cpu_player_count }
+                    dispatch={ dispatch }
+                />
             </>
         }
     }
@@ -134,7 +150,7 @@ impl App {
             ("u", "undo"),
             ("r", "redo"),
             ("E", "end turn"),
-            ("C", "can't play"),
+            ("C", "can’t play"),
         ];
 
         if self.show_shortcuts_modal {

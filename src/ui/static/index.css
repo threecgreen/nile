@@ -181,7 +181,11 @@ button.expand-collapse {
     margin-right: auto;
 }
 table.scores {
-    padding-top: 1rem;
+    padding-top: 1.25rem;
+}
+table.scores.current {
+    color: inherit;
+    padding-top: 0;
 }
 table.scores td {
     min-width: 1rem;
@@ -283,4 +287,15 @@ table.scores td {
     box-shadow: inset 0 -1px 0 #bbb;
     font-family: monospace;
     font-size: 11px;
+}
+
+/* game form */
+.cpu-count {
+    margin: 1rem;
+}
+form.game-form label {
+    margin: 0.75rem;
+}
+form.game-form button {
+    margin: 0.25rem;
 }

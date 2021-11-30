@@ -27,7 +27,7 @@ impl Component for Footer {
                 <Container>
                     <div class="footer-flex">
                         <div>
-                        <p class="copyright">{ "© 2020 Carter Green" }</p>
+                        <p class="copyright">{ "© 2021 Carter Green" }</p>
                         </div>
                         <div>
                             <div class="logo">

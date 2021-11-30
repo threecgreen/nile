@@ -1,9 +1,7 @@
-use std::rc::Rc;
-
-use super::board::Board;
+use super::{board::Board, utils::update_if_changed};
 use crate::{
     components::{controls::Controls, modal::error::ErrorModal, player::Players},
-    state::{Action, GameStore, Rotation, SelectRackTile, State},
+    state::{Action, GameStore, NewGameOptions, Rotation, SelectRackTile},
 };
 
 use nile::console;
@@ -12,31 +10,43 @@ use yew::{
     services::{keyboard::KeyListenerHandle, KeyboardService},
     utils::document,
 };
-use yewdux::prelude::{Dispatch, Dispatcher};
+use yewdux::{
+    component::WithDispatch,
+    prelude::{DispatchProps, DispatchPropsMut, Dispatcher},
+};
 
-pub struct Game {
-    dispatch: Dispatch<GameStore>,
-    state: Rc<State>,
-    link: ComponentLink<Self>,
-    handle: KeyListenerHandle,
+pub struct GameImpl {
+    props: Props,
+    _handle: KeyListenerHandle,
 }
+pub type Game = WithDispatch<GameImpl>;
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct Props {
+    #[prop_or_default]
+    pub dispatch: DispatchProps<GameStore>,
     pub player_names: Vec<String>,
     pub cpu_player_count: u8,
 }
 
-pub enum Msg {
-    State(Rc<State>),
+impl DispatchPropsMut for Props {
+    type Store = GameStore;
+
+    fn dispatch(&mut self) -> &mut DispatchProps<Self::Store> {
+        &mut self.dispatch
+    }
 }
 
-impl Component for Game {
+impl Component for GameImpl {
     type Properties = Props;
-    type Message = Msg;
+    type Message = ();
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let dispatch = Dispatch::bridge_state(link.callback(Msg::State));
+    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        let dispatch = &props.dispatch;
+        dispatch.send(Action::NewGame(NewGameOptions {
+            player_names: props.player_names.clone(),
+            cpu_player_count: props.cpu_player_count,
+        }));
         let handle = {
             let rotate_selected = dispatch.callback(|r| Action::RotateSelectedTile(r));
             let remove_selected = dispatch.callback(|_| Action::RemoveSelectedTile);
@@ -82,23 +92,27 @@ impl Component for Game {
             )
         };
         Self {
-            dispatch,
-            state: Rc::new(State::new_game(props.player_names, props.cpu_player_count)),
-            link,
-            handle,
+            props,
+            _handle: handle,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        match msg {
-            Msg::State(state) => self.state = state,
-        };
-        true
+    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+        false
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.state = Rc::new(State::new_game(props.player_names, props.cpu_player_count));
-        true
+        let player_names = props.player_names.clone();
+        let cpu_player_count = props.cpu_player_count;
+        if update_if_changed(&mut self.props, props) {
+            // self.props.dispatch.send(Action::NewGame(NewGameOptions {
+            //     player_names,
+            //     cpu_player_count,
+            // }));
+            true
+        } else {
+            false
+        }
     }
 
     fn view(&self) -> Html {
@@ -117,9 +131,11 @@ impl Component for Game {
     }
 }
 
-impl Game {
+impl GameImpl {
     fn view_error_modal(&self) -> Html {
-        self.state
+        let dispatch = &self.props.dispatch;
+        dispatch
+            .state()
             .modal
             .as_ref()
             .map(|modal| match modal {
@@ -127,7 +143,7 @@ impl Game {
                 crate::state::Modal::Error(msg) => msg,
             })
             .map_or(html! {}, |msg| {
-                let dismiss = self.dispatch.callback(|_| Action::Dismiss);
+                let dismiss = dispatch.callback(|_| Action::Dismiss);
                 html! {
                     <ErrorModal msg={ msg.clone() }
                         dismiss={ dismiss }

@@ -1,6 +1,6 @@
 use self::player::Player;
 use self::rack::TileRack;
-use nile::console;
+// use nile::console;
 use yew::prelude::*;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
@@ -43,7 +43,7 @@ impl Component for PlayersImpl {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        console::debug("`Players` change");
+        // console::debug("`Players` change");
         // TODO: narrow to used props
         update_if_changed(&mut self.props, props)
     }
@@ -117,9 +117,7 @@ mod player {
     use super::*;
 
     pub struct PlayerImpl {
-        props: DispatchProps<GameStore>,
-        id: u8,
-        are_scores_expanded: bool,
+        props: Props,
     }
 
     #[derive(Properties, Clone, PartialEq)]
@@ -144,19 +142,8 @@ mod player {
         type Properties = Props;
         type Message = ();
 
-        fn create(
-            Self::Properties {
-                dispatch,
-                id,
-                are_scores_expanded,
-            }: Self::Properties,
-            _link: ComponentLink<Self>,
-        ) -> Self {
-            Self {
-                props: dispatch,
-                id,
-                are_scores_expanded,
-            }
+        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+            Self { props }
         }
 
         fn update(&mut self, _msg: Self::Message) -> ShouldRender {
@@ -164,41 +151,24 @@ mod player {
         }
 
         fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            console::debug("`Player` change");
-            let id = self.id as usize;
-            let current_state = self.props.state();
-            let new_state = props.dispatch.state();
-            if current_state.nile.players()[id] != new_state.nile.players()[id]
-                || current_state.nile.selected_tile() != new_state.nile.selected_tile()
-            {
-                self.props = props.dispatch;
-                self.id = props.id;
-                self.are_scores_expanded = props.are_scores_expanded;
-                true
-            } else {
-                false
-            }
+            update_if_changed(&mut self.props, props)
         }
 
         fn view(&self) -> Html {
-            let Self {
-                props,
-                id,
-                are_scores_expanded,
-            } = self;
-            let state = props.state();
-            let is_current_turn = state.nile.current_turn() == *id as usize;
-            let player = &state.nile.players()[*id as usize];
+            let state = self.props.dispatch.state();
+            let is_current_turn = state.nile.current_turn() == self.props.id as usize;
+            let player = &state.nile.players()[self.props.id as usize];
             let current_turn_score_fwd = Self::sum_turn_scores(player.scores());
             let current_turn_score = player.current_turn_score();
             let mut score_fwd = 0;
             let selected_tile_idx = state.nile.selected_rack_tile();
             let on_select = self
                 .props
+                .dispatch
                 .callback(move |rack_idx| Action::SelectRackTile(SelectRackTile { rack_idx }));
             html! {
                 // grid columns start at 1
-                <section style={ format!("grid-column: {}", id + 1) }>
+                <section style={ format!("grid-column: {}", self.props.id + 1) }>
                     <h2 class={ if is_current_turn { "current" } else { "other"} }>
                         { player.name() }
                     </h2>
@@ -207,7 +177,7 @@ mod player {
                         selected_tile_idx={ selected_tile_idx }
                         on_select={ on_select }
                     />
-                    <table class="scores">
+                    <table class={ if is_current_turn { "scores current"} else { "scores"} }>
                         <thead>
                             <tr>
                                 <th>{ "Score Fwd" }</th>
@@ -217,13 +187,13 @@ mod player {
                             </tr>
                         </thead>
                         <tbody>
-                            { if_render_html(*are_scores_expanded, player.scores().iter().enumerate().map(|(i, score)| {
+                            { if_render_html(self.props.are_scores_expanded, player.scores().iter().enumerate().map(|(i, score)| {
                                 let row_html = html! {
                                     <tr key={ i }>
                                         <td>{ score_fwd }</td>
                                         <td>{ score.add }</td>
                                         <td>{ score.sub }</td>
-                                        <td>{ score.add + score.sub }</td>
+                                        <td>{ score.add - score.sub }</td>
                                     </tr>
                                 };
                                 score_fwd = score_fwd + score.add - score.sub;
@@ -238,7 +208,6 @@ mod player {
                                 <td>{ if_render(is_current_turn, current_turn_score.sub) }</td>
                                 <td>{ if_render(is_current_turn, current_turn_score.add - current_turn_score.sub) }</td>
                             </tr>
-                            // FIXME: add current total score
                         </tbody>
                     </table>
                 </section>
@@ -248,7 +217,7 @@ mod player {
 
     impl PlayerImpl {
         fn sum_turn_scores(turn_scores: &Vec<TurnScore>) -> i16 {
-            turn_scores.iter().fold(0, |acc, ts| acc + ts.add + ts.sub)
+            turn_scores.iter().fold(0, |acc, ts| acc + ts.add - ts.sub)
         }
     }
 }

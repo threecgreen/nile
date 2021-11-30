@@ -1,3 +1,4 @@
+use nile::{SelectedTile, Tile, TilePath, TilePathType, TilePlacement, TILE_PATHS};
 use yew::prelude::*;
 use yewdux::{
     component::WithDispatch,
@@ -8,6 +9,7 @@ use crate::{
     components::{
         button::Button,
         carbon_icon::{CarbonIcon, Size},
+        tile::rack_tile::RackTile,
     },
     state::{Action, GameStore, Rotation},
 };
@@ -16,28 +18,51 @@ use super::utils::update_if_changed;
 
 pub struct ControlsImpl {
     props: DispatchProps<GameStore>,
+    link: ComponentLink<Self>,
+    is_tile_path_selector_open: bool,
 }
 pub type Controls = WithDispatch<ControlsImpl>;
+pub enum Msg {
+    SetIsTilePathSelectorOpen(bool),
+}
 
 impl Component for ControlsImpl {
     type Properties = DispatchProps<GameStore>;
-    type Message = ();
+    type Message = Msg;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        Self {
+            props,
+            link,
+            is_tile_path_selector_open: false,
+        }
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::SetIsTilePathSelectorOpen(is_tile_path_selector_open) => update_if_changed(
+                &mut self.is_tile_path_selector_open,
+                is_tile_path_selector_open,
+            ),
+        }
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         // TODO: narrow to just used props
-        update_if_changed(&mut self.props, props)
+
+        if update_if_changed(&mut self.props, props) {
+            if !self.props.state().selected_is_universal() {
+                self.is_tile_path_selector_open = false;
+            }
+            true
+        } else {
+            false
+        }
     }
 
     fn view(&self) -> Html {
         let state = self.props.state();
+        let selected_is_universal = state.selected_is_universal();
         let on_rotate_counterclockwise = self
             .props
             .callback_once(|_| Action::RotateSelectedTile(Rotation::Counterclockwise));
@@ -49,6 +74,11 @@ impl Component for ControlsImpl {
         let on_redo = self.props.callback(|_| Action::Redo);
         let on_end_turn = self.props.callback(|_| Action::EndTurn);
         let on_cant_play = self.props.callback(|_| Action::CantPlay);
+        let on_click_dropdown = {
+            let is_tile_path_selector_open = self.is_tile_path_selector_open;
+            self.link
+                .callback(move |_| Msg::SetIsTilePathSelectorOpen(!is_tile_path_selector_open))
+        };
         html! {
             <div class="controls">
                 <Button is_enabled={ state.has_selected_board_tile() }
@@ -72,7 +102,16 @@ impl Component for ControlsImpl {
                 >
                     <CarbonIcon name="trash_can" size={ Size::S24 } />
                 </Button>
-
+                <div class={ if selected_is_universal { "dropdown" } else { "dropdown disabled" } }>
+                    <Button aria_label="Select tile path for universal tile"
+                        class="dropdown"
+                        is_enabled={ selected_is_universal }
+                        on_click={ on_click_dropdown }
+                    >
+                        { "Tile Path " }<CarbonIcon name="down_to_buttom" size={ Size::S24 } />
+                    </Button>
+                    { self.view_dropdown() }
+                </div>
                 <Button is_enabled={ state.can_undo() }
                     on_click={ on_undo }
                     title="Undo"
@@ -104,6 +143,32 @@ impl Component for ControlsImpl {
                     { "Can’t play" }
                 </Button>
             </div>
+        }
+    }
+}
+
+impl ControlsImpl {
+    fn view_dropdown(&self) -> Html {
+        if self.is_tile_path_selector_open {
+            html! {
+                <div class="dropdown-content">
+                    { for TILE_PATHS.map(|tp| self.view_tile_path_selection(tp)) }
+                </div>
+            }
+        } else {
+            html! {}
+        }
+    }
+
+    fn view_tile_path_selection(&self, tile_path: TilePath) -> Html {
+        let on_click = self.props.callback(move |e: MouseEvent| {
+            e.prevent_default();
+            Action::UpdateSelectedUniversalPath(tile_path)
+        });
+        html! {
+            <a onclick={ on_click }>
+                <RackTile tile={ Tile::from(tile_path) } is_selected={ false } />
+            </a>
         }
     }
 }
