@@ -221,8 +221,6 @@ name = "nile-ui"
 version = "0.1.0"
 dependencies = [
  "nile",
- "wasm-bindgen",
- "wasm-bindgen-test",
  "yew",
  "yewdux",
 ]

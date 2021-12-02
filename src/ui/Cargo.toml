@@ -12,10 +12,6 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2.68"
 nile = { path = "../core" }
 yew = "0.18.0"
 yewdux = "0.6.2"
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3.18"
