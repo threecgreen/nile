@@ -72,7 +72,7 @@ impl Component for PlayersImpl {
                     }) } }
                 </div>
                 <Button class="expand-collapse"
-                    is_enabled={ players[0].scores().len() > 0 }
+                    is_enabled={ !players[0].scores().is_empty() }
                     title={ if self.are_scores_expanded { "Collapse scores" } else { "Expand scores" } }
                     on_click={ on_click }
                 >
@@ -216,7 +216,7 @@ mod player {
     }
 
     impl PlayerImpl {
-        fn sum_turn_scores(turn_scores: &Vec<TurnScore>) -> i16 {
+        fn sum_turn_scores(turn_scores: &[TurnScore]) -> i16 {
             turn_scores.iter().fold(0, |acc, ts| acc + ts.add - ts.sub)
         }
     }
@@ -302,7 +302,7 @@ mod rack {
                                         >
                                             { if self.props.show_tiles {
                                                 html! {
-                                                    <RackTile tile={ tile.clone() } is_selected={ matches!(self.props.selected_tile_idx, Some(idx) if idx == i) } />
+                                                    <RackTile tile={ *tile } is_selected={ matches!(self.props.selected_tile_idx, Some(idx) if idx == i) } />
                                                 }
                                             } else {
                                                 html! {

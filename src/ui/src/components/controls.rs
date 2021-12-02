@@ -1,4 +1,4 @@
-use nile::{SelectedTile, Tile, TilePath, TilePathType, TilePlacement, TILE_PATHS};
+use nile::{Tile, TilePath, TILE_PATHS};
 use yew::prelude::*;
 use yewdux::{
     component::WithDispatch,

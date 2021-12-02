@@ -40,7 +40,7 @@ impl Component for GameForm {
     fn view(&self) -> Html {
         let total_player_count =
             self.props.player_names.len() + self.props.cpu_player_count as usize;
-        let can_start = total_player_count >= 2 && total_player_count <= 4;
+        let can_start = (2..=4).contains(&total_player_count);
         let on_add_player = {
             let dispath = self.props.dispatch.clone();
             Callback::from(move |_| dispath.emit(crate::app::Msg::AddPlayer))

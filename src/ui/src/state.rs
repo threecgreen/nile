@@ -74,10 +74,7 @@ impl State {
     }
 
     pub fn has_selected_board_tile(&self) -> bool {
-        match self.nile.selected_tile() {
-            Some(SelectedTile::Board(_)) => true,
-            _ => false,
-        }
+        matches!(self.nile.selected_tile(), Some(SelectedTile::Board(_)))
     }
 
     pub fn selected_is_universal(&self) -> bool {

@@ -48,7 +48,7 @@ impl Component for GameImpl {
             cpu_player_count: props.cpu_player_count,
         }));
         let handle = {
-            let rotate_selected = dispatch.callback(|r| Action::RotateSelectedTile(r));
+            let rotate_selected = dispatch.callback(Action::RotateSelectedTile);
             let remove_selected = dispatch.callback(|_| Action::RemoveSelectedTile);
             let undo = dispatch.callback(|_| Action::Undo);
             let redo = dispatch.callback(|_| Action::Redo);
@@ -79,7 +79,7 @@ impl Component for GameImpl {
                                 .key()
                                 .as_str()
                                 .chars()
-                                .nth(0)
+                                .next()
                                 .and_then(|c| c.to_digit(10))
                             {
                                 let idx = (num - 1) as u8;
@@ -102,17 +102,7 @@ impl Component for GameImpl {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        let player_names = props.player_names.clone();
-        let cpu_player_count = props.cpu_player_count;
-        if update_if_changed(&mut self.props, props) {
-            // self.props.dispatch.send(Action::NewGame(NewGameOptions {
-            //     player_names,
-            //     cpu_player_count,
-            // }));
-            true
-        } else {
-            false
-        }
+        update_if_changed(&mut self.props, props)
     }
 
     fn view(&self) -> Html {

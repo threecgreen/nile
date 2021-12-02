@@ -99,7 +99,7 @@ impl Brute {
                     let placement = TilePlacementEvent {
                         coordinates: next_coordinates,
                         rotation: *rotation,
-                        tile_path_type: tile_path_type.clone(),
+                        tile_path_type,
                     };
                     if let Ok((next_coordinates, next_offset)) =
                         eval_placement((last_coordinates, last_offset), &placement)

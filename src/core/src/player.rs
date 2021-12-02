@@ -104,15 +104,6 @@ impl Player {
         self.tile_rack.push(tile);
     }
 
-    pub(crate) fn return_tile_to_idx(&mut self, tile: Tile, idx: u8) {
-        let idx = idx as usize;
-        if idx >= self.tile_rack.len() {
-            self.return_tile(tile);
-        } else {
-            self.tile_rack.insert(idx, tile);
-        }
-    }
-
     pub fn name(&self) -> &str {
         &self.name
     }

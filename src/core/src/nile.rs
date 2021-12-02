@@ -215,14 +215,14 @@ impl Engine {
 
     pub fn cant_play(&mut self) -> Result<bool, String> {
         self.nile.cant_play()?;
-        self.log.end_turn();
+        self.log.cant_play();
         self.selected_tile = None;
         self.take_cpu_turns_if_any();
         Ok(self.has_ended())
     }
 
     fn take_cpu_turns_if_any(&mut self) {
-        while !self.has_ended() == self.current_player().is_cpu() {
+        while !self.has_ended() && self.current_player().is_cpu() {
             if self.take_cpu_turn().is_none() {
                 break;
             }
@@ -386,7 +386,7 @@ pub enum SelectedTile {
 impl Nile {
     pub fn new(player_names: Vec<String>, cpu_player_count: u8) -> Result<Self, String> {
         let player_count = player_names.len() + cpu_player_count as usize;
-        if player_count < 2 || player_count > 4 {
+        if !(2..=4).contains(&player_count) {
             Err("Nile is a game for 2-4 players".to_owned())
         } else {
             let mut tile_box = TileBox::default();
@@ -447,10 +447,7 @@ impl Nile {
             .ok_or_else(|| format!("Player doesn't have a {:?}", tile))?;
         let event_score = self
             .board
-            .place_tile(
-                coordinates,
-                TilePlacement::new(tile_path_type.clone(), rotation),
-            )
+            .place_tile(coordinates, TilePlacement::new(tile_path_type, rotation))
             .map_err(|e| {
                 // Player's tile rack should be unchanged
                 player.return_tile(tile);
