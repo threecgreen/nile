@@ -49,12 +49,8 @@ impl Component for BoardImpl {
                                     Some(c) => c == coordinates,
                                     _ => false,
                                 };
-                                let on_select =
-                                        self.props.callback(move |_| Action::SelectBoardTile(coordinates))
-                                ;
-                                let on_drop =
-                                        self.props.callback(move |_| Action::PlaceTile(coordinates))
-                                ;
+                                let on_select = self.props.callback(move |_| Action::SelectBoardTile(coordinates));
+                                let on_drop = self.props.callback(move |_| Action::PlaceTile(coordinates));
 
                                 html! {
                                     <td key={ format!("{}", j) }>
