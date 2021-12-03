@@ -149,7 +149,7 @@ impl App {
     }
 
     fn view_shortcuts_help_modal(&self) -> Html {
-        const SHORTCUT_BINDINGS: [(&str, &str); 7] = [
+        const SHORTCUT_BINDINGS: [(&str, &str); 8] = [
             ("q", "rotate counter-clockwise"),
             ("e", "rotate clockwise"),
             ("x", "remove tile"),
@@ -157,6 +157,7 @@ impl App {
             ("r", "redo"),
             ("E", "end turn"),
             ("C", "can’t play"),
+            ("ESC", "dismiss modal"),
         ];
 
         if self.show_shortcuts_modal {

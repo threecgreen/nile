@@ -33,7 +33,7 @@ pub struct Coordinates(pub i8, pub i8);
 
 impl fmt::Display for Coordinates {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "row {}, column {}", self.0, self.0)
+        write!(f, "row {}, column {}", self.0, self.1)
     }
 }
 
