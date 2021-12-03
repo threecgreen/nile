@@ -22,6 +22,7 @@ impl Component for Footer {
     }
 
     fn view(&self) -> Html {
+        const VERSION: &str = env!("CARGO_PKG_VERSION");
         html! {
             <div class="footer-background">
                 <Container>
@@ -35,9 +36,9 @@ impl Component for Footer {
                             </div>
                         </div>
                         <div>
-                    // <p className={ styles.version }>
-                    //     { `Version ${VERSION}-${GIT_SHA}` }
-                    // </p>
+                        <p class="version">
+                            { format!("Version: {}", VERSION) }
+                        </p>
                         </div>
                     </div>
                 </Container>
