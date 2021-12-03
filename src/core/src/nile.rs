@@ -19,6 +19,8 @@ pub struct Engine {
     selected_tile: Option<SelectedTile>,
     /// event log for undoing and redoing
     log: Log,
+    // TODO: add Optional error cell coordinates to visually indicate to player which cell(s)
+    // caused a problem
 }
 
 impl Engine {
