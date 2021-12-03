@@ -42,7 +42,8 @@ impl Component for BoardImpl {
                 html! {
                     <tr key={ i }>
                         { for
-                            (0..BOARD_DIM as i8).map(|j| {
+                            // Extra column for end of game tiles
+                            (0..=BOARD_DIM as i8).map(|j| {
                                 let coordinates = Coordinates(i, j);
                                 let cell = board.cell(coordinates).unwrap();
                                 let is_seleted = match selection {
