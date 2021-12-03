@@ -1,3 +1,4 @@
+use crate::error::{self, CellError, Error};
 use crate::log::TilePlacementEvent;
 use crate::path::{self, eval_placement, Offset, TilePath, TilePathType};
 use crate::score::TurnScore;
@@ -222,11 +223,17 @@ impl Board {
         &mut self,
         coordinates: Coordinates,
         tile_placement: TilePlacement,
-    ) -> Result<TurnScore, String> {
+    ) -> Result<TurnScore, CellError> {
         match self.get_mut_cell(coordinates) {
             Some(cell) if cell.is_empty() => Ok(cell.set_tile(tile_placement)),
-            Some(_) => Err("There's already a tile there".to_owned()),
-            None => Err("Invalid coordinates".to_owned()),
+            Some(_) => Err(CellError::new(
+                coordinates,
+                "There's already a tile there".to_owned(),
+            )),
+            None => Err(CellError::new(
+                coordinates,
+                "Invalid coordinates".to_owned(),
+            )),
         }
     }
 
@@ -234,15 +241,15 @@ impl Board {
         &mut self,
         coordinates: Coordinates,
         rotation: Rotation,
-    ) -> Result<(), String> {
+    ) -> Result<(), CellError> {
         let cell = self
             .get_mut_cell(coordinates)
-            .ok_or_else(|| "Invalid coordinates".to_owned())?;
+            .ok_or_else(|| CellError::new(coordinates, "Invalid coordinates".to_owned()))?;
         if let Some(ref mut tile) = cell.tile {
             tile.rotation = rotation;
             Ok(())
         } else {
-            Err("Cell is empty".to_owned())
+            Err(CellError::new(coordinates, "Cell is empty".to_owned()))
         }
     }
 
@@ -258,10 +265,12 @@ impl Board {
         &mut self,
         coordinates: Coordinates,
         tile_path: TilePath,
-    ) -> Result<TilePath, String> {
+    ) -> error::Result<TilePath> {
         match self.get_mut_cell(coordinates) {
-            Some(cell) => cell.update_universal_path(tile_path),
-            None => Err("Invalid coordinates".to_owned()),
+            Some(cell) => cell
+                .update_universal_path(tile_path)
+                .map_err(|msg| Error::cell(coordinates, msg)),
+            None => Err(Error::cell(coordinates, "Invalid coordinates".to_owned())),
         }
     }
 
@@ -269,10 +278,14 @@ impl Board {
         &mut self,
         old_coordinates: Coordinates,
         new_coordinates: Coordinates,
-    ) -> Result<TurnScore, String> {
-        let (tile_placement, removal_score) = self
-            .remove_tile(old_coordinates)
-            .ok_or_else(|| "Can't move tile when there's no tile at old coordinates".to_owned())?;
+    ) -> Result<TurnScore, CellError> {
+        let (tile_placement, removal_score) =
+            self.remove_tile(old_coordinates).ok_or_else(|| {
+                CellError::new(
+                    old_coordinates,
+                    "Can't move tile when there's no tile at old coordinates".to_owned(),
+                )
+            })?;
         let placement_score = self
             .place_tile(new_coordinates, tile_placement.clone())
             .map_err(|e| {
@@ -305,16 +318,22 @@ impl Board {
     pub fn validate_turns_moves(
         &mut self,
         mut turn_coordinates: HashSet<Coordinates>,
-    ) -> Result<bool, String> {
+    ) -> crate::error::Result<bool> {
         let mut last_placement = self.last_placement;
         while !turn_coordinates.is_empty() {
             let coordinates = last_placement.0 + last_placement.1;
-            let cell = self
-                .cell(coordinates)
-                .ok_or_else(|| format!("Invalid coordinates {:?}", coordinates))?;
-            let tile = cell
-                .tile()
-                .ok_or_else(|| format!("Non-contiguous path. No tile at {:?}", coordinates))?;
+            let cell = self.cell(coordinates).ok_or_else(|| {
+                Error::cell(
+                    coordinates,
+                    format!("Invalid coordinates {:?}", coordinates),
+                )
+            })?;
+            let tile = cell.tile().ok_or_else(|| {
+                Error::cell(
+                    coordinates,
+                    format!("Non-contiguous path. No tile at {:?}", coordinates),
+                )
+            })?;
             last_placement = eval_placement(
                 last_placement,
                 &TilePlacementEvent {
@@ -322,18 +341,27 @@ impl Board {
                     rotation: tile.rotation,
                     coordinates,
                 },
-            )?;
+            )
+            .map_err(Error::Cell)?;
             self.no_crossover(last_placement.0, last_placement.1)?;
             if !turn_coordinates.remove(&last_placement.0) {
-                return Err("Can't reuse a tile from another turn".to_owned());
+                return Err(Error::cell(
+                    last_placement.0,
+                    "Can't reuse a tile from another turn".to_owned(),
+                ));
             }
         }
         // Check last tile doesn't end in another tile
         if self.has_tile(last_placement.0 + last_placement.1) {
-            return Err(format!(
+            let mut err_coordinates = HashSet::new();
+            err_coordinates.insert(last_placement.0);
+            err_coordinates.insert(last_placement.0 + last_placement.1);
+            return Err(Error::cells(
+                err_coordinates,
+                format!(
                 "Can't play a tile at {:?} because it dead-ends into the rest of the river at {:?}",
-                last_placement.0 + last_placement.1,
                 last_placement.0,
+                last_placement.0 + last_placement.1),
             ));
         }
         // Check if multiple tiles in end of game area
@@ -343,7 +371,7 @@ impl Board {
             .filter(|c| !c.is_empty())
             .count();
         // Check this turns doesn't leave the river encircled
-        self.no_encircles(last_placement)?;
+        self.no_encircles(last_placement).map_err(Error::Cell)?;
         let has_ended = Self::validate_end_of_game_cells(end_of_game_cell_count, last_placement)?;
         self.last_placement = last_placement;
         Ok(has_ended)
@@ -358,19 +386,25 @@ impl Board {
     pub fn validate_end_of_game_cells(
         end_of_game_cell_count: usize,
         last_placement: (Coordinates, Offset),
-    ) -> Result<bool, String> {
-        let (Coordinates(row, column), offset) = last_placement;
+    ) -> crate::error::Result<bool> {
+        let (Coordinates(_row, column), offset) = last_placement;
         match end_of_game_cell_count {
             1 if offset == Offset(0, 1) && column as usize == BOARD_DIM => Ok(true),
-            1 if column as usize == BOARD_DIM => Err(format!(
-                "Tile in end-of-game column at {:?} must align with the dot",
-                Coordinates(row, column),
+            1 if column as usize == BOARD_DIM => Err(Error::cell(
+                last_placement.0,
+                format!(
+                    "Tile in end-of-game column at {:?} must align with the dot",
+                    last_placement.0
+                ),
             )),
-            1 => Err(
+            1 => Err(Error::cell(
+                last_placement.0,
                 "Tile placed in end-of-game column must be the last tile of the river".to_owned(),
-            ),
+            )),
             0 => Ok(false),
-            _ => Err("Can't play more than one tile in the end-of-game column".to_owned()),
+            _ => Err(Error::Msg(
+                "Can't play more than one tile in the end-of-game column".to_owned(),
+            )),
         }
     }
 
@@ -384,7 +418,11 @@ impl Board {
     ///  | X
     ///  |/ \
     /// ```
-    pub fn no_crossover(&self, coordinates: Coordinates, offset: Offset) -> Result<(), String> {
+    pub fn no_crossover(
+        &self,
+        coordinates: Coordinates,
+        offset: Offset,
+    ) -> crate::error::Result<()> {
         if !offset.is_diagonal() {
             return Ok(());
         }
@@ -403,12 +441,11 @@ impl Board {
                     .into_iter()
                     .any(|o| coordinates2 + o == coordinates1)
             {
-                return Err(format!(
-                    "The river cannot cross over existing path between {:?} and {:?}. Invalid tile placement at {:?}",
-                    coordinates1,
-                    coordinates2,
-                    coordinates
-                ));
+                let mut err_coordinates = HashSet::new();
+                err_coordinates.insert(coordinates);
+                err_coordinates.insert(coordinates1);
+                err_coordinates.insert(coordinates2);
+                return Err(Error::cells(err_coordinates, format!("The river cannot cross over existing path between {:?} and {:?}. Invalid tile placement at {:?}", coordinates1, coordinates2, coordinates)));
             }
         }
         Ok(())
@@ -438,7 +475,7 @@ impl Board {
             .collect()
     }
 
-    fn no_encircles(&self, last_placement: (Coordinates, Offset)) -> Result<(), String> {
+    fn no_encircles(&self, last_placement: (Coordinates, Offset)) -> Result<(), CellError> {
         let (last_coordinates, _) = last_placement;
         if self.is_end_game_cell(last_coordinates) {
             return Ok(());
@@ -451,7 +488,7 @@ impl Board {
         &self,
         last_placement: (Coordinates, Offset),
         visited: &mut HashSet<Coordinates>,
-    ) -> Result<(), String> {
+    ) -> Result<(), CellError> {
         let (last_coordinates, last_offset) = last_placement;
         let coordinates = last_coordinates + last_offset;
         if self.is_end_game_cell(coordinates) {
@@ -461,9 +498,12 @@ impl Board {
         let mut copy = self.clone();
         copy.last_placement = last_placement;
         if copy.cell(coordinates).is_none() {
-            return Err(format!(
-                "Invalid path leading to coordinates: {:?} that are off the board",
-                coordinates
+            return Err(CellError::new(
+                coordinates,
+                format!(
+                    "Invalid path leading to coordinates: {:?} that are off the board",
+                    coordinates
+                ),
             ));
         }
         let open_moves = copy.open_moves();
@@ -483,7 +523,7 @@ impl Board {
                 }
             }
         }
-        Err(format!("Encircled path. No paths leading to the end of game column from {:?} with open moves {:?}", coordinates, open_moves))
+        Err(CellError::new(coordinates, format!("Encircled path. No paths leading to the end of game column from {:?} with open moves {:?}", coordinates, open_moves)))
     }
 }
 
@@ -673,7 +713,7 @@ mod test {
             .unwrap();
         let coordinates_set = HashSet::from_iter(coordinates.iter().cloned());
         let res = target.validate_turns_moves(coordinates_set);
-        assert!(matches!(res, Err(msg) if msg.contains("cross over")));
+        assert!(matches!(res, Err(Error::Cell(err)) if err.msg.contains("cross over")));
     }
 
     #[test]

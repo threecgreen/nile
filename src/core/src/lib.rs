@@ -1,6 +1,7 @@
 mod ai;
 mod board;
 pub mod console;
+mod error;
 mod log;
 mod nile;
 mod path;

@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use crate::ai::{Brute, CPUPlayer};
 use crate::board::{Board, TilePlacement};
+use crate::error::{self, Error};
 use crate::log::{Event, Log};
 use crate::path::{TilePath, TilePathType};
 use crate::player::Player;
@@ -19,8 +20,8 @@ pub struct Engine {
     selected_tile: Option<SelectedTile>,
     /// event log for undoing and redoing
     log: Log,
-    // TODO: add Optional error cell coordinates to visually indicate to player which cell(s)
-    // caused a problem
+    /// coordinates of a cell on the board that caused an error
+    error_cells: Option<HashSet<Coordinates>>,
 }
 
 impl Engine {
@@ -30,6 +31,7 @@ impl Engine {
             nile: Rc::new(nile),
             selected_tile: None,
             log: Log::new(),
+            error_cells: None,
         })
     }
 
@@ -91,6 +93,10 @@ impl Engine {
         }
     }
 
+    pub fn error_cells(&self) -> Option<&HashSet<Coordinates>> {
+        self.error_cells.as_ref()
+    }
+
     pub fn select_rack_tile(&mut self, rack_idx: u8) -> ActionResult {
         if self
             .current_player()
@@ -133,14 +139,17 @@ impl Engine {
                     .ok_or_else(|| format!("Invalid selected tile index: {}", idx))?;
                 let tile_path_type = TilePathType::from(*tile);
                 let rotation = Rotation::default();
-                self.mut_nile()
-                    .place_tile(tile_path_type, coordinates, rotation)?;
+                let res = self
+                    .mut_nile()
+                    .place_tile(tile_path_type, coordinates, rotation);
+                self.handle_error_cells(res)?;
                 self.selected_tile = Some(SelectedTile::Board(coordinates));
                 self.log.place_tile(tile_path_type, coordinates, rotation);
                 Ok(())
             }
             Some(SelectedTile::Board(old_coordinates)) => {
-                self.mut_nile().move_tile(old_coordinates, coordinates)?;
+                let res = self.mut_nile().move_tile(old_coordinates, coordinates);
+                self.handle_error_cells(res)?;
                 self.selected_tile = Some(SelectedTile::Board(coordinates));
                 self.log.move_tile(old_coordinates, coordinates);
                 Ok(())
@@ -161,7 +170,8 @@ impl Engine {
             .tile()
             .ok_or_else(|| "No tile there".to_owned())?
             .rotation();
-        self.mut_nile().rotate_tile(coordinates, rotation)?;
+        let res = self.mut_nile().rotate_tile(coordinates, rotation);
+        self.handle_error_cells(res)?;
         self.log.rotate_tile(coordinates, old_rotation, rotation);
         Ok(())
     }
@@ -170,7 +180,8 @@ impl Engine {
         let coordinates = self
             .selected_board_tile()
             .ok_or_else(|| "No selected board tile".to_owned())?;
-        let old_tile_placement = self.mut_nile().remove_tile(coordinates)?;
+        let res = self.mut_nile().remove_tile(coordinates);
+        let old_tile_placement = self.handle_error_cells(res)?;
         // TODO: make removed tile in rack the new selected?
         self.selected_tile = None;
         self.log.remove_tile(
@@ -185,9 +196,10 @@ impl Engine {
         let coordinates = self
             .selected_board_tile()
             .ok_or_else(|| "No selected board tile".to_owned())?;
-        let old_tile_path = self
+        let res = self
             .mut_nile()
-            .update_universal_path(coordinates, tile_path)?;
+            .update_universal_path(coordinates, tile_path);
+        let old_tile_path = self.handle_error_cells(res)?;
         self.log
             .update_universal_path(coordinates, old_tile_path, tile_path);
         Ok(())
@@ -195,7 +207,7 @@ impl Engine {
 
     /// Attempt to undo an action
     pub fn undo(&mut self) -> ActionResult {
-        self.nile.if_not_ended()?;
+        self.handle_error_cells(self.nile.if_not_ended())?;
         let event = self
             .log
             .undo()
@@ -205,7 +217,7 @@ impl Engine {
 
     /// Attempt to redo a previously-undone action
     pub fn redo(&mut self) -> ActionResult {
-        self.nile.if_not_ended()?;
+        self.handle_error_cells(self.nile.if_not_ended())?;
         let event = self
             .log
             .redo()
@@ -214,17 +226,21 @@ impl Engine {
     }
 
     pub fn end_turn(&mut self) -> Result<bool, String> {
-        self.mut_nile().end_turn()?;
+        let res = self.mut_nile().end_turn();
+        self.handle_error_cells(res)?;
         self.log.end_turn();
         self.selected_tile = None;
+        self.error_cells = None;
         self.take_cpu_turns_if_any();
         Ok(self.has_ended())
     }
 
     pub fn cant_play(&mut self) -> Result<bool, String> {
-        self.mut_nile().cant_play()?;
+        let res = self.mut_nile().cant_play();
+        self.handle_error_cells(res)?;
         self.log.cant_play();
         self.selected_tile = None;
+        self.error_cells = None;
         self.take_cpu_turns_if_any();
         Ok(self.has_ended())
     }
@@ -239,6 +255,18 @@ impl Engine {
 
     fn mut_nile(&mut self) -> &mut Nile {
         Rc::make_mut(&mut self.nile)
+    }
+
+    /// Sets error state after a call to `nile`
+    fn handle_error_cells<T>(&mut self, res: error::Result<T>) -> Result<T, String> {
+        match res {
+            Ok(v) => Ok(v),
+            Err(Error::Msg(msg)) => Err(msg),
+            Err(Error::Cell(cell_error)) => {
+                self.error_cells = Some(cell_error.coordinates);
+                Err(cell_error.msg)
+            }
+        }
     }
 
     /// Process a CPU turn
@@ -308,26 +336,34 @@ impl Engine {
     fn dispatch(&mut self, event: Event) -> ActionResult {
         match event {
             Event::PlaceTile(tpe) => {
-                self.mut_nile()
-                    .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation)?;
+                let res =
+                    self.mut_nile()
+                        .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation);
+                self.handle_error_cells(res)?;
                 self.selected_tile = Some(SelectedTile::Board(tpe.coordinates));
             }
             Event::RotateTile(re) => {
                 self.selected_tile = Some(SelectedTile::Board(re.new.coordinates));
-                self.mut_nile()
-                    .rotate_tile(re.new.coordinates, re.new.rotation)?;
+                let res = self
+                    .mut_nile()
+                    .rotate_tile(re.new.coordinates, re.new.rotation);
+                self.handle_error_cells(res)?;
             }
             Event::RemoveTile(tpe) => {
-                self.mut_nile().remove_tile(tpe.coordinates)?;
+                let res = self.mut_nile().remove_tile(tpe.coordinates);
+                self.handle_error_cells(res)?;
                 self.selected_tile = None;
             }
             Event::UpdateUniversalPath(uup) => {
                 self.selected_tile = Some(SelectedTile::Board(uup.coordinates));
-                self.mut_nile()
-                    .update_universal_path(uup.coordinates, uup.new_tile_path)?;
+                let res = self
+                    .mut_nile()
+                    .update_universal_path(uup.coordinates, uup.new_tile_path);
+                self.handle_error_cells(res)?;
             }
             Event::MoveTile(mte) => {
-                self.mut_nile().move_tile(mte.old, mte.new)?;
+                let res = self.mut_nile().move_tile(mte.old, mte.new);
+                self.handle_error_cells(res)?;
                 self.selected_tile = Some(SelectedTile::Board(mte.new));
             }
             Event::CantPlay | Event::EndTurn => {
@@ -444,43 +480,55 @@ impl Nile {
         tile_path_type: TilePathType,
         coordinates: Coordinates,
         rotation: Rotation,
-    ) -> ActionResult {
+    ) -> error::Result<()> {
         self.if_not_ended()?;
         let tile = Tile::from(&tile_path_type);
         let player = self.players.get_mut(self.current_turn).expect("Player");
         player
             .place_tile(tile)
-            .ok_or_else(|| format!("Player doesn't have a {:?}", tile))?;
+            .ok_or_else(|| Error::Msg(format!("Player doesn't have a {:?}", tile)))?;
         let event_score = Rc::make_mut(&mut self.board)
             .place_tile(coordinates, TilePlacement::new(tile_path_type, rotation))
             .map_err(|e| {
                 // Player's tile rack should be unchanged
                 player.return_tile(tile);
-                e
+                Error::Cell(e)
             })?;
         let _turn_score = player.add_score(event_score);
         self.current_turn_placements.insert(coordinates);
         Ok(())
     }
 
-    pub fn rotate_tile(&mut self, coordinates: Coordinates, rotation: Rotation) -> ActionResult {
+    pub fn rotate_tile(
+        &mut self,
+        coordinates: Coordinates,
+        rotation: Rotation,
+    ) -> error::Result<()> {
         self.if_not_ended()?;
         if !self.current_turn_placements.contains(&coordinates) {
-            return Err("Can't change tiles from another turn".to_owned());
+            return Err(Error::cell(
+                coordinates,
+                "Can't change tiles from another turn".to_owned(),
+            ));
         }
-        self.mut_board().rotate_tile(coordinates, rotation)?;
+        self.mut_board()
+            .rotate_tile(coordinates, rotation)
+            .map_err(Error::Cell)?;
         Ok(())
     }
 
-    pub fn remove_tile(&mut self, coordinates: Coordinates) -> Result<TilePlacement, String> {
+    pub fn remove_tile(&mut self, coordinates: Coordinates) -> error::Result<TilePlacement> {
         self.if_not_ended()?;
         if !self.current_turn_placements.contains(&coordinates) {
-            return Err("Can't change tiles from another turn".to_owned());
+            return Err(Error::cell(
+                coordinates,
+                "Can't change tiles from another turn".to_owned(),
+            ));
         }
         let (tile_placement, event_score) = self
             .mut_board()
             .remove_tile(coordinates)
-            .ok_or_else(|| "No tile there".to_owned())?;
+            .ok_or_else(|| Error::cell(coordinates, "No tile there".to_owned()))?;
         let player = self.players.get_mut(self.current_turn).expect("Player");
         player.return_tile(Tile::from(tile_placement.tile_path_type()));
         player.add_score(event_score);
@@ -492,10 +540,13 @@ impl Nile {
         &mut self,
         coordinates: Coordinates,
         tile_path: TilePath,
-    ) -> Result<TilePath, String> {
+    ) -> error::Result<TilePath> {
         self.if_not_ended()?;
         if !self.current_turn_placements.contains(&coordinates) {
-            return Err("Can't change tiles from another turn".to_owned());
+            return Err(Error::cell(
+                coordinates,
+                "Can't change tiles from another turn".to_owned(),
+            ));
         }
         let old_tile_path = self
             .mut_board()
@@ -507,14 +558,18 @@ impl Nile {
         &mut self,
         old_coordinates: Coordinates,
         new_coordinates: Coordinates,
-    ) -> ActionResult {
+    ) -> error::Result<()> {
         self.if_not_ended()?;
         if !self.current_turn_placements.contains(&old_coordinates) {
-            return Err("Can't change tiles from another turn".to_owned());
+            return Err(Error::cell(
+                old_coordinates,
+                "Can't change tiles from another turn".to_owned(),
+            ));
         }
         let score_change = self
             .mut_board()
-            .move_tile(old_coordinates, new_coordinates)?;
+            .move_tile(old_coordinates, new_coordinates)
+            .map_err(Error::Cell)?;
         let player = self.players.get_mut(self.current_turn).expect("Player");
         player.add_score(score_change);
         assert!(self.current_turn_placements.remove(&old_coordinates));
@@ -524,10 +579,10 @@ impl Nile {
 
     /// Called when the current player _claims_ they can't play any tiles. If successful, ends their
     /// turn
-    pub fn cant_play(&mut self) -> Result<bool, String> {
+    pub fn cant_play(&mut self) -> error::Result<bool> {
         self.if_not_ended()?;
         if !self.current_turn_placements.is_empty() {
-            return Err("Player has placed tiles this turn".to_owned());
+            return Err(Error::Msg("Player has placed tiles this turn".to_owned()));
         }
         let player_count = self.players.len();
         let player = self.players.get_mut(self.current_turn).expect("Player");
@@ -541,10 +596,10 @@ impl Nile {
     }
 
     /// Called when a human player ends their turn normally (they played at least one tile)
-    pub fn end_turn(&mut self) -> Result<bool, String> {
+    pub fn end_turn(&mut self) -> error::Result<bool> {
         self.if_not_ended()?;
         if self.current_turn_placements.is_empty() {
-            return Err("Can't end turn normally without placing at least one tile. Use can't play if there are no playable moves".to_owned());
+            return Err(Error::Msg("Can't end turn normally without placing at least one tile. Use can't play if there are no playable moves".to_owned()));
         }
         self.has_ended = Rc::make_mut(&mut self.board)
             .validate_turns_moves(self.current_turn_placements.clone())?;
@@ -564,9 +619,9 @@ impl Nile {
         self.current_turn_placements.clear();
     }
 
-    fn if_not_ended(&self) -> Result<(), String> {
+    fn if_not_ended(&self) -> error::Result<()> {
         if self.has_ended {
-            Err("Game has already ended".to_owned())
+            Err(Error::Msg("Game has already ended".to_owned()))
         } else {
             Ok(())
         }

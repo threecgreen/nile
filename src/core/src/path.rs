@@ -1,4 +1,5 @@
 use crate::board::TilePlacement;
+use crate::error::CellError;
 use crate::log::TilePlacementEvent;
 use crate::tile::{Coordinates, Rotation, Tile, ROTATIONS};
 
@@ -202,13 +203,13 @@ pub static OFFSETS: [Offset; 8] = [
 pub fn eval_placement(
     prev: (Coordinates, Offset),
     placement: &TilePlacementEvent,
-) -> Result<(Coordinates, Offset), String> {
+) -> Result<(Coordinates, Offset), CellError> {
     // Handle board boundaries elsewhere
     let new_coordinates = prev.0 + prev.1;
     if new_coordinates != placement.coordinates {
-        return Err(format!(
-            "Tile at {:?} doesn't align with the rest of the river",
-            placement.coordinates
+        return Err(CellError::new(
+            placement.coordinates,
+            "Tile at doesn't align with the rest of the river".to_owned(),
         ));
     }
     let offsets: Vec<Offset> = placement
@@ -221,16 +222,21 @@ pub fn eval_placement(
         .iter()
         .find(|o| placement.coordinates + **o == prev.0)
         .ok_or_else(|| {
-            format!(
-                "Tile and rotation at {:?} don't align with the rest of the river",
-                placement.coordinates
+            CellError::new(
+                placement.coordinates,
+                "Tile and rotation don't align with the rest of the river".to_owned(),
             )
         })?;
     offsets
         .iter()
         // Assumes there's only two offsets because `offsets` comes from `[Offset; 2]`
         .find(|o| *o != rev_offset)
-        .ok_or_else(|| format!("No valid output offset for {:?}", placement.coordinates))
+        .ok_or_else(|| {
+            CellError::new(
+                placement.coordinates,
+                "No valid output river path offset".to_owned(),
+            )
+        })
         .map(|o| (new_coordinates, *o))
 }
 
@@ -270,7 +276,7 @@ mod test {
                 coordinates: Coordinates(0, 1),
             },
         );
-        assert!(matches!(res, Err(msg) if msg.contains("doesn't align")));
+        assert!(matches!(res, Err(err) if err.msg.contains("doesn't align")));
     }
 
     #[test]
@@ -283,7 +289,7 @@ mod test {
                 coordinates: Coordinates(1, 1),
             },
         );
-        assert!(matches!(res, Err(msg) if msg.starts_with("Tile and rotation")));
+        assert!(matches!(res, Err(err) if err.msg.starts_with("Tile and rotation")));
     }
 
     #[test]
@@ -296,7 +302,7 @@ mod test {
                 coordinates: Coordinates(1, 1),
             },
         );
-        assert!(matches!(res, Err(msg) if msg.starts_with("Tile and rotation")));
+        assert!(matches!(res, Err(err) if err.msg.starts_with("Tile and rotation")));
     }
 
     #[test]
