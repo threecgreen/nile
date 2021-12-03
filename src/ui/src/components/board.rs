@@ -1,4 +1,6 @@
-use nile::{Cell, Coordinates, BOARD_DIM};
+use std::rc::Rc;
+
+use nile::{console, Cell, Coordinates, BOARD_DIM};
 use yew::prelude::*;
 use yewdux::prelude::Dispatcher;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
@@ -7,7 +9,6 @@ use crate::state::GameStore;
 
 use super::tile::empty_cell::EmptyCell;
 use super::tile::tile_cell::{Selection, TileCell, TileCellType};
-use super::utils::update_if_changed;
 use crate::state::Action;
 
 pub struct BoardImpl {
@@ -28,11 +29,21 @@ impl Component for BoardImpl {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        // TODO: narrow to just used props
-        update_if_changed(&mut self.props, props)
+        let old_state = self.props.state();
+        let new_state = props.state();
+        if !Rc::<nile::Board>::ptr_eq(new_state.nile.rc_board(), old_state.nile.rc_board())
+            || old_state.nile.current_turn_placements() != new_state.nile.current_turn_placements()
+            || old_state.nile.selected_board_tile() != new_state.nile.selected_board_tile()
+        {
+            self.props = props;
+            true
+        } else {
+            false
+        }
     }
 
     fn view(&self) -> Html {
+        console::log("Rendering board");
         let state = self.props.state();
         let board = state.nile.board();
         let current_turn_placements = state.nile.current_turn_placements();
