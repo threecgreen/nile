@@ -65,10 +65,10 @@ impl Component for ControlsImpl {
         let selected_is_universal = state.selected_is_universal();
         let on_rotate_counterclockwise = self
             .props
-            .callback_once(|_| Action::RotateSelectedTile(Rotation::Counterclockwise));
+            .callback(|_| Action::RotateSelectedTile(Rotation::Counterclockwise));
         let on_rotate_clockwise = self
             .props
-            .callback_once(|_| Action::RotateSelectedTile(Rotation::Clockwise));
+            .callback(|_| Action::RotateSelectedTile(Rotation::Clockwise));
         let on_remove_tile = self.props.callback(|_| Action::RemoveSelectedTile);
         let on_undo = self.props.callback(|_| Action::Undo);
         let on_redo = self.props.callback(|_| Action::Redo);
