@@ -2,10 +2,9 @@ use std::collections::HashSet;
 
 use crate::ai::{Brute, CPUPlayer};
 use crate::board::{Board, TilePlacement};
-use crate::log::{Event, Log, TilePlacementEvent};
+use crate::log::{Event, Log};
 use crate::path::{TilePath, TilePathType};
-use crate::player::{Player, TileArray};
-use crate::score::TurnScore;
+use crate::player::Player;
 use crate::tile::{Coordinates, Rotation, Tile, TileBox};
 
 pub type ActionResult = Result<(), String>;
@@ -225,16 +224,16 @@ impl Engine {
 
     fn take_cpu_turns_if_any(&mut self) {
         while !self.has_ended() && self.current_player().is_cpu() {
-            if self.take_cpu_turn().is_none() {
+            if !self.take_cpu_turn() {
                 break;
             }
         }
     }
 
     /// Process a CPU turn
-    fn take_cpu_turn(&mut self) -> Option<CPUTurnUpdate> {
+    fn take_cpu_turn(&mut self) -> bool {
         if self.nile.has_ended {
-            return None;
+            return false;
         }
         let player = self
             .nile
@@ -242,9 +241,8 @@ impl Engine {
             .get(self.nile.current_turn)
             .expect("player");
         if !player.is_cpu() {
-            return None;
+            return false;
         }
-        let player_id = self.nile.current_turn;
         // Hard-code CPU implementation for now
         let lists_of_moves = Brute::new(self.nile.players.len()).take_turn(
             player.tiles(),
@@ -272,15 +270,8 @@ impl Engine {
                     .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation);
             }
             match self.end_turn() {
-                Ok(has_ended) => {
-                    return Some(CPUTurnUpdate {
-                        placements: tile_placement_events,
-                        player_id,
-                        // FIXME: populate
-                        turn_score: TurnScore::default(),
-                        game_has_ended: has_ended,
-                        tile_count: self.nile.tile_count(),
-                    });
+                Ok(_has_ended) => {
+                    return true;
                 }
                 Err(e) => {
                     crate::console::warn(&format!(
@@ -294,14 +285,7 @@ impl Engine {
         }
         // Either no moves to begin with or all returned moves were invalid
         let _end_turn_update = self.cant_play().unwrap();
-        Some(CPUTurnUpdate {
-            placements: Vec::new(),
-            player_id,
-            // FIXME: populate
-            turn_score: TurnScore::default(),
-            game_has_ended: self.nile.has_ended,
-            tile_count: self.nile.tile_count(),
-        })
+        true
     }
 
     fn undo_all(&mut self) {
@@ -552,10 +536,6 @@ impl Nile {
         Ok(self.has_ended)
     }
 
-    fn tile_count(&self) -> usize {
-        self.players[self.current_turn].tiles().len()
-    }
-
     fn advance_turn(&mut self) {
         self.current_turn = (self.current_turn + 1) % self.players.len();
         self.has_ended = self.has_ended || self.players[self.current_turn].rack_is_empty();
@@ -569,24 +549,6 @@ impl Nile {
             Ok(())
         }
     }
-}
-
-#[derive(Debug)]
-pub struct EndTurnUpdate {
-    pub turn_score: TurnScore,
-    tiles: TileArray,
-    pub game_has_ended: bool,
-}
-
-// TODO: consolidate into `EndTurnUpdate`
-#[derive(Debug)]
-pub struct CPUTurnUpdate {
-    pub player_id: usize,
-    pub turn_score: TurnScore,
-    placements: Vec<TilePlacementEvent>,
-    pub game_has_ended: bool,
-    /// we don't need to display or expose what tiles the cpu actually has
-    pub tile_count: usize,
 }
 
 #[cfg(test)]
