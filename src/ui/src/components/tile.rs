@@ -87,6 +87,7 @@ pub mod tile_cell {
             self.tile_path_type == other.tile_path_type
                 && self.rotation == other.rotation
                 && self.tile_cell_type == other.tile_cell_type
+                && self.selection == other.selection
         }
     }
 
