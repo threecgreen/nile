@@ -49,7 +49,7 @@ pub mod rack_tile {
 }
 
 pub mod tile_cell {
-    use nile::{Rotation, TilePathType};
+    use nile::{console, Rotation, TilePathType};
 
     use super::*;
 
@@ -72,13 +72,22 @@ pub mod tile_cell {
         Selected,
     }
 
-    #[derive(Clone, Properties, PartialEq)]
+    #[derive(Clone, Properties)]
     pub struct Props {
         pub tile_path_type: TilePathType,
         pub rotation: Rotation,
         pub tile_cell_type: TileCellType,
         pub selection: Selection,
         pub on_select: Callback<()>,
+    }
+
+    impl PartialEq for Props {
+        fn eq(&self, other: &Self) -> bool {
+            // No callbacks
+            self.tile_path_type == other.tile_path_type
+                && self.rotation == other.rotation
+                && self.tile_cell_type == other.tile_cell_type
+        }
     }
 
     impl Component for TileCell {
@@ -98,6 +107,7 @@ pub mod tile_cell {
         }
 
         fn view(&self) -> Html {
+            console::debug("Rendering tile cell");
             let is_selectable = self.props.selection != Selection::Locked;
             let on_click = {
                 let on_select = self.props.on_select.clone();
@@ -189,17 +199,26 @@ pub mod tile_cell {
 }
 
 pub mod empty_cell {
+    use nile::console;
+
     use super::*;
 
     pub struct EmptyCell {
         props: Props,
     }
 
-    #[derive(Clone, PartialEq, Properties)]
+    #[derive(Clone, Properties)]
     pub struct Props {
         pub bonus: i16,
         pub is_end_game: bool,
         pub on_drop: Callback<()>,
+    }
+
+    impl PartialEq for Props {
+        fn eq(&self, other: &Self) -> bool {
+            // No callback
+            self.bonus == other.bonus && self.is_end_game == other.is_end_game
+        }
     }
 
     impl Component for EmptyCell {
@@ -219,6 +238,7 @@ pub mod empty_cell {
         }
 
         fn view(&self) -> Html {
+            console::debug("Rendering tile cell");
             let end_game_class = if self.props.is_end_game {
                 "end-game"
             } else {
