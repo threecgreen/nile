@@ -40,7 +40,7 @@ impl Component for BoardImpl {
         let cells = (0..BOARD_DIM as i8)
             .map(|i| {
                 html! {
-                    <tr key={ format!("{}", i) }>
+                    <tr key={ i }>
                         { for
                             (0..BOARD_DIM as i8).map(|j| {
                                 let coordinates = Coordinates(i, j);
@@ -53,15 +53,14 @@ impl Component for BoardImpl {
                                 let on_drop = self.props.callback(move |_| Action::PlaceTile(coordinates));
 
                                 html! {
-                                    <td key={ format!("{}", j) }>
+                                    <td key={ j }>
                                         { Self::view_cell(cell, TileCellType::from((cell, board.is_end_game_cell(coordinates))), Selection::from((is_seleted, current_turn_placements.contains(&coordinates))), on_select, on_drop) }
                                     </td>
                                 }
                             }) }
                     </tr>
                 }
-            })
-            .collect::<Html>();
+            });
 
         html! {
             <div class="outer">
@@ -69,7 +68,7 @@ impl Component for BoardImpl {
                 <span class="arrow">{ "→" }</span>
                 <table class="board">
                     <tbody>
-                        { cells }
+                        { for cells }
                     </tbody>
                 </table>
             </div>

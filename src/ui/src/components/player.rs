@@ -43,7 +43,6 @@ impl Component for PlayersImpl {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        // console::debug("`Players` change");
         // TODO: narrow to used props
         update_if_changed(&mut self.props, props)
     }
@@ -61,7 +60,6 @@ impl Component for PlayersImpl {
                 }
             })
         };
-        // let players_html = players.iter().map(|p| )
         html! {
             <div class="players">
                 <div style={ format!("column-count: {}", players.len()) }>
@@ -120,12 +118,24 @@ mod player {
         props: Props,
     }
 
-    #[derive(Properties, Clone, PartialEq)]
+    #[derive(Properties, Clone)]
     pub struct Props {
         #[prop_or_default]
         pub dispatch: DispatchProps<GameStore>,
         pub id: u8,
         pub are_scores_expanded: bool,
+    }
+
+    impl PartialEq for Props {
+        fn eq(&self, other: &Self) -> bool {
+            let nile = &self.dispatch.state().nile;
+            let other_nile = &other.dispatch.state().nile;
+            self.id == other.id
+                && self.are_scores_expanded == other.are_scores_expanded
+                && nile.current_turn() == other_nile.current_turn()
+                && nile.players()[self.id as usize] == other_nile.players()[self.id as usize]
+                && nile.selected_rack_tile() == other_nile.selected_rack_tile()
+        }
     }
 
     impl DispatchPropsMut for Props {
