@@ -61,6 +61,7 @@ impl Component for GameForm {
             .props
             .dispatch
             .reform(move |_| crate::app::Msg::Confirm);
+        let on_reset = self.props.dispatch.reform(move |_| crate::app::Msg::Reset);
         html! {
             <form class="game-form">
                 { for { self.props.player_names
@@ -105,6 +106,12 @@ impl Component for GameForm {
                     on_click={ on_start }
                 >
                     { "Start" }
+                </Button>
+                <Button title={ "Reset" }
+                    aria_label="Reset game form"
+                    on_click={ on_reset }
+                >
+                    { "Reset" }
                 </Button>
             </form>
         }

@@ -22,6 +22,7 @@ pub enum Msg {
     ShowShortcutsHelp,
     DismissShortcutsHelp,
     NewGame,
+    Reset,
 }
 
 pub struct PlayerNameChange {
@@ -80,6 +81,11 @@ impl Component for App {
                 self.game_number += 1;
                 true
             }
+            Msg::Reset => {
+                self.player_names = vec![String::default()];
+                self.cpu_player_count = 1;
+                true
+            }
         }
     }
 
@@ -133,7 +139,7 @@ impl App {
         let dispatch = self.link.callback(|action| action);
         html! {
             <>
-                <h2 class="center-text">{ "New game" }</h2>
+                <h2 class="center-text">{ "Game setup" }</h2>
                 <GameForm player_names={ self.player_names.clone() }
                     cpu_player_count={ self.cpu_player_count }
                     dispatch={ dispatch }
