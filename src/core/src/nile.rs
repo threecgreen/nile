@@ -154,7 +154,8 @@ impl Engine {
                 self.log.move_tile(old_coordinates, coordinates);
                 Ok(())
             }
-            None => Err("No selected tile".to_owned()),
+            // None => Err("No selected tile".to_owned()),
+            None => Ok(()),
         }
     }
 
@@ -260,7 +261,10 @@ impl Engine {
     /// Sets error state after a call to `nile`
     fn handle_error_cells<T>(&mut self, res: error::Result<T>) -> Result<T, String> {
         match res {
-            Ok(v) => Ok(v),
+            Ok(v) => {
+                self.error_cells = None;
+                Ok(v)
+            }
             Err(Error::Msg(msg)) => {
                 self.error_cells = None;
                 Err(msg)
