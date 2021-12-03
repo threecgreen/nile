@@ -87,14 +87,14 @@ impl PlayersImpl {
             { if self.are_scores_expanded {
                 html! {
                     <>
-                        <CarbonIcon name="row-collapse" size={ Size::S24 } />
+                        <CarbonIcon name="row_collapse" size={ Size::S24 } />
                         { "Collapse" }
                     </>
                 }
             } else {
                 html! {
                     <>
-                        <CarbonIcon name="row-expand" size={ Size::S24 } />
+                        <CarbonIcon name="row_expand" size={ Size::S24 } />
                         { "Expand" }
                     </>
                 }
