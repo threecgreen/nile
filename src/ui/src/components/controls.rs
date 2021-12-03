@@ -102,7 +102,7 @@ impl Component for ControlsImpl {
                 >
                     <CarbonIcon name="trash_can" size={ Size::S24 } />
                 </Button>
-                <div class={ if selected_is_universal { "dropdown" } else { "dropdown disabled" } }>
+                <div class=classes!("dropdown", (!selected_is_universal).then(|| "disabled"))>
                     <Button aria_label="Select tile path for universal tile"
                         class="dropdown"
                         is_enabled={ selected_is_universal }

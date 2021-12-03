@@ -1,6 +1,5 @@
 use self::player::Player;
 use self::rack::TileRack;
-// use nile::console;
 use yew::prelude::*;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
@@ -179,7 +178,7 @@ mod player {
             html! {
                 // grid columns start at 1
                 <section style={ format!("grid-column: {}", self.props.id + 1) }>
-                    <h2 class={ if is_current_turn { "current" } else { "other"} }>
+                    <h2 class=classes!(if is_current_turn { "current" } else { "other" })>
                         { player.name() }
                     </h2>
                     <TileRack tiles={ player.tiles().to_owned() }
@@ -187,7 +186,7 @@ mod player {
                         selected_tile_idx={ selected_tile_idx }
                         on_select={ on_select }
                     />
-                    <table class={ if is_current_turn { "scores current"} else { "scores"} }>
+                    <table class=classes!("scores", is_current_turn.then(|| "current"))>
                         <thead>
                             <tr>
                                 <th>{ "Score Fwd" }</th>

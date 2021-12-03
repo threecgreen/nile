@@ -35,12 +35,8 @@ pub mod rack_tile {
         }
 
         fn view(&self) -> Html {
-            let mut classes = vec!["tile"];
-            if self.props.is_selected {
-                classes.push("selected");
-            }
             html! {
-                <div class={ classes!("tile", if self.props.is_selected { "selected" } else { "" }) }>
+                <div class=classes!("tile", self.props.is_selected.then(|| "selected"))>
                     <TileSvg tile={ self.props.tile } />
               </div>
             }
@@ -141,7 +137,7 @@ pub mod tile_cell {
             };
             html! {
                 <div
-                    class={ classes!("tile", selected_css_class, universal_css_class, tile_cell_type_to_class(self.props.tile_cell_type)) }
+                    class=classes!("tile", selected_css_class, universal_css_class, tile_cell_type_to_class(self.props.tile_cell_type))
                     style={ rotation_to_css(self.props.rotation) }
                     onclick={ on_click }
                     draggable={ is_selectable.to_string() }
@@ -180,12 +176,12 @@ pub mod tile_cell {
         }
     }
 
-    const fn tile_cell_type_to_class(tile_cell_type: TileCellType) -> &'static str {
+    const fn tile_cell_type_to_class(tile_cell_type: TileCellType) -> Option<&'static str> {
         match tile_cell_type {
-            TileCellType::Normal => "",
-            TileCellType::Bonus => "bonus",
-            TileCellType::Penalty => "penalty",
-            TileCellType::EndGame => "end-game",
+            TileCellType::Normal => None,
+            TileCellType::Bonus => Some("bonus"),
+            TileCellType::Penalty => Some("penalty"),
+            TileCellType::EndGame => Some("end-game"),
         }
     }
 
@@ -240,11 +236,6 @@ pub mod empty_cell {
 
         fn view(&self) -> Html {
             console::debug("Rendering tile cell");
-            let end_game_class = if self.props.is_end_game {
-                "end-game"
-            } else {
-                ""
-            };
             let on_drag_over = Callback::from(|e: DragEvent| e.prevent_default());
             let on_drop = self
                 .props
@@ -255,7 +246,7 @@ pub mod empty_cell {
                 .on_drop
                 .reform(move |e: MouseEvent| e.prevent_default());
             html! {
-                <div class={ classes!("tile", bonus_to_class(self.props.bonus), end_game_class) }
+                <div class=classes!("tile", bonus_to_class(self.props.bonus), self.props.is_end_game.then(|| "end-game"))
                     ondragover={ on_drag_over }
                     ondrop={ on_drop }
                     onclick={ on_click }
@@ -266,11 +257,11 @@ pub mod empty_cell {
         }
     }
 
-    const fn bonus_to_class(bonus: i16) -> &'static str {
+    const fn bonus_to_class(bonus: i16) -> Option<&'static str> {
         match bonus {
-            0 => "",
-            b if b > 0 => "bonus",
-            _ => "penalty",
+            0 => None,
+            b if b > 0 => Some("bonus"),
+            _ => Some("penalty"),
         }
     }
 
@@ -305,7 +296,7 @@ impl Component for HiddenTile {
 
     fn view(&self) -> Html {
         html! {
-            <div class={ classes!("tile", "hidden-tile") } />
+            <div class=classes!("tile", "hidden-tile") />
         }
     }
 }
