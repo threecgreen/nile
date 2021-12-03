@@ -17,8 +17,6 @@ pub enum Size {
 pub struct Props {
     pub name: &'static str,
     pub size: Size,
-    #[prop_or_default]
-    pub aria_label: &'static str,
 }
 
 impl Component for CarbonIcon {
@@ -39,9 +37,7 @@ impl Component for CarbonIcon {
 
     fn view(&self) -> Html {
         html! {
-            <img src={ format!("/icons/{}/{}.svg", self.props.size.to_path(), self.props.name) }
-                alt={ self.props.aria_label }
-            />
+            <img src={ format!("/icons/{}/{}.svg", self.props.size.to_path(), self.props.name) } />
         }
     }
 }

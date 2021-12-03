@@ -246,13 +246,21 @@ mod rack {
         props: Props,
     }
 
-    #[derive(Clone, Properties, PartialEq)]
+    #[derive(Clone, Properties)]
     pub struct Props {
         pub tiles: TileArray,
         pub show_tiles: bool,
         #[prop_or_default]
         pub selected_tile_idx: Option<u8>,
         pub on_select: Callback<u8>,
+    }
+
+    impl PartialEq for Props {
+        fn eq(&self, other: &Self) -> bool {
+            self.show_tiles == other.show_tiles
+                && self.selected_tile_idx == other.selected_tile_idx
+                && self.tiles == other.tiles
+        }
     }
 
     impl Component for TileRack {
@@ -281,27 +289,18 @@ mod rack {
                         <tr>
                             { for self.props.tiles.iter().enumerate().map(|(i, tile)| {
                                 let i = i as u8;
-                                let on_drag_start = {
-                                    let on_select = self.props.on_select.clone();
-                                    Callback::from(move |e: DragEvent| {
-                                        e.prevent_default();
-                                        on_select.emit(i);
-                                    })
-                                };
-                                let on_touch_start = {
-                                    let on_select = self.props.on_select.clone();
-                                    Callback::from(move |e: TouchEvent| {
-                                        e.prevent_default();
-                                        on_select.emit(i);
-                                    })
-                                };
-                                let on_click = {
-                                    let on_select = self.props.on_select.clone();
-                                    Callback::from(move |e: MouseEvent| {
-                                        e.prevent_default();
-                                        on_select.emit(i);
-                                    })
-                                };
+                                let on_drag_start = self.props.on_select.reform(move |e: DragEvent| {
+                                    e.prevent_default();
+                                    i
+                                });
+                                let on_touch_start = self.props.on_select.reform(move |e: TouchEvent| {
+                                    e.prevent_default();
+                                    i
+                                });
+                                let on_click = self.props.on_select.reform(move |e: MouseEvent| {
+                                    e.prevent_default();
+                                    i
+                                });
                                 html! {
                                     <td key={ format!("${:?} - ${}", tile, i) }>
                                         <div draggable={ if self.props.show_tiles { "on" } else { "off" }  }

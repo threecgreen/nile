@@ -38,13 +38,9 @@ impl Component for Button {
     }
 
     fn view(&self) -> Html {
-        let on_click = {
-            let on_click = self.props.on_click.clone();
-            Callback::from(move |e: MouseEvent| {
-                e.prevent_default();
-                on_click.emit(());
-            })
-        };
+        let on_click = self.props.on_click.reform(move |e: MouseEvent| {
+            e.prevent_default();
+        });
         html! {
             <button onclick={ on_click }
                 class={ self.props.class }

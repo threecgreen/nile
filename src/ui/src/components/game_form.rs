@@ -41,26 +41,26 @@ impl Component for GameForm {
         let total_player_count =
             self.props.player_names.len() + self.props.cpu_player_count as usize;
         let can_start = (2..=4).contains(&total_player_count);
-        let on_add_player = {
-            let dispath = self.props.dispatch.clone();
-            Callback::from(move |_| dispath.emit(crate::app::Msg::AddPlayer))
-        };
-        let on_rm_player = {
-            let dispath = self.props.dispatch.clone();
-            Callback::from(move |_| dispath.emit(crate::app::Msg::RemovePlayer))
-        };
-        let on_add_cpu_player = {
-            let dispath = self.props.dispatch.clone();
-            Callback::from(move |_| dispath.emit(crate::app::Msg::AddCpuPlayer))
-        };
-        let on_rm_cpu_player = {
-            let dispath = self.props.dispatch.clone();
-            Callback::from(move |_| dispath.emit(crate::app::Msg::RemoveCpuPlayer))
-        };
-        let on_start = {
-            let dispatch = self.props.dispatch.clone();
-            Callback::from(move |_| dispatch.emit(crate::app::Msg::Confirm))
-        };
+        let on_add_player = self
+            .props
+            .dispatch
+            .reform(move |_| crate::app::Msg::AddPlayer);
+        let on_rm_player = self
+            .props
+            .dispatch
+            .reform(move |_| crate::app::Msg::RemovePlayer);
+        let on_add_cpu_player = self
+            .props
+            .dispatch
+            .reform(move |_| crate::app::Msg::AddCpuPlayer);
+        let on_rm_cpu_player = self
+            .props
+            .dispatch
+            .reform(move |_| crate::app::Msg::RemoveCpuPlayer);
+        let on_start = self
+            .props
+            .dispatch
+            .reform(move |_| crate::app::Msg::Confirm);
         html! {
             <form class="game-form">
                 { for { self.props.player_names

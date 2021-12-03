@@ -50,7 +50,9 @@ impl Component for GameImpl {
         let handle = {
             let rotate_selected = dispatch.callback(Action::RotateSelectedTile);
             let remove_selected = dispatch.callback(|_| Action::RemoveSelectedTile);
+            let can_undo = dispatch.state().can_undo();
             let undo = dispatch.callback(|_| Action::Undo);
+            let can_redo = dispatch.state().can_redo();
             let redo = dispatch.callback(|_| Action::Redo);
             let end_turn = dispatch.callback(|_| Action::EndTurn);
             let cant_play = dispatch.callback(|_| Action::CantPlay);
@@ -70,8 +72,8 @@ impl Component for GameImpl {
                         "q" => rotate_selected.emit(Rotation::Counterclockwise),
                         "e" => rotate_selected.emit(Rotation::Clockwise),
                         "x" => remove_selected.emit(()),
-                        "u" => undo.emit(()),
-                        "r" => redo.emit(()),
+                        "u" if can_undo => undo.emit(()),
+                        "r" if can_redo => redo.emit(()),
                         "E" => end_turn.emit(()),
                         "C" => cant_play.emit(()),
                         "1" | "2" | "3" | "4" | "5" => {

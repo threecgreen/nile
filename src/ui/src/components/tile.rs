@@ -246,20 +246,14 @@ pub mod empty_cell {
                 ""
             };
             let on_drag_over = Callback::from(|e: DragEvent| e.prevent_default());
-            let on_drop = {
-                let on_drop = self.props.on_drop.clone();
-                Callback::from(move |e: DragEvent| {
-                    e.prevent_default();
-                    on_drop.emit(());
-                })
-            };
-            let on_click = {
-                let on_drop = self.props.on_drop.clone();
-                Callback::from(move |e: MouseEvent| {
-                    e.prevent_default();
-                    on_drop.emit(());
-                })
-            };
+            let on_drop = self
+                .props
+                .on_drop
+                .reform(move |e: DragEvent| e.prevent_default());
+            let on_click = self
+                .props
+                .on_drop
+                .reform(move |e: MouseEvent| e.prevent_default());
             html! {
                 <div class={ classes!("tile", bonus_to_class(self.props.bonus), end_game_class) }
                     ondragover={ on_drag_over }
