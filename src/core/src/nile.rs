@@ -261,7 +261,10 @@ impl Engine {
     fn handle_error_cells<T>(&mut self, res: error::Result<T>) -> Result<T, String> {
         match res {
             Ok(v) => Ok(v),
-            Err(Error::Msg(msg)) => Err(msg),
+            Err(Error::Msg(msg)) => {
+                self.error_cells = None;
+                Err(msg)
+            }
             Err(Error::Cell(cell_error)) => {
                 self.error_cells = Some(cell_error.coordinates);
                 Err(cell_error.msg)

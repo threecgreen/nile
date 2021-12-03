@@ -1,3 +1,7 @@
+:root {
+    --nile-blue: rgb(96, 129, 228);
+}
+
 * {
     font-family: Lato, sans-serif;
 }
@@ -10,7 +14,7 @@ h1 {
 
 button {
     color: black;
-    background: rgb(96, 129, 228);
+    background: var(--nile-blue);
     border: none;
     padding: 0.5rem;
     transition: all 0.2s;
@@ -65,7 +69,7 @@ footer {
 
 /* footer */
 .footer-background {
-    background-color: rgb(96, 129, 228);
+    background-color: var(--nile-blue);
     height: 4rem;
     margin-top: 5rem;
 }
@@ -121,6 +125,9 @@ footer {
 .selected {
     background-color: lightcyan;
 }
+.has-error {
+    background-color: rgba(255, 99, 71, 0.8);
+}
 .penalty {
     background-color: rgba(255, 123, 0, 1);
 }
@@ -134,7 +141,7 @@ footer {
     background-color: rgba(26, 173, 36, 0.4);
 }
 .end-game {
-    background-color: rgba(96, 129, 228, 1);
+    background-color: var(--nile-blue);
 }
 .has-tile.end-game {
     background-color: rgba(113, 139, 219, 0.4);

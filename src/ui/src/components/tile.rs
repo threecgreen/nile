@@ -45,7 +45,7 @@ pub mod rack_tile {
 }
 
 pub mod tile_cell {
-    use nile::{console, Rotation, TilePathType};
+    use nile::{Rotation, TilePathType};
 
     use super::*;
 
@@ -61,7 +61,8 @@ pub mod tile_cell {
         props: Props,
     }
 
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, Copy, PartialEq)]
+    #[repr(u8)]
     pub enum Selection {
         Locked,
         Selectable,
@@ -74,6 +75,7 @@ pub mod tile_cell {
         pub rotation: Rotation,
         pub tile_cell_type: TileCellType,
         pub selection: Selection,
+        pub is_error: bool,
         pub on_select: Callback<()>,
     }
 
@@ -84,6 +86,7 @@ pub mod tile_cell {
                 && self.rotation == other.rotation
                 && self.tile_cell_type == other.tile_cell_type
                 && self.selection == other.selection
+                && self.is_error == other.is_error
         }
     }
 
@@ -104,7 +107,6 @@ pub mod tile_cell {
         }
 
         fn view(&self) -> Html {
-            console::debug("Rendering tile cell");
             let is_selectable = self.props.selection != Selection::Locked;
             let on_click = {
                 let on_select = self.props.on_select.clone();
@@ -128,16 +130,19 @@ pub mod tile_cell {
                 })
             };
             let selected_css_class = match self.props.selection {
-                Selection::Selected => "selected",
-                _ => "",
+                Selection::Selected => Some("selected"),
+                _ => None,
             };
             let universal_css_class = match self.props.tile_path_type {
-                TilePathType::Universal(_) => "universal",
-                _ => "",
+                TilePathType::Universal(_) => Some("universal"),
+                _ => None,
             };
             html! {
                 <div
-                    class=classes!("tile", selected_css_class, universal_css_class, tile_cell_type_to_class(self.props.tile_cell_type))
+                    class=classes!(
+                        "tile", selected_css_class, universal_css_class, self.props.is_error.then(|| "has-error"),
+                        tile_cell_type_to_class(self.props.tile_cell_type)
+                    )
                     style={ rotation_to_css(self.props.rotation) }
                     onclick={ on_click }
                     draggable={ is_selectable.to_string() }
@@ -196,8 +201,6 @@ pub mod tile_cell {
 }
 
 pub mod empty_cell {
-    use nile::console;
-
     use super::*;
 
     pub struct EmptyCell {
@@ -208,13 +211,16 @@ pub mod empty_cell {
     pub struct Props {
         pub bonus: i16,
         pub is_end_game: bool,
+        pub is_error: bool,
         pub on_drop: Callback<()>,
     }
 
     impl PartialEq for Props {
         fn eq(&self, other: &Self) -> bool {
             // No callback
-            self.bonus == other.bonus && self.is_end_game == other.is_end_game
+            self.bonus == other.bonus
+                && self.is_end_game == other.is_end_game
+                && self.is_error == other.is_error
         }
     }
 
@@ -235,7 +241,6 @@ pub mod empty_cell {
         }
 
         fn view(&self) -> Html {
-            console::debug("Rendering tile cell");
             let on_drag_over = Callback::from(|e: DragEvent| e.prevent_default());
             let on_drop = self
                 .props
@@ -246,7 +251,10 @@ pub mod empty_cell {
                 .on_drop
                 .reform(move |e: MouseEvent| e.prevent_default());
             html! {
-                <div class=classes!("tile", bonus_to_class(self.props.bonus), self.props.is_end_game.then(|| "end-game"))
+                <div class=classes!(
+                        "tile", bonus_to_class(self.props.bonus), self.props.is_error.then(|| "has-error"),
+                        self.props.is_end_game.then(|| "end-game")
+                    )
                     ondragover={ on_drag_over }
                     ondrop={ on_drop }
                     onclick={ on_click }

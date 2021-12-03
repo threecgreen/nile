@@ -34,6 +34,7 @@ impl Component for BoardImpl {
         if !Rc::<nile::Board>::ptr_eq(new_state.nile.rc_board(), old_state.nile.rc_board())
             || old_state.nile.current_turn_placements() != new_state.nile.current_turn_placements()
             || old_state.nile.selected_board_tile() != new_state.nile.selected_board_tile()
+            || old_state.nile.error_cells() != new_state.nile.error_cells()
         {
             self.props = props;
             true
@@ -48,6 +49,7 @@ impl Component for BoardImpl {
         let board = state.nile.board();
         let current_turn_placements = state.nile.current_turn_placements();
         let selection = state.nile.selected_board_tile();
+
         let cells = (0..BOARD_DIM as i8)
             .map(|i| {
                 html! {
@@ -61,12 +63,13 @@ impl Component for BoardImpl {
                                     Some(c) => c == coordinates,
                                     _ => false,
                                 };
+                                let is_error = state.nile.error_cells().map_or(false, |error_cells| error_cells.contains(&coordinates));
                                 let on_select = self.props.callback(move |_| Action::SelectBoardTile(coordinates));
                                 let on_drop = self.props.callback(move |_| Action::PlaceTile(coordinates));
 
                                 html! {
                                     <td key={ j }>
-                                        { Self::view_cell(cell, TileCellType::from((cell, board.is_end_game_cell(coordinates))), Selection::from((is_seleted, current_turn_placements.contains(&coordinates))), on_select, on_drop) }
+                                        { Self::view_cell(cell, TileCellType::from((cell, board.is_end_game_cell(coordinates))), Selection::from((is_seleted, current_turn_placements.contains(&coordinates))), is_error, on_select, on_drop) }
                                     </td>
                                 }
                             }) }
@@ -119,6 +122,7 @@ impl BoardImpl {
         cell: &Cell,
         tile_cell_type: TileCellType,
         selection: Selection,
+        is_error: bool,
         on_select: Callback<()>,
         on_drop: Callback<()>,
     ) -> Html {
@@ -129,6 +133,7 @@ impl BoardImpl {
                         rotation={ tp.rotation() }
                         tile_cell_type={ tile_cell_type }
                         selection={ selection }
+                        is_error={ is_error }
                         on_select={ on_select }
                     />
                 }
@@ -137,6 +142,7 @@ impl BoardImpl {
                 html! {
                     <EmptyCell bonus={ cell.bonus() }
                         is_end_game={ tile_cell_type == TileCellType::EndGame }
+                        is_error={ is_error }
                         on_drop={ on_drop }
                     />
                 }
