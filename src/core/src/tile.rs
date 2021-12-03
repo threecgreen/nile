@@ -2,6 +2,7 @@ use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::collections::VecDeque;
+use std::fmt;
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -29,6 +30,12 @@ impl Default for Rotation {
 /// A unique location on the board
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Coordinates(pub i8, pub i8);
+
+impl fmt::Display for Coordinates {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "row {}, column {}", self.0, self.0)
+    }
+}
 
 /// A game piece that can be placed on the board
 #[repr(u8)]

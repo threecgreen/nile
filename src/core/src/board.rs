@@ -90,7 +90,7 @@ impl Cell {
             .ok_or_else(|| "Cell is empty".to_owned())?;
         let old_tile_path = match tile_placement.tile_path_type {
             TilePathType::Normal(_) => {
-                return Err("Cell doesn't contain a universal tile".to_owned());
+                return Err("Cell doesn’t contain a universal tile".to_owned());
             }
             TilePathType::Universal(tp) => tp,
         };
@@ -228,7 +228,7 @@ impl Board {
             Some(cell) if cell.is_empty() => Ok(cell.set_tile(tile_placement)),
             Some(_) => Err(CellError::new(
                 coordinates,
-                "There's already a tile there".to_owned(),
+                "There’s already a tile there".to_owned(),
             )),
             None => Err(CellError::new(
                 coordinates,
@@ -283,7 +283,7 @@ impl Board {
             self.remove_tile(old_coordinates).ok_or_else(|| {
                 CellError::new(
                     old_coordinates,
-                    "Can't move tile when there's no tile at old coordinates".to_owned(),
+                    "Can’t move tile when there’s no tile at old coordinates".to_owned(),
                 )
             })?;
         let placement_score = self
@@ -323,15 +323,12 @@ impl Board {
         while !turn_coordinates.is_empty() {
             let coordinates = last_placement.0 + last_placement.1;
             let cell = self.cell(coordinates).ok_or_else(|| {
-                Error::cell(
-                    coordinates,
-                    format!("Invalid coordinates {:?}", coordinates),
-                )
+                Error::cell(coordinates, format!("Invalid coordinates: {}", coordinates))
             })?;
             let tile = cell.tile().ok_or_else(|| {
                 Error::cell(
                     coordinates,
-                    format!("Non-contiguous path. No tile at {:?}", coordinates),
+                    format!("Non-contiguous path. Missing tile at {}", coordinates),
                 )
             })?;
             last_placement = eval_placement(
@@ -347,7 +344,7 @@ impl Board {
             if !turn_coordinates.remove(&last_placement.0) {
                 return Err(Error::cell(
                     last_placement.0,
-                    "Can't reuse a tile from another turn".to_owned(),
+                    "Can’t reuse a tile from another turn".to_owned(),
                 ));
             }
         }
@@ -359,9 +356,10 @@ impl Board {
             return Err(Error::cells(
                 err_coordinates,
                 format!(
-                "Can't play a tile at {:?} because it dead-ends into the rest of the river at {:?}",
-                last_placement.0,
-                last_placement.0 + last_placement.1),
+                    "Can’t play a tile at {} because it dead-ends into the rest of the river at {}",
+                    last_placement.0,
+                    last_placement.0 + last_placement.1
+                ),
             ));
         }
         // Check if multiple tiles in end of game area
@@ -393,7 +391,7 @@ impl Board {
             1 if column as usize == BOARD_DIM => Err(Error::cell(
                 last_placement.0,
                 format!(
-                    "Tile in end-of-game column at {:?} must align with the dot",
+                    "Tile in end-of-game column at {} must align with the dot",
                     last_placement.0
                 ),
             )),
@@ -403,7 +401,7 @@ impl Board {
             )),
             0 => Ok(false),
             _ => Err(Error::Msg(
-                "Can't play more than one tile in the end-of-game column".to_owned(),
+                "Can’t play more than one tile in the end-of-game column".to_owned(),
             )),
         }
     }
@@ -445,7 +443,7 @@ impl Board {
                 err_coordinates.insert(coordinates);
                 err_coordinates.insert(coordinates1);
                 err_coordinates.insert(coordinates2);
-                return Err(Error::cells(err_coordinates, format!("The river cannot cross over existing path between {:?} and {:?}. Invalid tile placement at {:?}", coordinates1, coordinates2, coordinates)));
+                return Err(Error::cells(err_coordinates, format!("The river cannot cross over existing path between {} and {}. Invalid tile placement at {}", coordinates1, coordinates2, coordinates)));
             }
         }
         Ok(())
@@ -501,7 +499,7 @@ impl Board {
             return Err(CellError::new(
                 coordinates,
                 format!(
-                    "Invalid path leading to coordinates: {:?} that are off the board",
+                    "Invalid river path leading to coordinates: {} that are off the board",
                     coordinates
                 ),
             ));
@@ -523,7 +521,7 @@ impl Board {
                 }
             }
         }
-        Err(CellError::new(coordinates, format!("Encircled path. No paths leading to the end of game column from {:?} with open moves {:?}", coordinates, open_moves)))
+        Err(CellError::new(coordinates, format!("Encircled river path. There are no paths leading to the end of game column from {} with open moves {:?}", coordinates, open_moves)))
     }
 }
 
@@ -616,7 +614,7 @@ mod test {
             bonus: 0,
         };
         let res = target.update_universal_path(TilePath::Right45);
-        assert!(matches!(res, Err(e) if e.contains("doesn't contain a universal tile")));
+        assert!(matches!(res, Err(e) if e.contains("doesn’t contain a universal tile")));
     }
 
     #[test]

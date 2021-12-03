@@ -489,7 +489,7 @@ impl Nile {
         let player = self.players.get_mut(self.current_turn).expect("Player");
         player
             .place_tile(tile)
-            .ok_or_else(|| Error::Msg(format!("Player doesn't have a {:?}", tile)))?;
+            .ok_or_else(|| Error::Msg(format!("Player doesn’t have a {:?}", tile)))?;
         let event_score = Rc::make_mut(&mut self.board)
             .place_tile(coordinates, TilePlacement::new(tile_path_type, rotation))
             .map_err(|e| {
@@ -525,7 +525,7 @@ impl Nile {
         if !self.current_turn_placements.contains(&coordinates) {
             return Err(Error::cell(
                 coordinates,
-                "Can't change tiles from another turn".to_owned(),
+                "Can’t change tiles from another turn".to_owned(),
             ));
         }
         let (tile_placement, event_score) = self
@@ -548,7 +548,7 @@ impl Nile {
         if !self.current_turn_placements.contains(&coordinates) {
             return Err(Error::cell(
                 coordinates,
-                "Can't change tiles from another turn".to_owned(),
+                "Can’t change tiles from another turn".to_owned(),
             ));
         }
         let old_tile_path = self
@@ -566,7 +566,7 @@ impl Nile {
         if !self.current_turn_placements.contains(&old_coordinates) {
             return Err(Error::cell(
                 old_coordinates,
-                "Can't change tiles from another turn".to_owned(),
+                "Can’t change tiles from another turn".to_owned(),
             ));
         }
         let score_change = self
@@ -602,7 +602,7 @@ impl Nile {
     pub fn end_turn(&mut self) -> error::Result<bool> {
         self.if_not_ended()?;
         if self.current_turn_placements.is_empty() {
-            return Err(Error::Msg("Can't end turn normally without placing at least one tile. Use can't play if there are no playable moves".to_owned()));
+            return Err(Error::Msg("Can’t end turn normally without placing at least one tile. Use “can’t play” if there are no playable moves".to_owned()));
         }
         self.has_ended = Rc::make_mut(&mut self.board)
             .validate_turns_moves(self.current_turn_placements.clone())?;

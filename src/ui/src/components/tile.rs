@@ -250,6 +250,7 @@ pub mod empty_cell {
                 .props
                 .on_drop
                 .reform(move |e: MouseEvent| e.prevent_default());
+            // FIXME: end of game tile dots
             html! {
                 <div class=classes!(
                         "tile", bonus_to_class(self.props.bonus), self.props.is_error.then(|| "has-error"),
