@@ -89,7 +89,7 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <>
+            <div id="app-container">
                 <main>
                     <Container>
                         <h1>{ "Nile" }</h1>
@@ -99,7 +99,7 @@ impl Component for App {
                 <footer>
                     <Footer />
                 </footer>
-            </>
+            </div>
         }
     }
 }
