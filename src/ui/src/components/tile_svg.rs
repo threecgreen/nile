@@ -183,3 +183,31 @@ mod svg_wrapper {
         }
     }
 }
+
+/// Dot that indicates how the river should align in the end-of-game cells
+pub struct EndOfGameDot {}
+
+impl Component for EndOfGameDot {
+    type Properties = ();
+    type Message = ();
+
+    fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        Self {}
+    }
+
+    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+        false
+    }
+
+    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+        false
+    }
+
+    fn view(&self) -> Html {
+        html! {
+            <svg viewBox="0 0 40 40" class="end-game-dot">
+                <circle cx="37.5" cy="50%" r="2.5" />
+            </svg>
+        }
+    }
+}

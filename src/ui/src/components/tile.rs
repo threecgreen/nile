@@ -201,6 +201,8 @@ pub mod tile_cell {
 }
 
 pub mod empty_cell {
+    use crate::components::tile_svg::EndOfGameDot;
+
     use super::*;
 
     pub struct EmptyCell {
@@ -250,7 +252,6 @@ pub mod empty_cell {
                 .props
                 .on_drop
                 .reform(move |e: MouseEvent| e.prevent_default());
-            // FIXME: end of game tile dots
             html! {
                 <div class=classes!(
                         "tile", bonus_to_class(self.props.bonus), self.props.is_error.then(|| "has-error"),
@@ -260,6 +261,9 @@ pub mod empty_cell {
                     ondrop={ on_drop }
                     onclick={ on_click }
                 >
+                    { if self.props.is_end_game {
+                        html! { <EndOfGameDot /> }
+                    } else { html!{} } }
                     { bonus_to_html(self.props.bonus) }
                 </div>
             }
