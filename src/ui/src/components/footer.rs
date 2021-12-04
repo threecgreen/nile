@@ -24,7 +24,7 @@ impl Component for Footer {
     fn view(&self) -> Html {
         const VERSION: &str = env!("CARGO_PKG_VERSION");
         html! {
-            <div class="footer-background">
+            <div class=classes!("footer-background")>
                 <Container>
                     <div class="footer-flex">
                         <div>

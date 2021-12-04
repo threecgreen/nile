@@ -1,14 +1,8 @@
-mod board;
 mod button;
-mod carbon_icon;
+pub mod carbon_icon;
 mod container;
-mod controls;
-mod cover_art;
 mod footer;
-mod game;
-mod game_form;
 mod modal;
-mod player;
 mod tile;
 mod tile_svg;
 pub mod utils;
@@ -16,6 +10,11 @@ pub mod utils;
 pub use button::Button;
 pub use container::Container;
 pub use footer::Footer;
-pub use game::Game;
-pub use game_form::GameForm;
-pub use modal::Modal;
+pub use modal::{error::ErrorModal, Modal};
+pub use tile::{
+    display::DisplayTile,
+    empty_cell::EmptyCell,
+    rack_tile::RackTile,
+    tile_cell::{self, TileCell},
+    HiddenTile,
+};

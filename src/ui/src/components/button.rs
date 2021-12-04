@@ -10,7 +10,7 @@ pub struct Button {
 pub struct Props {
     pub on_click: Callback<()>,
     #[prop_or_default]
-    pub class: &'static str,
+    pub class: Classes,
     #[prop_or(true)]
     pub is_enabled: bool,
     #[prop_or_default]
@@ -43,7 +43,7 @@ impl Component for Button {
         });
         html! {
             <button onclick={ on_click }
-                class={ self.props.class }
+                class={ self.props.class.clone() }
                 disabled={ !self.props.is_enabled }
                 title={ self.props.title }
                 aria-label={ self.props.aria_label }

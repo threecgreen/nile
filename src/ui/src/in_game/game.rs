@@ -1,8 +1,11 @@
-use super::{board::Board, utils::update_if_changed};
-use crate::{
-    components::{controls::Controls, modal::error::ErrorModal, player::Players},
+use super::{
+    board::Board,
+    controls::Controls,
+    player::Players,
     state::{Action, GameStore, NewGameOptions, Rotation, SelectRackTile},
 };
+use crate::components::utils::update_if_changed;
+use crate::components::ErrorModal;
 
 use nile::console;
 use yew::{
@@ -131,8 +134,8 @@ impl GameImpl {
             .modal
             .as_ref()
             .map(|modal| match modal {
-                crate::state::Modal::EndOfGame(msg) => msg,
-                crate::state::Modal::Error(msg) => msg,
+                super::state::Modal::EndOfGame(msg) => msg,
+                super::state::Modal::Error(msg) => msg,
             })
             .map_or(html! {}, |msg| {
                 let dismiss = dispatch.callback(|_| Action::Dismiss);

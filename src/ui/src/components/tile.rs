@@ -38,7 +38,7 @@ pub mod rack_tile {
 
         fn view(&self) -> Html {
             html! {
-                <div class=classes!("tile", self.props.is_selected.then(|| "selected"))>
+                <div class=classes!("cell", "tile", self.props.is_selected.then(|| "selected"))>
                     <TileSvg tile={ self.props.tile } />
               </div>
             }
@@ -142,7 +142,7 @@ pub mod tile_cell {
             html! {
                 <div
                     class=classes!(
-                        "tile", selected_css_class, universal_css_class, self.props.is_error.then(|| "has-error"),
+                        "cell", "tile", selected_css_class, universal_css_class, self.props.is_error.then(|| "has-error"),
                         tile_cell_type_to_class(self.props.tile_cell_type)
                     )
                     style={ rotation_to_css(self.props.rotation) }
@@ -221,7 +221,7 @@ pub mod empty_cell {
                 .reform(move |e: MouseEvent| e.prevent_default());
             html! {
                 <div class=classes!(
-                        "tile", bonus_to_class(self.props.bonus), self.props.is_error.then(|| "has-error"),
+                        "cell", bonus_to_class(self.props.bonus), self.props.is_error.then(|| "has-error"),
                         self.props.is_end_game.then(|| "end-game")
                     )
                     ondragover={ on_drag_over }
@@ -276,28 +276,29 @@ impl Component for HiddenTile {
 
     fn view(&self) -> Html {
         html! {
-            <div class=classes!("tile", "hidden-tile") />
+            <div class=classes!("cell", "tile", "hidden-tile") />
         }
     }
 }
 
-pub mod display_cell {
+pub mod display {
     use nile::{Rotation, TilePathType};
 
     use super::*;
 
-    pub struct DisplayCell {
+    pub struct DisplayTile {
         props: Props,
     }
 
     #[derive(Clone, Properties, PartialEq)]
     pub struct Props {
-        tile_path_type: TilePathType,
-        rotation: Rotation,
-        classes: Classes,
+        pub tile_path_type: TilePathType,
+        pub rotation: Rotation,
+        #[prop_or_default]
+        pub classes: Classes,
     }
 
-    impl Component for DisplayCell {
+    impl Component for DisplayTile {
         type Properties = Props;
         type Message = ();
 
@@ -319,6 +320,7 @@ pub mod display_cell {
                 <div
                     class=classes!(
                         self.props.classes.clone(),
+                        "cell",
                         "tile",
                         "display-tile",
                         "has-tile",

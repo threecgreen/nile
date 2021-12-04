@@ -1,15 +1,13 @@
 use std::rc::Rc;
 
-use nile::{console, Cell, Coordinates, BOARD_DIM};
+use nile::{Cell, Coordinates, BOARD_DIM};
 use yew::prelude::*;
 use yewdux::prelude::Dispatcher;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
-use crate::state::GameStore;
-
-use super::tile::empty_cell::EmptyCell;
-use super::tile::tile_cell::{Selection, TileCell, TileCellType};
-use crate::state::Action;
+use super::state::{Action, GameStore};
+use crate::components::EmptyCell;
+use crate::components::{tile_cell::Selection, tile_cell::TileCellType, TileCell};
 
 pub struct BoardImpl {
     props: DispatchProps<GameStore>,
@@ -44,7 +42,6 @@ impl Component for BoardImpl {
     }
 
     fn view(&self) -> Html {
-        console::log("Rendering board");
         let state = self.props.state();
         let board = state.nile.board();
         let current_turn_placements = state.nile.current_turn_placements();

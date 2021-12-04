@@ -4,11 +4,10 @@ use crate::{
     app::PlayerNameChange,
     components::{
         carbon_icon::{CarbonIcon, Size},
+        utils::update_if_changed,
         Button,
     },
 };
-
-use super::utils::update_if_changed;
 
 pub struct GameForm {
     props: Props,
@@ -71,6 +70,7 @@ impl Component for GameForm {
                 } }
                 <Button title="Add player"
                     aria_label="Add player"
+                    class=classes!("nile-blue-bg")
                     is_enabled={ total_player_count < 4 }
                     on_click={ on_add_player }
                 >
@@ -78,6 +78,7 @@ impl Component for GameForm {
                 </Button>
                 <Button title="Remove player"
                     aria_label="Remove player"
+                    class=classes!("nile-blue-bg")
                     is_enabled={ self.props.player_names.len() > 1 }
                     on_click={ on_rm_player }
                 >
@@ -87,6 +88,7 @@ impl Component for GameForm {
                 <span class="cpu-count">{ format!("CPU players: {}", self.props.cpu_player_count) }</span>
                 <Button title="Add CPU player"
                     aria_label="Add CPU player"
+                    class=classes!("nile-blue-bg")
                     is_enabled={ total_player_count < 4 }
                     on_click={ on_add_cpu_player }
                 >
@@ -94,6 +96,7 @@ impl Component for GameForm {
                 </Button>
                 <Button title="Remove CPU player"
                     aria_label="Remove CPU player"
+                    class=classes!("nile-blue-bg")
                     is_enabled={ total_player_count > 1 && self.props.cpu_player_count > 0 }
                     on_click={ on_rm_cpu_player }
                 >
@@ -101,6 +104,7 @@ impl Component for GameForm {
                 </Button>
                 <br />
                 <Button title={ if can_start { "Start new game" } else { "Need at least two players" } }
+                    class=classes!("river-turquoise-bg")
                     aria_label="Start new game"
                     is_enabled={ can_start }
                     on_click={ on_start }
@@ -108,6 +112,7 @@ impl Component for GameForm {
                     { "Start" }
                 </Button>
                 <Button title={ "Reset" }
+                    class=classes!("red-bg")
                     aria_label="Reset game form"
                     on_click={ on_reset }
                 >

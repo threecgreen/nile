@@ -37,7 +37,7 @@ impl Component for CarbonIcon {
 
     fn view(&self) -> Html {
         html! {
-            <img src={ format!("/icons/{}/{}.svg", self.props.size.to_path(), self.props.name) } />
+            <img class="carbon-icon" src={ format!("/icons/{}/{}.svg", self.props.size.to_path(), self.props.name) } />
         }
     }
 }

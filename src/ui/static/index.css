@@ -1,5 +1,6 @@
 :root {
-    --nile-blue: rgb(96, 129, 228);
+    --nile-blue: rgb(60, 104, 242);
+    --river-turquoise: rgb(71, 193, 171);
 }
 
 * {
@@ -14,7 +15,6 @@ h1 {
 
 button {
     color: black;
-    background: var(--nile-blue);
     border: none;
     padding: 0.5rem;
     transition: all 0.2s;
@@ -69,7 +69,7 @@ footer {
 
 /* footer */
 .footer-background {
-    background-color: var(--nile-blue);
+    background-color: royalblue;
     height: 4rem;
     margin-top: 5rem;
 }
@@ -98,19 +98,20 @@ footer {
 }
 
 /* tile */
-.tile {
+.cell {
     height: 2rem;
     width: 2rem;
     border: solid;
     border-width: 1px;
-
-    background-color: rgb(253, 255, 155);
-
+    background-color: rgb(253, 255, 222);
     /* For bonus/penalty text */
     text-align: center;
 }
-.tile p {
+.cell p {
     margin-top: 0.5rem;
+}
+.tile {
+    background-color: rgb(253, 255, 155);
 }
 .universal {
     position: relative;
@@ -221,7 +222,7 @@ table.scores td {
 }
 
 /* tile rack */
-.alignRight > td {
+.align-right > td {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
@@ -338,4 +339,108 @@ form.game-form button {
     position: relative;
     top: 2.0375rem;
     margin: -0.5px;
+}
+
+/* landing/header */
+h1.landing-title {
+    text-align: left;
+    font-size: 3rem;
+    font-style: normal;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    margin: 0;
+}
+h2.subtitle {
+    text-align: left;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 2rem;
+    color: rgba(0, 0, 0, 0.66);
+    margin: 0;
+}
+.landing-header {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1.5rem;
+    margin-bottom: 4rem;
+}
+.landing-header > * {
+    display: inline-block;
+    margin-right: 1rem;
+}
+
+/* in-game/header */
+.in-game-header {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.in-game-title {
+    text-align: left;
+    font-size: 3rem;
+    font-style: normal;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    margin: 0;
+}
+
+/* landing */
+.section-title {
+    font-weight: 600;
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+.center-content {
+    display: flex;
+    justify-content: center;
+}
+
+/* landing/button */
+.landing-button {
+    display: inline-block;
+    width: 10rem;
+    height: 2.5rem;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    text-align: center;
+    margin: 0.5rem;
+    text-transform: lowercase;
+    line-height: 2.25rem;
+    padding: 0;
+    font-size: 1rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+a.landing-button {
+    color: whitesmoke;
+}
+
+/* colors */
+.river-turquoise-bg {
+    background: var(--river-turquoise);
+}
+.river-turquoise-bg:disabled {
+    background: rgba(71, 193, 171, 0.4);
+}
+/* .riverTurquoiseBg:hover {
+    background-color: ;
+} */
+.nile-blue-bg {
+    background: var(--nile-blue);
+}
+.nile-blue-bg:disabled {
+    background:  rgba(60, 104, 242, 0.4);
+}
+/* .nileBlueBg:hover {
+    background-color: ;
+} */
+.red-bg {
+    background: rgba(255, 20, 20, 1);
+}
+.red-bg:disabled {
+    background: rgba(255, 20, 20, 0.4);
+}
+
+/* carbon_icon */
+.carbon-icon {
+    vertical-align: middle;
 }

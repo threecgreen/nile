@@ -5,16 +5,12 @@ use yewdux::{
     prelude::{DispatchProps, Dispatcher},
 };
 
-use crate::{
-    components::{
-        button::Button,
-        carbon_icon::{CarbonIcon, Size},
-        tile::rack_tile::RackTile,
-    },
-    state::{Action, GameStore, Rotation},
+use super::state::{Action, GameStore, Rotation};
+use crate::components::{
+    carbon_icon::{CarbonIcon, Size},
+    utils::update_if_changed,
+    Button, RackTile,
 };
-
-use super::utils::update_if_changed;
 
 pub struct ControlsImpl {
     props: DispatchProps<GameStore>,
@@ -82,6 +78,7 @@ impl Component for ControlsImpl {
         html! {
             <div class="controls">
                 <Button is_enabled={ state.has_selected_board_tile() }
+                    class=classes!("nile-blue-bg")
                     on_click={ on_rotate_counterclockwise }
                     title="Rotate tile counter-clockwise"
                     aria_label="Rotate selected tile counter-clockwise"
@@ -89,6 +86,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="rotate_counterclockwise" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ state.has_selected_board_tile() }
+                    class=classes!("nile-blue-bg")
                     on_click={ on_rotate_clockwise }
                     title="Rotate tile clockwise"
                     aria_label="Rotate selected tile clockwise"
@@ -96,6 +94,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="rotate_clockwise" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ !state.nile.current_turn_placements().is_empty() }
+                    class=classes!("red-bg")
                     on_click={ on_remove_tile }
                     title="Remove tile"
                     aria_label="Remove selected tile from the board"
@@ -104,15 +103,17 @@ impl Component for ControlsImpl {
                 </Button>
                 <div class=classes!("dropdown", (!selected_is_universal).then(|| "disabled"))>
                     <Button aria_label="Select tile path for universal tile"
-                        class="dropdown"
+                        class=classes!("dropdown", "nile-blue-bg")
                         is_enabled={ selected_is_universal }
                         on_click={ on_click_dropdown }
                     >
-                        { "Tile Path " }<CarbonIcon name="down_to_buttom" size={ Size::S24 } />
+                        <CarbonIcon name="down_to_buttom" size={ Size::S24 } />
+                        { "Tile Path " }
                     </Button>
                     { self.view_dropdown() }
                 </div>
                 <Button is_enabled={ state.can_undo() }
+                    class=classes!("nile-blue-bg")
                     on_click={ on_undo }
                     title="Undo"
                     aria_label="Undo the last move"
@@ -120,6 +121,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="undo" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ state.can_redo() }
+                    class=classes!("nile-blue-bg")
                     on_click={ on_redo }
                     title="Redo"
                     aria_label="Redo an undone move"
@@ -127,6 +129,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="redo" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ !state.nile.current_turn_placements().is_empty() }
+                    class=classes!("river-turquoise-bg")
                     on_click={ on_end_turn }
                     title="End turn"
                     aria_label="End turn"
@@ -135,6 +138,7 @@ impl Component for ControlsImpl {
                     { "End Turn" }
                 </Button>
                 <Button is_enabled={ state.nile.current_turn_placements().is_empty() }
+                    class=classes!("red-bg")
                     on_click={ on_cant_play }
                     title="Can’t play"
                     aria_label="Can’t play"

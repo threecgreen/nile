@@ -3,13 +3,11 @@ use self::rack::TileRack;
 use yew::prelude::*;
 use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
-use crate::{
-    components::{
-        button::Button,
-        carbon_icon::{CarbonIcon, Size},
-        utils::update_if_changed,
-    },
-    state::GameStore,
+use super::state::GameStore;
+use crate::components::{
+    carbon_icon::{CarbonIcon, Size},
+    utils::update_if_changed,
+    Button,
 };
 
 pub struct PlayersImpl {
@@ -68,7 +66,7 @@ impl Component for PlayersImpl {
                         }
                     }) } }
                 </div>
-                <Button class="expand-collapse"
+                <Button class=classes!("expand-collapse")
                     is_enabled={ !players[0].scores().is_empty() }
                     title={ if self.are_scores_expanded { "Collapse scores" } else { "Expand scores" } }
                     on_click={ on_click }
@@ -106,10 +104,8 @@ mod player {
     use nile::TurnScore;
     use yewdux::prelude::{DispatchPropsMut, Dispatcher};
 
-    use crate::{
-        components::utils::{if_render, if_render_html},
-        state::{Action, SelectRackTile},
-    };
+    use super::super::state::{Action, SelectRackTile};
+    use crate::components::utils::{if_render, if_render_html};
 
     use super::*;
 
@@ -235,10 +231,7 @@ mod player {
 mod rack {
     use nile::TileArray;
 
-    use crate::components::{
-        tile::{rack_tile::RackTile, HiddenTile},
-        utils::if_render,
-    };
+    use crate::components::{utils::if_render, HiddenTile, RackTile};
 
     use super::*;
 
