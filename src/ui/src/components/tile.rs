@@ -1,6 +1,8 @@
 use yew::prelude::*;
 
-use nile::Tile;
+use nile::{Rotation, Tile, TilePathType};
+
+use crate::colors;
 
 use super::tile_svg::TileSvg;
 use super::utils::update_if_changed;
@@ -155,47 +157,12 @@ pub mod tile_cell {
         }
     }
 
-    fn view_tile_path_type(tile_path_type: TilePathType) -> Html {
-        match tile_path_type {
-            TilePathType::Normal(tp) => {
-                let tile = Tile::from(tp);
-                html! {
-                    <TileSvg tile={ tile }
-                        stroke_color={ "royalblue" }
-                    />
-                }
-            }
-            TilePathType::Universal(tp) => {
-                let tile = Tile::from(tp);
-                html! {
-                    <>
-                        <TileSvg tile={ Tile::Universal }
-                            stroke_color="#aaaaaa"
-                        />
-                        <TileSvg tile={ tile }
-                            stroke_color={ "royalblue" }
-                        />
-                    </>
-                }
-            }
-        }
-    }
-
     const fn tile_cell_type_to_class(tile_cell_type: TileCellType) -> Option<&'static str> {
         match tile_cell_type {
             TileCellType::Normal => None,
             TileCellType::Bonus => Some("bonus"),
             TileCellType::Penalty => Some("penalty"),
             TileCellType::EndGame => Some("end-game"),
-        }
-    }
-
-    const fn rotation_to_css(rotation: Rotation) -> &'static str {
-        match rotation {
-            Rotation::None => "",
-            Rotation::Clockwise90 => "transform: rotate(90deg)",
-            Rotation::Clockwise180 => "transform: rotate(180deg)",
-            Rotation::Clockwise270 => "transform: rotate(270deg)",
         }
     }
 }
@@ -310,6 +277,93 @@ impl Component for HiddenTile {
     fn view(&self) -> Html {
         html! {
             <div class=classes!("tile", "hidden-tile") />
+        }
+    }
+}
+
+pub mod display_cell {
+    use nile::{Rotation, TilePathType};
+
+    use super::*;
+
+    pub struct DisplayCell {
+        props: Props,
+    }
+
+    #[derive(Clone, Properties, PartialEq)]
+    pub struct Props {
+        tile_path_type: TilePathType,
+        rotation: Rotation,
+        classes: Classes,
+    }
+
+    impl Component for DisplayCell {
+        type Properties = Props;
+        type Message = ();
+
+        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+            Self { props }
+        }
+
+        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+            false
+        }
+
+        fn change(&mut self, props: Self::Properties) -> ShouldRender {
+            update_if_changed(&mut self.props, props)
+        }
+
+        fn view(&self) -> Html {
+            let is_universal = matches!(self.props.tile_path_type, TilePathType::Universal(_));
+            html! {
+                <div
+                    class=classes!(
+                        self.props.classes.clone(),
+                        "tile",
+                        "display-tile",
+                        "has-tile",
+                        is_universal.then(|| "universal"),
+                    )
+                    style={ rotation_to_css(self.props.rotation) }
+                >
+                    { view_tile_path_type(self.props.tile_path_type) }
+                </div>
+            }
+        }
+    }
+}
+
+const fn rotation_to_css(rotation: Rotation) -> &'static str {
+    match rotation {
+        Rotation::None => "",
+        Rotation::Clockwise90 => "transform: rotate(90deg)",
+        Rotation::Clockwise180 => "transform: rotate(180deg)",
+        Rotation::Clockwise270 => "transform: rotate(270deg)",
+    }
+}
+
+fn view_tile_path_type(tile_path_type: TilePathType) -> Html {
+    match tile_path_type {
+        TilePathType::Normal(tp) => {
+            let tile = Tile::from(tp);
+            html! {
+                <TileSvg tile={ tile }
+                    stroke_color={ colors::RIVER_PATH_STROKE }
+                />
+            }
+        }
+        TilePathType::Universal(tp) => {
+            let tile = Tile::from(tp);
+            html! {
+                <>
+                    <TileSvg tile={ Tile::Universal }
+                        stroke_color={ colors::UNIVERSAL_TILE_STROKE }
+                    />
+                    <TileSvg tile={ tile }
+                        stroke_color={ colors::RIVER_PATH_STROKE }
+                    />
+                </>
+            }
         }
     }
 }

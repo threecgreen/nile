@@ -63,7 +63,7 @@ footer {
 /* container */
 .container {
     width: 90%;
-    max-width: 1080px;
+    max-width: 880px;
     margin: 0 auto;
 }
 
@@ -104,7 +104,7 @@ footer {
     border: solid;
     border-width: 1px;
 
-    background-color: rgb(253, 255, 222);
+    background-color: rgb(253, 255, 155);
 
     /* For bonus/penalty text */
     text-align: center;
@@ -152,6 +152,9 @@ footer {
     background: repeating-linear-gradient(135deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem),
                 repeating-linear-gradient(45deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem);
     /* background-size: calc(0.5rem * 1.414); */
+}
+.display-tile {
+    display: inline-block;
 }
 .end-game-dot {
     position: absolute; /* overlap */
@@ -312,4 +315,27 @@ form.game-form label {
 }
 form.game-form button {
     margin: 0.25rem;
+}
+
+/* cover art */
+.cover-art {
+    padding-bottom: 1rem;
+    margin-right: 3rem;
+}
+.negative-margin {
+    margin: -0.5px;
+}
+.up {
+    position: relative;
+    left: -2.0625rem;
+    margin-right: -2.0625rem;
+}
+.right {
+    position: relative;
+    left: 0;
+}
+.down-right {
+    position: relative;
+    top: 2.0375rem;
+    margin: -0.5px;
 }

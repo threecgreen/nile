@@ -3,6 +3,7 @@ mod button;
 mod carbon_icon;
 mod container;
 mod controls;
+mod cover_art;
 mod footer;
 mod game;
 mod game_form;
