@@ -179,7 +179,8 @@ mod player {
                 // grid columns start at 1
                 <section style={ format!("grid-column: {}", self.props.id + 1) }>
                     <h2 class=classes!(if is_current_turn { "current" } else { "other" })>
-                        { player.name() }
+                        // nbsp keeps grid if empty player name
+                        { format!("{}\u{00a0}", player.name()) }
                     </h2>
                     <TileRack tiles={ player.tiles().to_owned() }
                         show_tiles={ is_current_turn }
