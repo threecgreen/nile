@@ -385,14 +385,25 @@ h2.subtitle {
 }
 
 /* landing */
-.section-title {
+.landing-section h3 {
     font-weight: 600;
     font-size: 1.75rem;
     margin-bottom: 0.25rem;
 }
+.landing-section h4 {
+    font-size: 1.25rem;
+    margin-bottom: 0.15rem;
+}
+.landing-section h5 {
+    font-size: 1.1rem;
+    margin-bottom: 0.15rem;
+}
 .center-content {
     display: flex;
     justify-content: center;
+}
+.tile-score {
+    text-align: center;
 }
 
 /* landing/button */
