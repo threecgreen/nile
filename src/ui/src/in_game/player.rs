@@ -66,7 +66,7 @@ impl Component for PlayersImpl {
                         }
                     }) } }
                 </div>
-                <Button class=classes!("expand-collapse")
+                <Button class=classes!("expand-collapse", "nile-blue-bg")
                     is_enabled={ !players[0].scores().is_empty() }
                     title={ if self.are_scores_expanded { "Collapse scores" } else { "Expand scores" } }
                     on_click={ on_click }
