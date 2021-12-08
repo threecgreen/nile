@@ -1,3 +1,5 @@
+use smallvec::{smallvec, SmallVec};
+
 use super::CPUPlayer;
 use crate::board::Board;
 use crate::log::TilePlacementEvent;
@@ -52,17 +54,17 @@ struct PotentialSetOfMoves {
     placements: Vec<TilePlacementEvent>,
 }
 
-fn tile_paths_from_tile(t: Tile) -> Vec<TilePath> {
+fn tile_paths_from_tile(t: Tile) -> SmallVec<[TilePath; 8]> {
     match t {
-        Tile::Straight => vec![TilePath::Straight],
-        Tile::Diagonal => vec![TilePath::Diagonal],
-        Tile::Center90 => vec![TilePath::Center90],
-        Tile::Corner90 => vec![TilePath::Corner90],
-        Tile::Left45 => vec![TilePath::Left45],
-        Tile::Right45 => vec![TilePath::Right45],
-        Tile::Left135 => vec![TilePath::Left135],
-        Tile::Right135 => vec![TilePath::Right135],
-        Tile::Universal => Vec::from(TILE_PATHS),
+        Tile::Straight => smallvec![TilePath::Straight],
+        Tile::Diagonal => smallvec![TilePath::Diagonal],
+        Tile::Center90 => smallvec![TilePath::Center90],
+        Tile::Corner90 => smallvec![TilePath::Corner90],
+        Tile::Left45 => smallvec![TilePath::Left45],
+        Tile::Right45 => smallvec![TilePath::Right45],
+        Tile::Left135 => smallvec![TilePath::Left135],
+        Tile::Right135 => smallvec![TilePath::Right135],
+        Tile::Universal => SmallVec::from(TILE_PATHS),
     }
 }
 
@@ -96,91 +98,96 @@ impl Brute {
                     } else {
                         &ROTATIONS[..]
                     };
-                for rotation in rotations.iter() {
+                for rotation in rotations {
                     let placement = TilePlacementEvent {
                         coordinates: next_coordinates,
                         rotation: *rotation,
                         tile_path_type,
                     };
-                    if let Ok((next_coordinates, next_offset)) =
-                        eval_placement((last_coordinates, last_offset), &placement)
-                    {
-                        if let Some(cell) = board.cell(next_coordinates) {
-                            if !board.in_bounds(next_coordinates + next_offset)
+                    // Check if valid placement and valid cell
+                    let (next_coordinates, next_offset, cell) = {
+                        let placement_res =
+                            eval_placement((last_coordinates, last_offset), &placement)
+                                .ok()
+                                .and_then(|p| board.cell(p.0).map(|cell| (p.0, p.1, cell)));
+                        match placement_res {
+                            Some(p) => p,
+                            None => {
+                                continue;
+                            }
+                        }
+                    };
+                    // Check if placement sends the river path off the board
+                    if !board.in_bounds(next_coordinates + next_offset)
                                 // If this is an end game cell, the next coordinates don't need
                                 // to be in bounds
                                 && !board.is_end_game_cell(next_coordinates)
-                            {
-                                continue;
-                            }
-                            // Can't replay in same place
-                            let has_replayed_in_cell = placements.iter().any(|placement| {
-                                placement.coordinates == next_coordinates
-                                    || placement.coordinates == next_coordinates + next_offset
-                            }) || !cell.is_empty()
-                                || board.has_tile(next_coordinates + next_offset);
-                            if has_replayed_in_cell {
-                                continue;
-                            }
-                            if board.no_crossover(next_coordinates, next_offset).is_err() {
-                                continue;
-                            }
-                            // clone
-                            let mut new_placements = placements.to_owned();
-                            new_placements.push(placement);
-                            let new_score = turn_score
-                                + TurnScore::from(tile.score())
-                                + cell.score()
-                                + if tiles.len() == 1 {
-                                    // TODO: fix when fewer than 5 tiles in rack
-                                    // Bonus for using all tiles
-                                    TurnScore::from(20)
-                                } else {
-                                    TurnScore::default()
-                                };
-                            let end_game_adj = match Brute::end_game_adjustment(
-                                score,
-                                other_scores,
-                                board,
-                                new_score,
-                                &new_placements,
-                                (next_coordinates, next_offset),
-                            ) {
-                                Ok(adj) => adj,
-                                Err(()) => {
-                                    continue;
-                                }
-                            };
-                            let set_of_moves = PotentialSetOfMoves {
-                                placements: new_placements.clone(),
-                                score: new_score
-                                    + self.next_tile_adjustment(
-                                        board,
-                                        next_coordinates + next_offset,
-                                    )
-                                    + end_game_adj,
-                            };
-                            potential_placements.push(set_of_moves);
-                            if tiles.len() > 1
+                    {
+                        continue;
+                    }
+                    // Can't replay in same place
+                    let has_replayed_in_cell = placements.iter().any(|placement| {
+                        placement.coordinates == next_coordinates
+                            || placement.coordinates == next_coordinates + next_offset
+                    }) || !cell.is_empty()
+                        || board.has_tile(next_coordinates + next_offset);
+                    if has_replayed_in_cell {
+                        continue;
+                    }
+                    if board.no_crossover(next_coordinates, next_offset).is_err() {
+                        continue;
+                    }
+                    // clone
+                    let mut new_placements = placements.to_owned();
+                    new_placements.push(placement);
+                    let new_score = turn_score
+                        + TurnScore::from(tile.score())
+                        + cell.score()
+                        + if tiles.len() == 1 {
+                            // TODO: fix when fewer than 5 tiles in rack
+                            // Bonus for using all tiles
+                            TurnScore::from(20)
+                        } else {
+                            TurnScore::default()
+                        };
+                    let end_game_adj = match Brute::end_game_adjustment(
+                        score,
+                        other_scores,
+                        board,
+                        new_score,
+                        &new_placements,
+                        (next_coordinates, next_offset),
+                    ) {
+                        Ok(adj) => adj,
+                        Err(()) => {
+                            continue;
+                        }
+                    };
+                    let set_of_moves = PotentialSetOfMoves {
+                        placements: new_placements.clone(),
+                        score: new_score
+                            + self.next_tile_adjustment(board, next_coordinates + next_offset)
+                            + end_game_adj,
+                    };
+                    potential_placements.push(set_of_moves);
+                    if tiles.len() > 1
                                 // Don't try to play more tiles if this set of moves
                                 // will already end the game
                                 && !board.is_end_game_cell(next_coordinates)
-                            {
-                                // Recurse
-                                let mut rem_tiles = tiles.clone();
-                                rem_tiles.remove(idx);
-                                potential_placements.extend(self.ranked_moves(
-                                    board,
-                                    score,
-                                    other_scores,
-                                    next_coordinates,
-                                    next_offset,
-                                    new_score,
-                                    &rem_tiles,
-                                    &new_placements,
-                                ));
-                            }
-                        }
+                    {
+                        // Recurse
+                        let mut rem_tiles = tiles.clone();
+                        rem_tiles.remove(idx);
+                        potential_placements.extend(self.ranked_moves(
+                            board,
+                            score,
+                            other_scores,
+                            next_coordinates,
+                            next_offset,
+                            new_score,
+                            &rem_tiles,
+                            &new_placements,
+                        ));
                     }
                 }
             }
@@ -192,8 +199,8 @@ impl Brute {
         // this should be a function of the number of players. In a two-player game, the
         // game is zero-sum
         match board.cell(next_coordinates) {
-            // when player count is 2, it's a zero-sum game, so forced
-            // are as valuable as bonuses for the player
+            // when player count is 2, it's a zero-sum game, so forced penalties for the opponent
+            // are as valuable as bonuses for the cpu player
             Some(cell) => -cell.score() * 2 / self.player_count as i16,
             _ => TurnScore::default(),
         }
