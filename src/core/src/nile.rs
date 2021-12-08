@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 use std::rc::Rc;
 
+use rand::Rng;
+
 use crate::ai::{Brute, CPUPlayer};
 use crate::board::{Board, TilePlacement};
 use crate::error::{self, Error};
@@ -438,11 +440,13 @@ impl Nile {
             for i in 1..=cpu_player_count {
                 players.push(Player::new(format!("cpu{}", i), &mut tile_box, true))
             }
+            let mut rng = rand::thread_rng();
+            let first_turn = rng.gen_range(0, players.len());
             Ok(Self {
                 board: Rc::new(Board::new()),
                 tile_box,
                 players,
-                current_turn: 0,
+                current_turn: first_turn,
                 current_turn_placements: HashSet::default(),
                 cant_play_count: 0,
                 has_ended: false,
