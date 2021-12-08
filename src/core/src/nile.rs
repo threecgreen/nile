@@ -283,11 +283,7 @@ impl Engine {
         if self.nile.has_ended {
             return false;
         }
-        let player = self
-            .nile
-            .players
-            .get(self.nile.current_turn)
-            .expect("player");
+        let player = self.current_player();
         if !player.is_cpu() {
             return false;
         }
@@ -298,8 +294,8 @@ impl Engine {
             player.total_score(),
             self.other_player_scores(),
         );
-        'list_of_moves: for tile_placement_events in lists_of_moves {
-            for tpe in tile_placement_events.iter() {
+        let success = lists_of_moves.iter().any(|tile_placement_events| {
+            let success = tile_placement_events.iter().all(|tpe| {
                 if let Err(err) =
                     self.mut_nile()
                         .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation)
@@ -309,31 +305,32 @@ impl Engine {
                         err, &tpe
                     ));
                     self.undo_all();
-                    // continue outer for loop
-                    continue 'list_of_moves;
+                    return false;
                 }
                 // Add to log in case there's a problem with the moves and everything needs to be
                 // undo
                 self.log
                     .place_tile(tpe.tile_path_type, tpe.coordinates, tpe.rotation);
-            }
-            match self.end_turn() {
-                Ok(_has_ended) => {
-                    return true;
-                }
-                Err(e) => {
+                true
+            });
+            if success {
+                self.end_turn().map(|_| true).unwrap_or_else(|e| {
                     crate::console::warn(&format!(
                         "Failed to end CPU player turn: {:?}; Placements: {:?}",
                         e, tile_placement_events,
                     ));
                     self.undo_all();
-                    continue;
-                }
+                    false
+                })
+            } else {
+                false
             }
+        });
+        if !success {
+            // Either no moves to begin with or all returned moves were invalid
+            let _end_turn_update = self.cant_play().unwrap();
         }
-        // Either no moves to begin with or all returned moves were invalid
-        let _end_turn_update = self.cant_play().unwrap();
-        true
+        success
     }
 
     fn undo_all(&mut self) {
@@ -410,8 +407,8 @@ pub struct Nile {
     players: Vec<Player>,
     /// the index in `players` of the player whose turn it is
     current_turn: usize,
-    /// coordinates where tiles were place in the current turn. Could be derived from `log` but
-    /// keeping it here is faster
+    /// coordinates where tiles were place in the current turn. Could be derived from `log` in
+    /// `Engine` but keeping it here is faster
     current_turn_placements: HashSet<Coordinates>,
     /// Count of consecutive "can't plays"
     cant_play_count: u8,
@@ -616,7 +613,6 @@ impl Nile {
             .validate_turns_moves(self.current_turn_placements.clone())?;
         let player = self.players.get_mut(self.current_turn).expect("Player");
         let _turn_score = player.end_turn(&mut self.tile_box);
-        // let tiles = player.tiles().to_owned();
         self.advance_turn();
         // Reset count
         self.cant_play_count = 0;
@@ -659,23 +655,22 @@ mod test {
     }
 
     /// Placing and removing a tile should have no net effect on the score
-    // #[test]
-    // fn place_remove_no_score_change() {
-    //     let mut target = setup();
-    //     let tile = get_normal_tile(&mut target);
-    //     let inter_score = target
-    //         .place_tile(
-    //             TilePathType::from(tile),
-    //             Coordinates(10, 0),
-    //             Rotation::Clockwise90,
-    //         )
-    //         .unwrap();
-    //     assert_ne!(inter_score, TurnScore::default());
-    //     assert_ne!(inter_score.score(), 0);
-    //     let final_score = target.remove_tile(Coordinates(10, 0)).unwrap();
-    //     assert_eq!(final_score, TurnScore::default());
-    //     assert_eq!(final_score.score(), 0);
-    // }
+    #[test]
+    fn place_remove_no_score_change() {
+        let mut target = setup();
+        assert_eq!(target.current_player().current_turn_score().score(), 0);
+        let tile = get_normal_tile(&mut target);
+        target
+            .place_tile(
+                TilePathType::from(tile),
+                Coordinates(10, 0),
+                Rotation::Clockwise90,
+            )
+            .unwrap();
+        assert_ne!(target.current_player().current_turn_score().score(), 0);
+        target.remove_tile(Coordinates(10, 0)).unwrap();
+        assert_eq!(target.current_player().current_turn_score().score(), 0);
+    }
 
     #[test]
     fn move_tile_has_no_score_change_except_for_bonues() {
