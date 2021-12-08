@@ -7,7 +7,6 @@ use super::{
 use crate::components::utils::update_if_changed;
 use crate::components::ErrorModal;
 
-use nile::console;
 use yew::{
     prelude::*,
     services::{keyboard::KeyListenerHandle, KeyboardService},

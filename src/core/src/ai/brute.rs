@@ -67,6 +67,7 @@ fn tile_paths_from_tile(t: Tile) -> Vec<TilePath> {
 }
 
 impl Brute {
+    #[allow(clippy::too_many_arguments)]
     fn ranked_moves(
         &self,
         board: &Board,
