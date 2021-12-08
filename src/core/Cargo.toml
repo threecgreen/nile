@@ -1,0 +1,22 @@
+[package]
+name = "nile"
+version = "0.2.0"
+description = "Board game Nile in the browser"
+authors = ["Carter Green <cartergr@usc.edu>"]
+repository = "https://github.com/threecgreen/nile"
+readme = "./README.md"
+license = "MIT"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2.68"
+rand = { version = "0.7.3", features = ["wasm-bindgen"] }
+# Debuggable panics
+console_error_panic_hook = "0.1.6"
+smallvec = "1.4.2"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.18"

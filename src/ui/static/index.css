@@ -1,0 +1,457 @@
+:root {
+    --nile-blue: rgb(60, 104, 242);
+    --river-turquoise: rgb(71, 193, 171);
+}
+
+* {
+    font-family: Lato, sans-serif;
+}
+
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+}
+
+button {
+    color: black;
+    border: none;
+    padding: 0.5rem;
+    transition: all 0.2s;
+    margin: 0 0.3em 0.3em 0;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+button:hover {
+    background: #333;
+    color: whitesmoke;
+}
+
+button:disabled {
+    background: rgb(192, 201, 229)
+}
+
+/* Align icons in buttons */
+button svg {
+    vertical-align: middle;
+}
+
+.centerText {
+    text-align: center;
+}
+
+/* Sticky footer */
+html, body, div#app-container {
+    height: 100%;
+    margin: 0;
+}
+
+div#app-container {
+    display: flex;
+    flex-direction: column;
+}
+main {
+    flex: 1 0 auto;
+}
+footer {
+    flex-shrink: 0;
+}
+
+/* container */
+.container {
+    width: 90%;
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+/* footer */
+.footer-background {
+    background-color: royalblue;
+    height: 4rem;
+    margin-top: 5rem;
+}
+.footer-flex {
+    display: flex;
+    justify-content: space-between;
+}
+.footer > div {
+    width: 32%;
+}
+.copyright {
+    font-size: small;
+    padding-left: 1rem;
+}
+.logo {
+    align-content: center;
+    background-color: whitesmoke;
+    margin: 0.5rem;
+    width: 3rem;
+    height: 3rem;
+}
+.version {
+    font-size: small;
+    text-align: right;
+    padding-right: 1rem;
+}
+
+/* tile */
+.cell {
+    height: 2rem;
+    width: 2rem;
+    border: solid;
+    border-width: 1px;
+    background-color: rgb(253, 255, 222);
+    /* For bonus/penalty text */
+    text-align: center;
+}
+.cell p {
+    margin-top: 0.5rem;
+}
+.tile {
+    background-color: rgb(253, 255, 155);
+}
+.universal {
+    position: relative;
+}
+.universal > :first-child ~ * {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+.selected {
+    background-color: lightcyan;
+}
+.has-error {
+    background-color: rgba(255, 99, 71, 0.8);
+}
+.penalty {
+    background-color: rgba(255, 123, 0, 1);
+}
+.has-tile.penalty {
+    background-color: rgba(255, 123, 0, 0.4);
+}
+.bonus {
+    background-color: rgba(26, 173, 36, 1);
+}
+.has-tile.bonus {
+    background-color: rgba(26, 173, 36, 0.4);
+}
+.end-game {
+    background-color: var(--nile-blue);
+    /* for dot positioning */
+    position: relative;
+}
+.has-tile.end-game {
+    background-color: rgba(113, 139, 219, 0.4);
+}
+.hidden-tile {
+    background: repeating-linear-gradient(135deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem),
+                repeating-linear-gradient(45deg, rgba(40, 40, 40, 0.3), rgba(40, 40, 40, 0.3) 0.4rem, rgba(0, 0, 0, 0) 0.4rem, rgba(0, 0, 0, 0) 0.5rem);
+    /* background-size: calc(0.5rem * 1.414); */
+}
+.display-tile {
+    display: inline-block;
+}
+.end-game-dot {
+    position: absolute; /* overlap */
+    top: 0;
+    left: 0;
+}
+
+/* controls */
+.controls {
+    text-align: center;
+    margin: 1rem;
+}
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-content {
+    position: absolute;
+    box-shadow: 0px 2rem 2rem 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+.dropdown-content a {
+    text-decoration: none;
+    display: block;
+    width: 2rem;
+    height: 2rem;
+}
+
+/* players */
+.players {
+    display: grid;
+    align-content: center;
+}
+.players > div {
+    margin: auto;
+    display: grid;
+    gap: 2rem;
+}
+button.expand-collapse {
+    margin-left: auto;
+    margin-right: auto;
+}
+table.scores {
+    padding-top: 1.25rem;
+}
+table.scores.current {
+    color: inherit;
+    padding-top: 0;
+}
+table.scores td {
+    min-width: 1rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.current {
+    color: royalblue;
+}
+.other {
+    color: rgb(40, 40, 40)
+}
+
+/* tile rack */
+.align-right > td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* board */
+.board {
+    align-self: center;
+}
+.arrow {
+    color: royalblue;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    /* Fix vertical centering */
+    margin-bottom: 0.5rem;
+}
+.start {
+    color: royalblue;
+    text-transform: uppercase;
+    font-size: 1.2rem;
+}
+.outer {
+    display: flex;
+    align-items: center;
+    margin: auto;
+}
+/* Justify center cuts off board on mobile sizes */
+@media screen and (min-width: 768px) {
+    .outer {
+        justify-content: center;
+    }
+}
+
+/* modal */
+.modal {
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    /* Transparent black */
+    background-color: rgba(0, 0, 0, 0.4);
+}
+.modal-content {
+    background-color: #eeeeee;
+    margin: 15% auto;
+    padding: 2.5rem;
+    border: 1px solid #888;
+    width: 75%;
+    max-width: 40rem;
+}
+
+/* shortcut help */
+.shortcuts-help {
+    margin: 2rem;
+}
+.shortcuts-help td {
+    line-height: 130%;
+    padding-right: 0.5rem;
+}
+/* Right align first column */
+.shortcuts-help tr > td:first-of-type {
+    text-align: right;
+}
+.help-key {
+    background-color: rgb(243,243,243);
+    color: rgb(33,33,33);
+    margin-left: 2px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-radius: 3px;
+    border: solid 1px #ccc;
+    border-bottom-color: rgb(204, 204, 204);
+    border-bottom-color: #bbb;
+    box-shadow: inset 0 -1px 0 #bbb;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+/* game form */
+.cpu-count {
+    margin: 1rem;
+}
+form.game-form label {
+    margin: 0.75rem;
+}
+form.game-form button {
+    margin: 0.25rem;
+}
+
+/* cover art */
+.cover-art {
+    padding-bottom: 1rem;
+    margin-right: 3rem;
+}
+.negative-margin {
+    margin: -0.5px;
+}
+.up {
+    position: relative;
+    left: -2.0625rem;
+    margin-right: -2.0625rem;
+}
+.right {
+    position: relative;
+    left: 0;
+}
+.down-right {
+    position: relative;
+    top: 2.0375rem;
+    margin: -0.5px;
+}
+
+/* landing/header */
+h1.landing-title {
+    text-align: left;
+    font-size: 3rem;
+    font-style: normal;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    margin: 0;
+}
+h2.subtitle {
+    text-align: left;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 2rem;
+    color: rgba(0, 0, 0, 0.66);
+    margin: 0;
+}
+.landing-header {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1.5rem;
+    margin-bottom: 4rem;
+}
+.landing-header > * {
+    display: inline-block;
+    margin-right: 1rem;
+}
+
+/* in-game/header */
+.in-game-header {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.in-game-title {
+    text-align: left;
+    font-size: 3rem;
+    font-style: normal;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    margin: 0;
+}
+
+/* landing */
+.landing-section h3 {
+    font-weight: 600;
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+.landing-section h4 {
+    font-size: 1.25rem;
+    margin-bottom: 0.15rem;
+}
+.landing-section h5 {
+    font-size: 1.1rem;
+    margin-bottom: 0.15rem;
+}
+.center-content {
+    display: flex;
+    justify-content: center;
+}
+.tile-score {
+    text-align: center;
+}
+
+/* landing/button */
+.landing-button {
+    display: inline-block;
+    width: 10rem;
+    height: 2.5rem;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    text-align: center;
+    margin: 0.5rem;
+    text-transform: lowercase;
+    line-height: 2.25rem;
+    padding: 0;
+    font-size: 1rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+a.landing-button {
+    color: whitesmoke;
+}
+
+/* colors */
+.river-turquoise-bg {
+    background: var(--river-turquoise);
+}
+.river-turquoise-bg:disabled {
+    background: rgba(71, 193, 171, 0.4);
+}
+/* .riverTurquoiseBg:hover {
+    background-color: ;
+} */
+.nile-blue-bg {
+    background: var(--nile-blue);
+}
+.nile-blue-bg:disabled {
+    background:  rgba(60, 104, 242, 0.4);
+}
+/* .nileBlueBg:hover {
+    background-color: ;
+} */
+.red-bg {
+    background: rgba(255, 20, 20, 1);
+}
+.red-bg:disabled {
+    background: rgba(255, 20, 20, 0.4);
+}
+
+/* carbon_icon */
+.carbon-icon {
+    vertical-align: middle;
+}

@@ -11,45 +11,27 @@ env:
 
 jobs:
   rust-build:
-    name: Wasm build and JS
+    name: Trunk build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install wasm-pack
-      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-    - name: Wasm build
-      run: wasm-pack build
-    - name: Generate JS constants
-      uses: actions-rs/cargo@v1
+    - name: Install trunk
+      run: cargo install trunk
+    - name: Install wasm target
+      uses: actions-rs/toolchain@v1
       with:
-        command: run
-        args: --bin gen_constants
-    - name: Install JS dependencies
+        target: wasm32-unknown-unknown
+        toolchain: stable
+    - name: Trunk build
       run: |
-        cd web
-        npm ci
-    - name: Build JS
-      run: |
-        cd web
-        npm run build
-    - name: JS test
-      run: |
-        cd web
-        npm run test
-    - name: JS lint
-      run: |
-        cd web
-        npm run lint
+        cd src/ui
+        trunk build
 
   rust-test:
     name: Rust test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install wasm-pack
-      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-    - name: Wasm test
-      run: wasm-pack test --node
     - name: Rust test
       uses: actions-rs/cargo@v1
       with:
@@ -81,14 +63,3 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: audit
-
-  js-audit:
-    name: JS Audit
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-    - uses: actions/checkout@v2
-    - name: Audit
-      run: npm audit --production
