@@ -29,12 +29,15 @@ pub struct Engine {
 impl Engine {
     pub fn new(player_names: Vec<String>, cpu_player_count: u8) -> Result<Self, String> {
         let nile = Nile::new(player_names, cpu_player_count)?;
-        Ok(Self {
+        let mut engine = Self {
             nile: Rc::new(nile),
             selected_tile: None,
             log: Log::new(),
             error_cells: None,
-        })
+        };
+        // Necessary if the randomized first player is a cpu
+        engine.take_cpu_turns_if_any();
+        Ok(engine)
     }
 
     pub fn board(&self) -> &Board {
