@@ -495,15 +495,15 @@ impl Board {
         visited.insert(coordinates);
         let mut copy = self.clone();
         copy.last_placement = last_placement;
-        if copy.cell(coordinates).is_none() {
-            return Err(CellError::new(
+        copy.cell(coordinates).ok_or_else(|| {
+            CellError::new(
                 coordinates,
                 format!(
                     "Invalid river path leading to coordinates: {} that are off the board",
                     coordinates
                 ),
-            ));
-        }
+            )
+        })?;
         let open_moves = copy.open_moves();
 
         for offset in open_moves.iter() {
