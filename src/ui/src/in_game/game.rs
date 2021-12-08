@@ -63,7 +63,6 @@ impl Component for GameImpl {
             KeyboardService::register_key_down(
                 &document(),
                 Callback::from(move |keyboard_event: KeyboardEvent| {
-                    console::debug("Keyboard callback called");
                     if keyboard_event.ctrl_key()
                         || keyboard_event.alt_key()
                         || keyboard_event.meta_key()

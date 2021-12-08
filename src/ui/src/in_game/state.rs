@@ -7,6 +7,7 @@ use crate::components::utils::update_if_changed;
 pub struct State {
     /// Main game state
     pub nile: Engine,
+    /// Modal state for displaying errors and end-of-game message
     pub modal: Option<Modal>,
 }
 
@@ -24,11 +25,7 @@ pub enum Action {
     Redo,
     EndTurn,
     CantPlay,
-    // CpuTurn,
-    // SetError(String),
-    // SetEndOfGame(String),
     Dismiss,
-    // None,
 }
 
 #[derive(Clone, PartialEq)]
@@ -96,7 +93,7 @@ impl Reducer for State {
     }
 
     fn reduce(&mut self, action: Self::Action) -> yewdux::prelude::Changed {
-        console::info(&format!("Received action: {:?}", action));
+        // console::info(&format!("Received action: {:?}", action));
         match action {
             Action::NewGame(NewGameOptions {
                 player_names,
@@ -143,15 +140,7 @@ impl Reducer for State {
                 .unwrap_or_else(|e| self.set_error(e)),
             Action::EndTurn => self.end_turn(),
             Action::CantPlay => self.cant_play(),
-            // Action::CpuTurn => self
-            //     .nile
-            //     .take_cpu_turn()
-            //     .map(|_| true)
-            //     .unwrap_or_else(|e| self.set_error(e)),
-            // Action::SetError(msg) => self.set_error(msg),
-            // Action::SetEndOfGame(msg) => self.set_end_of_game(msg),
             Action::Dismiss => self.dismiss(),
-            // Action::None => false,
         }
     }
 }
