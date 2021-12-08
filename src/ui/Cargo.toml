@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "UI frontend for playing the game Nile in the browser"
 authors = ["Carter Green <cartergr@usc.edu>"]
 repository = "https://github.com/threecgreen/nile"
-readme = "../../README.md"
+readme = "./README.md"
 license = "MIT"
 edition = "2021"
 

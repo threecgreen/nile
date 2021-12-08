@@ -1,4 +1,3 @@
-/// This could be its own crate
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
