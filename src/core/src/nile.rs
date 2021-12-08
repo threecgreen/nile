@@ -644,7 +644,9 @@ mod test {
     use super::*;
 
     fn setup() -> Nile {
-        Nile::new(vec!["player1".to_owned(), "player2".to_owned()], 0).unwrap()
+        let mut nile = Nile::new(vec!["player1".to_owned(), "player2".to_owned()], 0).unwrap();
+        nile.current_turn = 0;
+        nile
     }
 
     fn get_normal_tile(target: &mut Nile) -> Tile {
