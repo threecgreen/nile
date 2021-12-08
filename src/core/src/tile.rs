@@ -42,10 +42,8 @@ impl fmt::Display for Coordinates {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Tile {
     /// ```text
-    ///
     /// ---
-    ///
-    /// ```.clone()
+    /// ```
     Straight,
     /// ```text
     /// \
@@ -85,8 +83,8 @@ pub enum Tile {
     Left135,
     /// ```text
     /// ---
-    //   /
-    //  /
+    ///   /
+    ///  /
     /// ```
     Right135,
     /// Can represent any one of the other `Tile` variants
