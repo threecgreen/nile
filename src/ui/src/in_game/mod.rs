@@ -7,7 +7,7 @@ mod state;
 
 use yew::prelude::*;
 
-use crate::components::{Button, Container, Modal};
+use crate::components::{utils::update_if_changed, Button, Container, Modal};
 use game::Game;
 use header::Header;
 
@@ -24,6 +24,15 @@ pub struct Props {
     pub on_shortcuts_modal: Callback<bool>,
 }
 
+impl PartialEq for Props {
+    fn eq(&self, other: &Self) -> bool {
+        // exclude `Callback`s
+        self.player_names == other.player_names
+            && self.cpu_player_count == other.cpu_player_count
+            && self.should_show_shortcuts == other.should_show_shortcuts
+    }
+}
+
 impl Component for InGame {
     type Properties = Props;
     type Message = ();
@@ -36,8 +45,8 @@ impl Component for InGame {
         false
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        todo!()
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        update_if_changed(&mut self.props, props)
     }
 
     fn view(&self) -> Html {
