@@ -62,6 +62,7 @@ impl Component for InGame {
                     { "New game" }
                 </Button>
                 <Button title="Shortcuts help"
+                    class=classes!("nile-blue-bg")
                     on_click={ show_shortcuts_modal }
                 >
                     { "Shortcuts help" }
@@ -114,6 +115,7 @@ impl InGame {
                         </table>
                     </section>
                     <Button title="Dismiss"
+                        class=classes!("nile-blue-bg")
                         on_click={ dismiss }
                     >
                         { "Dismiss" }

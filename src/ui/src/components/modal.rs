@@ -76,6 +76,7 @@ pub mod error {
                 <Modal>
                     <p>{ &self.props.msg }</p>
                     <Button title="Dismiss"
+                        class=classes!("nile-blue-bg")
                         on_click={ self.props.dismiss.clone() }
                     >
                         { "Dismiss" }
