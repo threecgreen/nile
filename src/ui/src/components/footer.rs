@@ -9,22 +9,14 @@ impl Component for Footer {
     type Message = ();
     type Properties = ();
 
-    fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {}
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         const VERSION: &str = env!("CARGO_PKG_VERSION");
         html! {
-            <div class=classes!("footer-background")>
+            <div class={ classes!("footer-background") }>
                 <Container>
                     <div class="footer-flex">
                         <div>

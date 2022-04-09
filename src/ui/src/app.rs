@@ -7,7 +7,6 @@ use crate::{
 };
 
 pub struct App {
-    link: ComponentLink<App>,
     player_names: Vec<String>,
     has_confirmed: bool,
     cpu_player_count: u8,
@@ -38,7 +37,7 @@ impl Component for App {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {
             player_names: vec![String::default()],
             has_confirmed: false,
@@ -46,11 +45,10 @@ impl Component for App {
             game_number: 1,
             should_show_shortcuts: false,
             should_show_new_game_form: false,
-            link,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::AddPlayer => {
                 let total_player_count = self.player_names.len() + self.cpu_player_count as usize;
@@ -99,14 +97,10 @@ impl Component for App {
         }
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
-        let dispatch = self.link.callback(|action| action);
-        let on_new_game = self.link.callback(|_| Msg::NewGame);
-        let on_shortcuts_modal = self.link.callback(Msg::SetShouldShowShortcuts);
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let dispatch = ctx.link().callback(|action| action);
+        let on_new_game = ctx.link().callback(|_| Msg::NewGame);
+        let on_shortcuts_modal = ctx.link().callback(Msg::SetShouldShowShortcuts);
         html! {
             <div id="app-container">
                 <main>{ if self.has_confirmed { html! {

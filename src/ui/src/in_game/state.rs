@@ -1,8 +1,11 @@
+use std::rc::Rc;
+
 use nile::{console, Coordinates, Engine, Player, SelectedTile, TilePath, TilePathType};
-use yewdux::prelude::{Reducer, ReducerStore};
+use yewdux::{prelude::Reducer, store::Store};
 
 use crate::components::utils::update_if_changed;
 
+/// Shared state for a game of nile.
 #[derive(Clone)]
 pub struct State {
     /// Main game state
@@ -10,6 +13,11 @@ pub struct State {
     /// Modal state for displaying errors and end-of-game message
     pub modal: Option<Modal>,
 }
+
+/// A message when [`State`] has changed.
+pub struct UpdateStateMsg(pub Rc<State>);
+
+pub type Dispatch = yewdux::dispatch::Dispatch<State>;
 
 #[derive(Debug)]
 pub enum Action {
@@ -52,7 +60,15 @@ pub struct SelectRackTile {
     pub rack_idx: u8,
 }
 
-pub type GameStore = ReducerStore<State>;
+impl Store for State {
+    fn new() -> Self {
+        Self::new_game(vec![String::default()], 1)
+    }
+
+    fn should_notify(&self, _old: &Self) -> bool {
+        true
+    }
+}
 
 impl State {
     pub fn new_game(player_names: Vec<String>, cpu_player_count: u8) -> Self {
@@ -85,68 +101,72 @@ impl State {
     }
 }
 
-impl Reducer for State {
-    type Action = Action;
-
-    fn new() -> Self {
-        Self::new_game(vec![String::default()], 1)
-    }
-
-    fn reduce(&mut self, action: Self::Action) -> yewdux::prelude::Changed {
+impl Reducer<State> for Action {
+    fn apply(self, mut state_rc: Rc<State>) -> Rc<State> {
+        // copy on write
+        let state = Rc::make_mut(&mut state_rc);
         // console::info(&format!("Received action: {:?}", action));
-        match action {
+        match self {
             Action::NewGame(NewGameOptions {
                 player_names,
                 cpu_player_count,
             }) => {
-                self.nile = Engine::new(player_names, cpu_player_count).expect("nile engine");
-                true
+                state.nile = Engine::new(player_names, cpu_player_count).expect("nile engine");
             }
-            Action::SelectRackTile(select_rack_tile) => self
-                .nile
-                .select_rack_tile(select_rack_tile.rack_idx)
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::SelectBoardTile(coordinates) => self
-                .nile
-                .select_board_tile(coordinates)
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::PlaceTile(coordinates) => self
-                .nile
-                .place_tile(coordinates)
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::RotateSelectedTile(rotation) => self.rotate_selected_tile(rotation),
-            Action::RemoveSelectedTile => self
-                .nile
-                .remove_selected_tile()
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::UpdateSelectedUniversalPath(tile_path) => self
-                .nile
-                .update_selected_universal_path(tile_path)
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::Undo => self
-                .nile
-                .undo()
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::Redo => self
-                .nile
-                .redo()
-                .map(|_| true)
-                .unwrap_or_else(|e| self.set_error(e)),
-            Action::EndTurn => self.end_turn(),
-            Action::CantPlay => self.cant_play(),
-            Action::Dismiss => self.dismiss(),
-        }
+            Action::SelectRackTile(select_rack_tile) => {
+                if let Err(e) = state.nile.select_rack_tile(select_rack_tile.rack_idx) {
+                    state.set_error(e);
+                }
+            }
+            Action::SelectBoardTile(coordinates) => {
+                if let Err(e) = state.nile.select_board_tile(coordinates) {
+                    state.set_error(e);
+                }
+            }
+            Action::PlaceTile(coordinates) => {
+                if let Err(e) = state.nile.place_tile(coordinates) {
+                    state.set_error(e);
+                }
+            }
+            Action::RotateSelectedTile(rotation) => {
+                state.rotate_selected_tile(rotation);
+            }
+            Action::RemoveSelectedTile => {
+                if let Err(e) = state.nile.remove_selected_tile() {
+                    state.set_error(e);
+                }
+            }
+            Action::UpdateSelectedUniversalPath(tile_path) => {
+                if let Err(e) = state.nile.update_selected_universal_path(tile_path) {
+                    state.set_error(e);
+                }
+            }
+            Action::Undo => {
+                if let Err(e) = state.nile.undo() {
+                    state.set_error(e);
+                }
+            }
+            Action::Redo => {
+                if let Err(e) = state.nile.redo() {
+                    state.set_error(e);
+                }
+            }
+            Action::EndTurn => {
+                state.end_turn();
+            }
+            Action::CantPlay => {
+                state.cant_play();
+            }
+            Action::Dismiss => {
+                state.dismiss();
+            }
+        };
+        state_rc
     }
 }
 
 impl State {
-    fn rotate_selected_tile(&mut self, rotation: Rotation) -> yewdux::prelude::Changed {
+    fn rotate_selected_tile(&mut self, rotation: Rotation) -> bool {
         self.nile
             .selected_board_tile()
             .and_then(|coordinates| self.nile.board().cell(coordinates))
@@ -166,7 +186,7 @@ impl State {
             })
     }
 
-    fn end_turn(&mut self) -> yewdux::prelude::Changed {
+    fn end_turn(&mut self) -> bool {
         self.nile
             .end_turn()
             .map(|has_ended| {
@@ -178,7 +198,7 @@ impl State {
             .unwrap_or_else(|e| self.set_error(e))
     }
 
-    fn cant_play(&mut self) -> yewdux::prelude::Changed {
+    fn cant_play(&mut self) -> bool {
         self.nile
             .cant_play()
             .map(|has_ended| {
@@ -190,7 +210,7 @@ impl State {
             .unwrap_or_else(|e| self.set_error(e))
     }
 
-    fn set_end_of_game(&mut self) -> yewdux::prelude::Changed {
+    fn set_end_of_game(&mut self) -> bool {
         let winning_score = self
             .nile
             .players()
@@ -217,12 +237,12 @@ impl State {
         update_if_changed(&mut self.modal, Some(Modal::EndOfGame(msg)))
     }
 
-    fn set_error(&mut self, msg: String) -> yewdux::prelude::Changed {
+    fn set_error(&mut self, msg: String) -> bool {
         console::error(&msg);
         update_if_changed(&mut self.modal, Some(Modal::Error(msg)))
     }
 
-    fn dismiss(&mut self) -> yewdux::prelude::Changed {
+    fn dismiss(&mut self) -> bool {
         update_if_changed(&mut self.modal, None)
     }
 }

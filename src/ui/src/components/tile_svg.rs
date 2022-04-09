@@ -2,11 +2,8 @@ use nile::Tile;
 use yew::prelude::*;
 
 use self::svg_wrapper::SvgWrapper;
-use super::utils::update_if_changed;
 
-pub struct TileSvg {
-    props: Props,
-}
+pub struct TileSvg {}
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct Props {
@@ -19,115 +16,107 @@ impl Component for TileSvg {
     type Message = ();
     type Properties = Props;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        update_if_changed(&mut self.props, props)
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
-        match self.props.tile {
-            Tile::Straight => self.straight(),
-            Tile::Diagonal => self.diagonal(),
-            Tile::Center90 => self.center90(),
-            Tile::Corner90 => self.corner90(),
-            Tile::Left45 => self.left45(),
-            Tile::Right45 => self.right45(),
-            Tile::Left135 => self.left135(),
-            Tile::Right135 => self.right135(),
-            Tile::Universal => self.universal(),
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        match ctx.props().tile {
+            Tile::Straight => self.straight(ctx),
+            Tile::Diagonal => self.diagonal(ctx),
+            Tile::Center90 => self.center90(ctx),
+            Tile::Corner90 => self.corner90(ctx),
+            Tile::Left45 => self.left45(ctx),
+            Tile::Right45 => self.right45(ctx),
+            Tile::Left135 => self.left135(ctx),
+            Tile::Right135 => self.right135(ctx),
+            Tile::Universal => self.universal(ctx),
         }
     }
 }
 
 impl TileSvg {
-    fn straight(&self) -> Html {
+    fn straight(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper>
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="0" y1="20" x2="40" y2="20" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="0" y1="20" x2="40" y2="20" />
             </SvgWrapper>
         }
     }
-    fn diagonal(&self) -> Html {
+    fn diagonal(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper>
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="40" y1="0" x2="0" y2="40" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="40" y1="0" x2="0" y2="40" />
             </SvgWrapper>
         }
     }
-    fn center90(&self) -> Html {
+    fn center90(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper>
-                <path fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" d="M20,40c0-11.055-8.945-20-20-20"/>
+                <path fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" d="M20,40c0-11.055-8.945-20-20-20"/>
             </SvgWrapper>
         }
     }
-    fn corner90(&self) -> Html {
+    fn corner90(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper>
-                <path fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" d="M40,40C28.986,28.986,11.163,28.986,0.148,40"/>
+                <path fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" d="M40,40C28.986,28.986,11.163,28.986,0.148,40"/>
             </SvgWrapper>
         }
     }
-    fn left45(&self) -> Html {
+    fn left45(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper style={ Self::reflect_to_css(true) }>
-                { self.tile45() }
+                { self.tile45(ctx) }
             </SvgWrapper>
         }
     }
-    fn right45(&self) -> Html {
+    fn right45(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper style={ Self::reflect_to_css(false) }>
-                { self.tile45() }
+                { self.tile45(ctx) }
             </SvgWrapper>
         }
     }
-    fn tile45(&self) -> Html {
+    fn tile45(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <path fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" d="M19.938,40.063c0-27.636,22.363-50,50-50" />
+            <path fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" d="M19.938,40.063c0-27.636,22.363-50,50-50" />
         }
     }
-    fn left135(&self) -> Html {
+    fn left135(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper style={ Self::reflect_to_css(false) }>
-                { self.tile135() }
+                { self.tile135(ctx) }
             </SvgWrapper>
         }
     }
-    fn right135(&self) -> Html {
+    fn right135(&self, ctx: &Context<Self>) -> Html {
         html! {
             // For 45, left is reflected, but for 135 right is
             <SvgWrapper style={ Self::reflect_to_css(true) }>
-                { self.tile135() }
+                { self.tile135(ctx) }
             </SvgWrapper>
         }
     }
-    fn tile135(&self) -> Html {
+    fn tile135(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <path fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" d="M0,40l15.725-15.725
+            <path fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" d="M0,40l15.725-15.725
                 c0.444-0.527,1.11-0.862,1.854-0.862c1.337,0,2.422,1.084,2.422,2.422L20,40"
             />
         }
     }
-    fn universal(&self) -> Html {
+    fn universal(&self, ctx: &Context<Self>) -> Html {
         html! {
             <SvgWrapper>
-                <circle fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" cx="20" cy="20" r="5" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="23.535" y1="23.535" x2="40" y2="40" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="0" y1="0" x2="16.466" y2="16.466" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="16.464" y1="23.535" x2="0" y2="40" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="40" y1="0" x2="23.535" y2="16.464" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="15" y1="20" x2="0" y2="20" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="40" y1="20" x2="25" y2="20" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="20" y1="25" x2="20" y2="40" />
-                <line fill="none" stroke={ self.props.stroke_color } stroke-width="3" stroke-miterlimit="10" x1="20" y1="0" x2="20" y2="15" />
+                <circle fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" cx="20" cy="20" r="5" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="23.535" y1="23.535" x2="40" y2="40" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="0" y1="0" x2="16.466" y2="16.466" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="16.464" y1="23.535" x2="0" y2="40" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="40" y1="0" x2="23.535" y2="16.464" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="15" y1="20" x2="0" y2="20" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="40" y1="20" x2="25" y2="20" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="20" y1="25" x2="20" y2="40" />
+                <line fill="none" stroke={ ctx.props().stroke_color } stroke-width="3" stroke-miterlimit="10" x1="20" y1="0" x2="20" y2="15" />
             </SvgWrapper>
         }
     }
@@ -142,13 +131,9 @@ impl TileSvg {
 }
 
 mod svg_wrapper {
-    use yew::{html, Children, Component, Properties};
+    use yew::{html, Children, Component, Context, Properties};
 
-    use crate::components::utils::update_if_changed;
-
-    pub struct SvgWrapper {
-        props: Props,
-    }
+    pub struct SvgWrapper {}
 
     #[derive(Clone, Properties, PartialEq)]
     pub struct Props {
@@ -162,22 +147,14 @@ mod svg_wrapper {
         type Message = ();
         type Properties = Props;
 
-        fn create(props: Self::Properties, _link: yew::ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> yew::ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> yew::ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> yew::Html {
+        fn view(&self, ctx: &Context<Self>) -> yew::Html {
             html! {
-                <svg viewBox="0 0 40 40" style={ self.props.style }>
-                    { self.props.children.clone() }
+                <svg viewBox="0 0 40 40" style={ ctx.props().style }>
+                    { ctx.props().children.clone() }
                 </svg>
             }
         }
@@ -191,19 +168,11 @@ impl Component for EndOfGameDot {
     type Properties = ();
     type Message = ();
 
-    fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {}
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <svg viewBox="0 0 40 40" class="end-game-dot">
                 <circle cx="37.5" cy="50%" r="2.5" />

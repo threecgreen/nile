@@ -1,10 +1,6 @@
 use yew::prelude::*;
 
-use super::utils::update_if_changed;
-
-pub struct CarbonIcon {
-    props: Props,
-}
+pub struct CarbonIcon {}
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(u8)]
@@ -23,21 +19,15 @@ impl Component for CarbonIcon {
     type Properties = Props;
     type Message = ();
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        update_if_changed(&mut self.props, props)
-    }
-
-    fn view(&self) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <img class="carbon-icon" src={ format!("/icons/{}/{}.svg", self.props.size.to_path(), self.props.name) } />
+            <img class="carbon-icon"
+                src={ format!("/icons/{}/{}.svg", ctx.props().size.to_path(), ctx.props().name) }
+            />
         }
     }
 }

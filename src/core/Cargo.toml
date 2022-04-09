@@ -1,6 +1,6 @@
 [package]
 name = "nile"
-version = "0.2.0"
+version = "0.3.0"
 description = "Board game Nile in the browser"
 authors = ["Carter Green <cartergr@usc.edu>"]
 repository = "https://github.com/threecgreen/nile"

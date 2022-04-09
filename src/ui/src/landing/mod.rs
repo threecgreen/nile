@@ -8,15 +8,13 @@ use yew::prelude::*;
 
 use crate::{
     app,
-    components::{utils::update_if_changed, Container, EmptyCell, RackTile},
+    components::{Container, EmptyCell, RackTile},
 };
 use button::{ClickButton, LinkButton};
 use game_form::GameForm;
 use header::Header;
 
-pub struct Landing {
-    props: Props,
-}
+pub struct Landing {}
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct Props {
@@ -30,21 +28,13 @@ impl Component for Landing {
     type Properties = Props;
     type Message = ();
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        update_if_changed(&mut self.props, props)
-    }
-
-    fn view(&self) -> Html {
-        let show_new_game_form = self
-            .props
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let show_new_game_form = ctx
+            .props()
             .dispatch
             .reform(|_| app::Msg::SetShouldShowNewGameForm(true));
         html! {
@@ -61,12 +51,12 @@ impl Component for Landing {
                         { "new game" }
                     </ClickButton>
                 </div>
-                { if self.props.should_show_new_game_form { html! {
+                { if ctx.props().should_show_new_game_form { html! {
                     <section>
                         <h3 class="section-title">{ "new game" }</h3>
-                        <GameForm player_names={ self.props.player_names.clone() }
-                            cpu_player_count={ self.props.cpu_player_count }
-                            dispatch={ self.props.dispatch.clone() }
+                        <GameForm player_names={ ctx.props().player_names.clone() }
+                            cpu_player_count={ ctx.props().cpu_player_count }
+                            dispatch={ ctx.props().dispatch.clone() }
                         />
                     </section>
                 } } else { html!{} } }

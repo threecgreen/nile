@@ -7,13 +7,11 @@ mod state;
 
 use yew::prelude::*;
 
-use crate::components::{utils::update_if_changed, Button, Container, Modal};
+use crate::components::{Button, Container, Modal};
 use game::Game;
 use header::Header;
 
-pub struct InGame {
-    props: Props,
-}
+pub struct InGame {}
 
 #[derive(Clone, Properties)]
 pub struct Props {
@@ -37,39 +35,31 @@ impl Component for InGame {
     type Properties = Props;
     type Message = ();
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        update_if_changed(&mut self.props, props)
-    }
-
-    fn view(&self) -> Html {
-        let show_shortcuts_modal = self.props.on_shortcuts_modal.reform(|_| true);
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let show_shortcuts_modal = ctx.props().on_shortcuts_modal.reform(|_| true);
         html! {
             <Container>
                 <Header />
                 <Button title="New game"
-                    class=classes!("river-turquoise-bg")
+                    class={ classes!("river-turquoise-bg") }
                     // TODO: confirm starting new game
-                    on_click={ self.props.on_new_game.clone() }
+                    on_click={ ctx.props().on_new_game.clone() }
                 >
                     { "New game" }
                 </Button>
                 <Button title="Shortcuts help"
-                    class=classes!("nile-blue-bg")
+                    class={ classes!("nile-blue-bg") }
                     on_click={ show_shortcuts_modal }
                 >
                     { "Shortcuts help" }
                 </Button>
-                { self.view_shortcuts_help_modal() }
-                <Game player_names={ self.props.player_names.clone() }
-                    cpu_player_count={ self.props.cpu_player_count }
+                { Self::view_shortcuts_help_modal(ctx) }
+                <Game player_names={ ctx.props().player_names.clone() }
+                    cpu_player_count={ ctx.props().cpu_player_count }
                 />
             </Container>
         }
@@ -77,7 +67,7 @@ impl Component for InGame {
 }
 
 impl InGame {
-    fn view_shortcuts_help_modal(&self) -> Html {
+    fn view_shortcuts_help_modal(ctx: &Context<Self>) -> Html {
         const SHORTCUT_BINDINGS: [(&str, &str); 8] = [
             ("q", "rotate counter-clockwise"),
             ("e", "rotate clockwise"),
@@ -89,8 +79,8 @@ impl InGame {
             ("ESC", "dismiss modal"),
         ];
 
-        if self.props.should_show_shortcuts {
-            let dismiss = self.props.on_shortcuts_modal.reform(|_| false);
+        if ctx.props().should_show_shortcuts {
+            let dismiss = ctx.props().on_shortcuts_modal.reform(|_| false);
             html! {
                 <Modal>
                     <h2>{ "Keyboard shortcuts" }</h2>
@@ -115,7 +105,7 @@ impl InGame {
                         </table>
                     </section>
                     <Button title="Dismiss"
-                        class=classes!("nile-blue-bg")
+                        class={ classes!("nile-blue-bg") }
                         on_click={ dismiss }
                     >
                         { "Dismiss" }

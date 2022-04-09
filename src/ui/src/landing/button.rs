@@ -1,16 +1,12 @@
 use yew::prelude::*;
 
-use crate::components::utils::update_if_changed;
-
 pub use click::Button as ClickButton;
 pub use link::Button as LinkButton;
 
 pub mod link {
     use super::*;
 
-    pub struct Button {
-        props: Props,
-    }
+    pub struct Button {}
 
     #[derive(Clone, Properties, PartialEq)]
     pub struct Props {
@@ -23,24 +19,16 @@ pub mod link {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
+        fn view(&self, ctx: &Context<Self>) -> Html {
             html! {
-                <a href={ self.props.href }
-                    class=classes!("landing-button", "nile-blue-bg")
+                <a href={ ctx.props().href }
+                    class={ classes!("landing-button", "nile-blue-bg") }
                 >
-                    { self.props.children.clone() }
+                    { ctx.props().children.clone() }
                 </a>
             }
         }
@@ -52,9 +40,7 @@ pub mod click {
 
     use super::*;
 
-    pub struct Button {
-        props: Props,
-    }
+    pub struct Button {}
 
     #[derive(Clone, Properties, PartialEq)]
     pub struct Props {
@@ -67,24 +53,16 @@ pub mod click {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
+        fn view(&self, ctx: &Context<Self>) -> Html {
             html! {
-                <Btn on_click={ self.props.on_click.clone() }
+                <Btn on_click={ ctx.props().on_click.clone() }
                     class={ classes!("landing-button", "river-turquoise-bg") }
                 >
-                    { self.props.children.clone() }
+                    { ctx.props().children.clone() }
                 </Btn>
             }
         }

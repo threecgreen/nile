@@ -5,14 +5,11 @@ use nile::{Rotation, Tile, TilePathType};
 use crate::colors;
 
 use super::tile_svg::TileSvg;
-use super::utils::update_if_changed;
 
 pub mod rack_tile {
     use super::*;
 
-    pub struct RackTile {
-        props: Props,
-    }
+    pub struct RackTile {}
 
     #[derive(Clone, Properties, PartialEq)]
     pub struct Props {
@@ -24,22 +21,14 @@ pub mod rack_tile {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
+        fn view(&self, ctx: &Context<Self>) -> Html {
             html! {
-                <div class=classes!("cell", "tile", self.props.is_selected.then(|| "selected"))>
-                    <TileSvg tile={ self.props.tile } />
+                <div class={ classes!("cell", "tile", ctx.props().is_selected.then(|| "selected")) }>
+                    <TileSvg tile={ ctx.props().tile } />
               </div>
             }
         }
@@ -59,9 +48,7 @@ pub mod tile_cell {
         EndGame,
     }
 
-    pub struct TileCell {
-        props: Props,
-    }
+    pub struct TileCell {}
 
     #[derive(Clone, Copy, PartialEq)]
     #[repr(u8)]
@@ -96,22 +83,14 @@ pub mod tile_cell {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
-            let is_selectable = self.props.selection != Selection::Locked;
+        fn view(&self, ctx: &Context<Self>) -> Html {
+            let is_selectable = ctx.props().selection != Selection::Locked;
             let on_click = {
-                let on_select = self.props.on_select.clone();
+                let on_select = ctx.props().on_select.clone();
                 Callback::from(move |e: MouseEvent| {
                     e.prevent_default();
                     if is_selectable {
@@ -123,7 +102,7 @@ pub mod tile_cell {
                 e.prevent_default();
             });
             let on_drag_start = {
-                let on_select = self.props.on_select.clone();
+                let on_select = ctx.props().on_select.clone();
                 Callback::from(move |e: DragEvent| {
                     e.prevent_default();
                     if is_selectable {
@@ -131,27 +110,27 @@ pub mod tile_cell {
                     }
                 })
             };
-            let selected_css_class = match self.props.selection {
+            let selected_css_class = match ctx.props().selection {
                 Selection::Selected => Some("selected"),
                 _ => None,
             };
-            let universal_css_class = match self.props.tile_path_type {
+            let universal_css_class = match ctx.props().tile_path_type {
                 TilePathType::Universal(_) => Some("universal"),
                 _ => None,
             };
             html! {
                 <div
-                    class=classes!(
-                        "cell", "tile", selected_css_class, universal_css_class, self.props.is_error.then(|| "has-error"),
-                        tile_cell_type_to_class(self.props.tile_cell_type)
-                    )
-                    style={ rotation_to_css(self.props.rotation) }
+                    class={ classes!(
+                        "cell", "tile", selected_css_class, universal_css_class, ctx.props().is_error.then(|| "has-error"),
+                        tile_cell_type_to_class(ctx.props().tile_cell_type)
+                    ) }
+                    style={ rotation_to_css(ctx.props().rotation) }
                     onclick={ on_click }
                     draggable={ is_selectable.to_string() }
                     ondrag={ on_drag }
                     ondragstart={ on_drag_start }
                 >
-                    { view_tile_path_type(self.props.tile_path_type) }
+                    { view_tile_path_type(ctx.props().tile_path_type) }
                 </div>
             }
         }
@@ -172,9 +151,7 @@ pub mod empty_cell {
 
     use super::*;
 
-    pub struct EmptyCell {
-        props: Props,
-    }
+    pub struct EmptyCell {}
 
     #[derive(Clone, Properties)]
     pub struct Props {
@@ -197,41 +174,33 @@ pub mod empty_cell {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
+        fn view(&self, ctx: &Context<Self>) -> Html {
             let on_drag_over = Callback::from(|e: DragEvent| e.prevent_default());
-            let on_drop = self
-                .props
+            let on_drop = ctx
+                .props()
                 .on_drop
                 .reform(move |e: DragEvent| e.prevent_default());
-            let on_click = self
-                .props
+            let on_click = ctx
+                .props()
                 .on_drop
                 .reform(move |e: MouseEvent| e.prevent_default());
             html! {
-                <div class=classes!(
-                        "cell", bonus_to_class(self.props.bonus), self.props.is_error.then(|| "has-error"),
-                        self.props.is_end_game.then(|| "end-game")
-                    )
+                <div class={ classes!(
+                        "cell", bonus_to_class(ctx.props().bonus), ctx.props().is_error.then(|| "has-error"),
+                        ctx.props().is_end_game.then(|| "end-game")
+                    ) }
                     ondragover={ on_drag_over }
                     ondrop={ on_drop }
                     onclick={ on_click }
                 >
-                    { if self.props.is_end_game {
+                    { if ctx.props().is_end_game {
                         html! { <EndOfGameDot /> }
                     } else { html!{} } }
-                    { bonus_to_html(self.props.bonus) }
+                    { bonus_to_html(ctx.props().bonus) }
                 </div>
             }
         }
@@ -262,21 +231,13 @@ impl Component for HiddenTile {
     type Properties = ();
     type Message = ();
 
-    fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {}
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
-            <div class=classes!("cell", "tile", "hidden-tile") />
+            <div class={ classes!("cell", "tile", "hidden-tile") } />
         }
     }
 }
@@ -286,9 +247,7 @@ pub mod display {
 
     use super::*;
 
-    pub struct DisplayTile {
-        props: Props,
-    }
+    pub struct DisplayTile {}
 
     #[derive(Clone, Properties, PartialEq)]
     pub struct Props {
@@ -302,33 +261,25 @@ pub mod display {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
-            let is_universal = matches!(self.props.tile_path_type, TilePathType::Universal(_));
+        fn view(&self, ctx: &Context<Self>) -> Html {
+            let is_universal = matches!(ctx.props().tile_path_type, TilePathType::Universal(_));
             html! {
                 <div
-                    class=classes!(
-                        self.props.classes.clone(),
+                    class={ classes!(
+                        ctx.props().classes.clone(),
                         "cell",
                         "tile",
                         "display-tile",
                         "has-tile",
                         is_universal.then(|| "universal"),
-                    )
-                    style={ rotation_to_css(self.props.rotation) }
+                    ) }
+                    style={ rotation_to_css(ctx.props().rotation) }
                 >
-                    { view_tile_path_type(self.props.tile_path_type) }
+                    { view_tile_path_type(ctx.props().tile_path_type) }
                 </div>
             }
         }

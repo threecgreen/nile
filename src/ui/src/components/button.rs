@@ -1,10 +1,6 @@
 use yew::prelude::*;
 
-use super::utils::update_if_changed;
-
-pub struct Button {
-    props: Props,
-}
+pub struct Button {}
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct Props {
@@ -25,30 +21,22 @@ impl Component for Button {
     type Message = ();
     type Properties = Props;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        update_if_changed(&mut self.props, props)
-    }
-
-    fn view(&self) -> Html {
-        let on_click = self.props.on_click.reform(move |e: MouseEvent| {
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let on_click = ctx.props().on_click.reform(move |e: MouseEvent| {
             e.prevent_default();
         });
         html! {
             <button onclick={ on_click }
-                class={ self.props.class.clone() }
-                disabled={ !self.props.is_enabled }
-                title={ self.props.title }
-                aria-label={ self.props.aria_label }
+                class={ ctx.props().class.clone() }
+                disabled={ !ctx.props().is_enabled }
+                title={ ctx.props().title }
+                aria-label={ ctx.props().aria_label }
             >
-                { self.props.children.clone() }
+                { ctx.props().children.clone() }
             </button>
         }
     }

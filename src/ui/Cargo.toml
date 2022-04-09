@@ -1,6 +1,6 @@
 [package]
 name = "nile-ui"
-version = "0.2.0"
+version = "0.3.0"
 description = "UI frontend for playing the game Nile in the browser"
 authors = ["Carter Green <cartergr@usc.edu>"]
 repository = "https://github.com/threecgreen/nile"
@@ -13,5 +13,5 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 nile = { path = "../core" }
-yew = "0.18.0"
-yewdux = "0.6.2"
+yew = { version = "0.20", features = ["csr"] }
+yewdux = "0.9"

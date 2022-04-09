@@ -1,10 +1,6 @@
 use yew::prelude::*;
 
-use super::utils::update_if_changed;
-
-pub struct Container {
-    props: Props,
-}
+pub struct Container {}
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct Props {
@@ -16,22 +12,14 @@ impl Component for Container {
     type Message = ();
     type Properties = Props;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Self { props }
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        update_if_changed(&mut self.props, props)
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div class="container">
-                { self.props.children.clone() }
+                { ctx.props().children.clone() }
             </div>
         }
     }

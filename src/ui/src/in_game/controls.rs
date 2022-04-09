@@ -1,84 +1,80 @@
+use std::rc::Rc;
+
 use nile::{Tile, TilePath, TILE_PATHS};
 use yew::prelude::*;
-use yewdux::{
-    component::WithDispatch,
-    prelude::{DispatchProps, Dispatcher},
-};
 
-use super::state::{Action, GameStore, Rotation};
+use super::state::{Action, Dispatch, Rotation, State};
 use crate::components::{
     carbon_icon::{CarbonIcon, Size},
     utils::update_if_changed,
     Button, RackTile,
 };
 
-pub struct ControlsImpl {
-    props: DispatchProps<GameStore>,
-    link: ComponentLink<Self>,
+pub struct Controls {
+    dispatch: Dispatch,
+    state: Rc<State>,
     is_tile_path_selector_open: bool,
 }
-pub type Controls = WithDispatch<ControlsImpl>;
 pub enum Msg {
     SetIsTilePathSelectorOpen(bool),
+    UpdateState(Rc<State>),
 }
 
-impl Component for ControlsImpl {
-    type Properties = DispatchProps<GameStore>;
+impl Component for Controls {
+    type Properties = ();
     type Message = Msg;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
+        let callback = ctx.link().callback(Msg::UpdateState);
+        let dispatch = Dispatch::subscribe(callback);
+        let state = dispatch.get();
         Self {
-            props,
-            link,
+            dispatch,
+            state,
             is_tile_path_selector_open: false,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::SetIsTilePathSelectorOpen(is_tile_path_selector_open) => update_if_changed(
                 &mut self.is_tile_path_selector_open,
                 is_tile_path_selector_open,
             ),
-        }
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        // TODO: narrow to just used props
-
-        if update_if_changed(&mut self.props, props) {
-            if !self.props.state().selected_is_universal() {
-                self.is_tile_path_selector_open = false;
+            Msg::UpdateState(new_state) => {
+                if !new_state.selected_is_universal() {
+                    self.is_tile_path_selector_open = false;
+                }
+                // TODO: narrow to just used props
+                self.state = new_state;
+                true
             }
-            true
-        } else {
-            false
         }
     }
 
-    fn view(&self) -> Html {
-        let state = self.props.state();
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let state = &self.state;
         let selected_is_universal = state.selected_is_universal();
         let on_rotate_counterclockwise = self
-            .props
-            .callback(|_| Action::RotateSelectedTile(Rotation::Counterclockwise));
+            .dispatch
+            .apply_callback(|_| Action::RotateSelectedTile(Rotation::Counterclockwise));
         let on_rotate_clockwise = self
-            .props
-            .callback(|_| Action::RotateSelectedTile(Rotation::Clockwise));
-        let on_remove_tile = self.props.callback(|_| Action::RemoveSelectedTile);
-        let on_undo = self.props.callback(|_| Action::Undo);
-        let on_redo = self.props.callback(|_| Action::Redo);
-        let on_end_turn = self.props.callback(|_| Action::EndTurn);
-        let on_cant_play = self.props.callback(|_| Action::CantPlay);
+            .dispatch
+            .apply_callback(|_| Action::RotateSelectedTile(Rotation::Clockwise));
+        let on_remove_tile = self.dispatch.apply_callback(|_| Action::RemoveSelectedTile);
+        let on_undo = self.dispatch.apply_callback(|_| Action::Undo);
+        let on_redo = self.dispatch.apply_callback(|_| Action::Redo);
+        let on_end_turn = self.dispatch.apply_callback(|_| Action::EndTurn);
+        let on_cant_play = self.dispatch.apply_callback(|_| Action::CantPlay);
         let on_click_dropdown = {
             let is_tile_path_selector_open = self.is_tile_path_selector_open;
-            self.link
+            ctx.link()
                 .callback(move |_| Msg::SetIsTilePathSelectorOpen(!is_tile_path_selector_open))
         };
         html! {
             <div class="controls">
                 <Button is_enabled={ state.has_selected_board_tile() }
-                    class=classes!("nile-blue-bg")
+                    class={ classes!("nile-blue-bg") }
                     on_click={ on_rotate_counterclockwise }
                     title="Rotate tile counter-clockwise"
                     aria_label="Rotate selected tile counter-clockwise"
@@ -86,7 +82,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="rotate_counterclockwise" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ state.has_selected_board_tile() }
-                    class=classes!("nile-blue-bg")
+                    class={ classes!("nile-blue-bg") }
                     on_click={ on_rotate_clockwise }
                     title="Rotate tile clockwise"
                     aria_label="Rotate selected tile clockwise"
@@ -94,26 +90,26 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="rotate_clockwise" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ !state.nile.current_turn_placements().is_empty() }
-                    class=classes!("red-bg")
+                    class={ classes!("red-bg") }
                     on_click={ on_remove_tile }
                     title="Remove tile"
                     aria_label="Remove selected tile from the board"
                 >
                     <CarbonIcon name="trash_can" size={ Size::S24 } />
                 </Button>
-                <div class=classes!("dropdown", (!selected_is_universal).then(|| "disabled"))>
+                <div class={ classes!("dropdown", (!selected_is_universal).then(|| "disabled")) }>
                     <Button aria_label="Select tile path for universal tile"
-                        class=classes!("dropdown", "nile-blue-bg")
+                        class={ classes!("dropdown", "nile-blue-bg") }
                         is_enabled={ selected_is_universal }
                         on_click={ on_click_dropdown }
                     >
                         <CarbonIcon name="down_to_buttom" size={ Size::S24 } />
                         { "Tile Path " }
                     </Button>
-                    { self.view_dropdown() }
+                    { self.view_dropdown(ctx) }
                 </div>
                 <Button is_enabled={ state.can_undo() }
-                    class=classes!("nile-blue-bg")
+                    class={ classes!("nile-blue-bg") }
                     on_click={ on_undo }
                     title="Undo"
                     aria_label="Undo the last move"
@@ -121,7 +117,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="undo" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ state.can_redo() }
-                    class=classes!("nile-blue-bg")
+                    class={ classes!("nile-blue-bg") }
                     on_click={ on_redo }
                     title="Redo"
                     aria_label="Redo an undone move"
@@ -129,7 +125,7 @@ impl Component for ControlsImpl {
                     <CarbonIcon name="redo" size={ Size::S24 } />
                 </Button>
                 <Button is_enabled={ !state.nile.current_turn_placements().is_empty() }
-                    class=classes!("river-turquoise-bg")
+                    class={ classes!("river-turquoise-bg") }
                     on_click={ on_end_turn }
                     title="End turn"
                     aria_label="End turn"
@@ -138,7 +134,7 @@ impl Component for ControlsImpl {
                     { "End Turn" }
                 </Button>
                 <Button is_enabled={ state.nile.current_turn_placements().is_empty() }
-                    class=classes!("red-bg")
+                    class={ classes!("red-bg") }
                     on_click={ on_cant_play }
                     title="Can’t play"
                     aria_label="Can’t play"
@@ -151,8 +147,8 @@ impl Component for ControlsImpl {
     }
 }
 
-impl ControlsImpl {
-    fn view_dropdown(&self) -> Html {
+impl Controls {
+    fn view_dropdown(&self, _ctx: &Context<Self>) -> Html {
         if self.is_tile_path_selector_open {
             html! {
                 <div class="dropdown-content">
@@ -165,7 +161,7 @@ impl ControlsImpl {
     }
 
     fn view_tile_path_selection(&self, tile_path: TilePath) -> Html {
-        let on_click = self.props.callback(move |e: MouseEvent| {
+        let on_click = self.dispatch.apply_callback(move |e: MouseEvent| {
             e.prevent_default();
             Action::UpdateSelectedUniversalPath(tile_path)
         });

@@ -1,55 +1,55 @@
+use std::rc::Rc;
+
 use self::player::Player;
 use self::rack::TileRack;
 use yew::prelude::*;
-use yewdux::{component::WithDispatch, prelude::DispatchProps};
 
-use super::state::GameStore;
 use crate::components::{
     carbon_icon::{CarbonIcon, Size},
     utils::update_if_changed,
     Button,
 };
 
-pub struct PlayersImpl {
+use super::state::{Dispatch, State, UpdateStateMsg};
+
+pub struct Players {
+    _dispatch: Dispatch,
+    state: Rc<State>,
     are_scores_expanded: bool,
-    props: DispatchProps<GameStore>,
-    link: ComponentLink<Self>,
 }
-pub type Players = WithDispatch<PlayersImpl>;
 
 pub enum Msg {
     Expand,
     Collapse,
+    UpdateState(Rc<State>),
 }
 
-impl Component for PlayersImpl {
-    type Properties = DispatchProps<GameStore>;
+impl Component for Players {
+    type Properties = ();
     type Message = Msg;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
+        let callback = ctx.link().callback(Msg::UpdateState);
+        let dispatch = Dispatch::subscribe(callback);
+        let state = dispatch.get();
         Self {
+            _dispatch: dispatch,
+            state,
             are_scores_expanded: false,
-            props,
-            link,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         let desired_are_scores_expanded = matches!(msg, Msg::Expand);
         update_if_changed(&mut self.are_scores_expanded, desired_are_scores_expanded)
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        // TODO: narrow to used props
-        update_if_changed(&mut self.props, props)
-    }
-
-    fn view(&self) -> Html {
-        let state = self.props.state();
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let state = &self.state;
         let players = state.nile.players();
         let on_click = {
             let are_scores_expanded = self.are_scores_expanded;
-            self.link.callback(move |_| {
+            ctx.link().callback(move |_| {
                 if are_scores_expanded {
                     Msg::Collapse
                 } else {
@@ -66,7 +66,7 @@ impl Component for PlayersImpl {
                         }
                     }) } }
                 </div>
-                <Button class=classes!("expand-collapse", "nile-blue-bg")
+                <Button class={ classes!("expand-collapse", "nile-blue-bg") }
                     is_enabled={ !players[0].scores().is_empty() }
                     title={ if self.are_scores_expanded { "Collapse scores" } else { "Expand scores" } }
                     on_click={ on_click }
@@ -78,7 +78,7 @@ impl Component for PlayersImpl {
     }
 }
 
-impl PlayersImpl {
+impl Players {
     fn view_inner_collapse_expand(&self) -> Html {
         html! {
             { if self.are_scores_expanded {
@@ -102,79 +102,67 @@ impl PlayersImpl {
 
 mod player {
     use nile::TurnScore;
-    use yewdux::prelude::{DispatchPropsMut, Dispatcher};
 
     use super::super::state::{Action, SelectRackTile};
     use crate::components::utils::{if_render, if_render_html};
 
     use super::*;
 
-    pub struct PlayerImpl {
-        props: Props,
+    pub struct Player {
+        dispatch: Dispatch,
+        state: Rc<State>,
     }
 
-    #[derive(Properties, Clone)]
+    #[derive(Properties, Clone, PartialEq)]
     pub struct Props {
-        #[prop_or_default]
-        pub dispatch: DispatchProps<GameStore>,
         pub id: u8,
         pub are_scores_expanded: bool,
     }
 
-    impl PartialEq for Props {
-        fn eq(&self, other: &Self) -> bool {
-            let nile = &self.dispatch.state().nile;
-            let other_nile = &other.dispatch.state().nile;
-            self.id == other.id
-                && self.are_scores_expanded == other.are_scores_expanded
-                && nile.current_turn() == other_nile.current_turn()
-                && nile.players()[self.id as usize] == other_nile.players()[self.id as usize]
-                && nile.selected_rack_tile() == other_nile.selected_rack_tile()
-        }
-    }
+    // impl PartialEq for Props {
+    //     fn eq(&self, other: &Self) -> bool {
+    //         let nile = &self.dispatch.state().nile;
+    //         let other_nile = &other.dispatch.state().nile;
+    //         self.id == other.id
+    //             && self.are_scores_expanded == other.are_scores_expanded
+    //             && nile.current_turn() == other_nile.current_turn()
+    //             && nile.players()[self.id as usize] == other_nile.players()[self.id as usize]
+    //             && nile.selected_rack_tile() == other_nile.selected_rack_tile()
+    //     }
+    // }
 
-    impl DispatchPropsMut for Props {
-        type Store = GameStore;
-
-        fn dispatch(&mut self) -> &mut DispatchProps<Self::Store> {
-            &mut self.dispatch
-        }
-    }
-
-    pub type Player = WithDispatch<PlayerImpl>;
-
-    impl Component for PlayerImpl {
+    impl Component for Player {
         type Properties = Props;
-        type Message = ();
+        type Message = UpdateStateMsg;
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(ctx: &Context<Self>) -> Self {
+            let callback = ctx.link().callback(UpdateStateMsg);
+            let dispatch = Dispatch::subscribe(callback);
+            let state = dispatch.get();
+            Self { dispatch, state }
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
+        fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+            // TODO: update only if specific player changes
+            UpdateStateMsg(self.state) = msg;
+            true
         }
 
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
-            let state = self.props.dispatch.state();
-            let is_current_turn = state.nile.current_turn() == self.props.id as usize;
-            let player = &state.nile.players()[self.props.id as usize];
+        fn view(&self, ctx: &Context<Self>) -> Html {
+            let state = &self.state;
+            let is_current_turn = state.nile.current_turn() == ctx.props().id as usize;
+            let player = &state.nile.players()[ctx.props().id as usize];
             let current_turn_score_fwd = Self::sum_turn_scores(player.scores());
             let current_turn_score = player.current_turn_score();
             let mut score_fwd = 0;
             let selected_tile_idx = state.nile.selected_rack_tile();
-            let on_select = self
-                .props
-                .dispatch
-                .callback(move |rack_idx| Action::SelectRackTile(SelectRackTile { rack_idx }));
+            let on_select = self.dispatch.apply_callback(move |rack_idx| {
+                Action::SelectRackTile(SelectRackTile { rack_idx })
+            });
             html! {
                 // grid columns start at 1
-                <section style={ format!("grid-column: {}", self.props.id + 1) }>
-                    <h2 class=classes!(if is_current_turn { "current" } else { "other" })>
+                <section style={ format!("grid-column: {}", ctx.props().id + 1) }>
+                    <h2 class={ classes!(if is_current_turn { "current" } else { "other" }) }>
                         // nbsp keeps grid if empty player name
                         { format!("{}\u{00a0}", player.name()) }
                     </h2>
@@ -183,7 +171,7 @@ mod player {
                         selected_tile_idx={ selected_tile_idx }
                         on_select={ on_select }
                     />
-                    <table class=classes!("scores", is_current_turn.then(|| "current"))>
+                    <table class={ classes!("scores", is_current_turn.then(|| "current")) }>
                         <thead>
                             <tr>
                                 <th>{ "Score Fwd" }</th>
@@ -193,7 +181,7 @@ mod player {
                             </tr>
                         </thead>
                         <tbody>
-                            { if_render_html(self.props.are_scores_expanded, player.scores().iter().enumerate().map(|(i, score)| {
+                            { if_render_html(ctx.props().are_scores_expanded, player.scores().iter().enumerate().map(|(i, score)| {
                                 let row_html = html! {
                                     <tr key={ i }>
                                         <td>{ score_fwd }</td>
@@ -221,7 +209,7 @@ mod player {
         }
     }
 
-    impl PlayerImpl {
+    impl Player {
         fn sum_turn_scores(turn_scores: &[TurnScore]) -> i16 {
             turn_scores.iter().fold(0, |acc, ts| acc + ts.add - ts.sub)
         }
@@ -235,9 +223,7 @@ mod rack {
 
     use super::*;
 
-    pub struct TileRack {
-        props: Props,
-    }
+    pub struct TileRack {}
 
     #[derive(Clone, Properties)]
     pub struct Props {
@@ -260,19 +246,11 @@ mod rack {
         type Properties = Props;
         type Message = ();
 
-        fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-            Self { props }
+        fn create(_ctx: &Context<Self>) -> Self {
+            Self {}
         }
 
-        fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-            false
-        }
-
-        fn change(&mut self, props: Self::Properties) -> ShouldRender {
-            update_if_changed(&mut self.props, props)
-        }
-
-        fn view(&self) -> Html {
+        fn view(&self, ctx: &Context<Self>) -> Html {
             let on_drag = Callback::from(move |e: DragEvent| {
                 e.prevent_default();
             });
@@ -280,31 +258,31 @@ mod rack {
                 <table>
                     <tbody>
                         <tr>
-                            { for self.props.tiles.iter().enumerate().map(|(i, tile)| {
+                            { for ctx.props().tiles.iter().enumerate().map(|(i, tile)| {
                                 let i = i as u8;
-                                let on_drag_start = self.props.on_select.reform(move |e: DragEvent| {
+                                let on_drag_start = ctx.props().on_select.reform(move |e: DragEvent| {
                                     e.prevent_default();
                                     i
                                 });
-                                let on_touch_start = self.props.on_select.reform(move |e: TouchEvent| {
+                                let on_touch_start = ctx.props().on_select.reform(move |e: TouchEvent| {
                                     e.prevent_default();
                                     i
                                 });
-                                let on_click = self.props.on_select.reform(move |e: MouseEvent| {
+                                let on_click = ctx.props().on_select.reform(move |e: MouseEvent| {
                                     e.prevent_default();
                                     i
                                 });
                                 html! {
                                     <td key={ format!("${:?} - ${}", tile, i) }>
-                                        <div draggable={ if self.props.show_tiles { "on" } else { "off" }  }
+                                        <div draggable={ if ctx.props().show_tiles { "on" } else { "off" }  }
                                             ondrag={ on_drag.clone() }
                                             ondragstart={ on_drag_start.clone() }
                                             ontouchstart={ on_touch_start.clone() }
                                             onclick={ on_click.clone() }
                                         >
-                                            { if self.props.show_tiles {
+                                            { if ctx.props().show_tiles {
                                                 html! {
-                                                    <RackTile tile={ *tile } is_selected={ matches!(self.props.selected_tile_idx, Some(idx) if idx == i) } />
+                                                    <RackTile tile={ *tile } is_selected={ matches!(ctx.props().selected_tile_idx, Some(idx) if idx == i) } />
                                                 }
                                             } else {
                                                 html! {
@@ -317,9 +295,9 @@ mod rack {
                             }) }
                         </tr>
                         <tr class="align-right">
-                            { for self.props.tiles.iter().enumerate().map(|(i, tile)| { html! {
+                            { for ctx.props().tiles.iter().enumerate().map(|(i, tile)| { html! {
                                 <td key={ format!("{:?} - {}", tile, i) }>
-                                    { if_render(self.props.show_tiles, tile.score()) }
+                                    { if_render(ctx.props().show_tiles, tile.score()) }
                                 </td>
                             } }) }
                         </tr>
